@@ -9,9 +9,9 @@ This document explains how we work together. Please read it carefully before con
 
 - **`main`** is our protected branch. No one pushes directly to `main`.
 - All work must be done on **feature branches**:
-  - `feature/<name>` → new features (e.g., `feature/login-page`)
-  - `bugfix/<name>` → bug fixes (e.g., `bugfix/cart-total`)
-  - `hotfix/<name>` → urgent fixes to `main` (e.g., `hotfix/payment-error`)
+  - `<your-name>/feature/<feature-name>` → new features (e.g., `neo/feature/login-page`)
+  - `<your-name>/bugfix/<bug-name>` → bug fixes (e.g., `neo/bugfix/cart-total`)
+  - `<your-name>/hotfix/<hotfix-name>` → urgent fixes to `main` (e.g., `neo/hotfix/payment-error`)
 
 ---
 
