@@ -68,3 +68,8 @@ h5,
 h6 {
   font-family: "Inter", serif;
 }
+
+/* in src/index.css */
+@utility max-w-8xl {
+  max-width: 100rem;
+}

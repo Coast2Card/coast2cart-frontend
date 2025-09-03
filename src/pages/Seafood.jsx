@@ -49,11 +49,11 @@ const Seafood = () => {
 
       {/* White Background Cover Section with Products */}
       <section className="relative z-30 bg-white py-16 -mt-20 md:-mt-36 lg:-mt-15">
-        <div className="container mx-auto px-4 md:px-8">
+        <div className="container mx-auto px-4 md:px-8  max-w-8xl">
           {/* Seafood Products Section */}
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Sidebar - Filters */}
-            <div className="lg:w-1/4 space-y-8">
+            <div className="lg:w-1/4 space-y-8 bg-r">
               {/* Categories Filter */}
               <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
                 <h3 className="font-outfit font-bold text-xl text-primary mb-4">
