@@ -1,8 +1,8 @@
 import React from "react";
 import c2cLogoWhite from "../assets/logos/c2c_white_transparent.png";
-import heroBgImg from "../assets/images/images/about/HeroBg.jpg";
-import fishermenImg from "../assets/images/images/about/Fishermen.jpg";
-import souvenirImg from "../assets/images/images/about/Souvenir.jpg";
+import heroBgImg from "../assets/images/about/HeroBg.jpg";
+import fishermenImg from "../assets/images/about/Fishermen.jpg";
+import souvenirImg from "../assets/images/about/Souvenir.jpg";
 
 const About = () => {
   return (
