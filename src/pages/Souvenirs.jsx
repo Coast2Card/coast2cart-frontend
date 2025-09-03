@@ -15,7 +15,7 @@ const Souvenirs = () => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside 
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -66,9 +66,9 @@ const Souvenirs = () => {
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <div className="flex flex-col lg:flex-row items-center lg:items-start gap-12 mb-16">
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-12 mb-16 max-w-6xl mx-auto mt-16">
         {/* Left side - Text content */}
-        <div className="lg:w-1/2 lg:pr-16">
+        <div className="lg:w-1/2 text-left">
           <h1 className="text-5xl font-bold mb-6 font-display" style={{ color: '#FF6F47' }}>
             Souvenirs
           </h1>
@@ -78,17 +78,17 @@ const Souvenirs = () => {
         </div>
         
         {/* Right side - Fish image */}
-        <div className="flex-shrink-0 lg:w-1/2">
+        <div className="flex-shrink-0 lg:w-1/2 flex justify-center">
           <img 
             src={FishImage} 
             alt="Decorative fish lantern" 
-            className="w-full h-auto max-w-md mx-auto lg:mx-0"
+            className="w-full h-auto max-w-sm"
           />
         </div>
       </div>
 
       {/* Sorting and Search Section */}
-      <div className="bg-white shadow-xl p-4 mb-20">
+      <div className="bg-white shadow-xl p-4 mb-20 mx-8">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           {/* Left side - Product count and sort */}
           <div className="flex items-center gap-4">
@@ -149,7 +149,7 @@ const Souvenirs = () => {
 
       {/* Souvenir Grid or No Results */}
       {filteredAndSortedSouvenirs.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-6xl mx-auto">
           {filteredAndSortedSouvenirs.map((souvenir) => (
             <div key={souvenir.id} className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-[4/5] overflow-hidden">
