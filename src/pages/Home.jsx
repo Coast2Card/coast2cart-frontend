@@ -5,6 +5,7 @@ import fish2 from "../assets/images/home_fish2.png";
 import fish3 from "../assets/images/home_fish3.png";
 import fish4 from "../assets/images/home_fish4.png";
 import fish5 from "../assets/images/home_fish5.png";
+import HomeFeatures from "../components/home/HomeFeatures";
 const Home = () => {
   return (
     <main className="relative overflow-x-hidden">
@@ -65,6 +66,7 @@ const Home = () => {
           className="min-w-60 sm:w-65 h-90 object-cover rounded-2xl"
         />
       </section>
+      <HomeFeatures className="mb-20" />
     </main>
   );
 };

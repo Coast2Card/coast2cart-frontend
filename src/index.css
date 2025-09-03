@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 @plugin "daisyui";
 @plugin "daisyui/theme" {
@@ -47,6 +47,14 @@
   font-family: "Inter", serif;
 }
 
+.font-outfit {
+  font-family: "Outfit", sans-serif;
+}
+
+.font-inter {
+  font-family: "Inter", sans-serif;
+}
+
 /* Global Styles */
 body {
   font-family: "Inter", sans-serif;
@@ -59,4 +67,9 @@ h4,
 h5,
 h6 {
   font-family: "Inter", serif;
+}
+
+/* in src/index.css */
+@utility max-w-8xl {
+  max-width: 100rem;
 }
