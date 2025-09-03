@@ -35,7 +35,7 @@ const HomeFeatures = ({ className = "" }) => {
             key={index}
             className="flex flex-col items-center justify-start gap-2"
           >
-            <div className="bg-accent mb-2 p-11 flex justify-center items-center rounded-full">
+            <div className="bg-accent mb-2 p-11 sm:p-11 flex justify-center items-center rounded-full">
               <div className="bg-gray-300 rounded-xl p-1 h-14 w-14"></div>
             </div>
             <h3 className="text-2xl font-bold text-primary">{item.title}</h3>
