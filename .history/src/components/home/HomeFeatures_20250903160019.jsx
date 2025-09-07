@@ -28,7 +28,7 @@ const features = [
 
 const HomeFeatures = ({ className = "" }) => {
   return (
-    <article className={` mx-auto w-full ${className}`}>
+    <article className={`mx-6  mx-auto max-w-8xl ${className}`}>
       <section className="grid grid-cols-1 sm:grid-cols-2 space-y-6 lg:grid-cols-4 gap-6 sm:w-[95%] lg:w-[90%] xl:w-[80%] mx-auto">
         {features.map((item, index) => (
           <div

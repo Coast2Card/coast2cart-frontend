@@ -68,11 +68,9 @@ const Home = () => {
           className="min-w-60 sm:w-65 h-90 object-cover rounded-2xl"
         />
       </section>
-      <section className="max-w-8xl mx-auto p-4 flex flex-col">
-        <HomeFeatures className="mb-25" />
-        <HomeGallery />
-        <HomeFreshCatch />
-      </section>
+      <HomeFeatures className="mb-25" />
+      <HomeGallery />
+      <HomeFreshCatch />
     </main>
   );
 };

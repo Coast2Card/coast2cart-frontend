@@ -33,7 +33,7 @@ const HomeFreshCatch = ({ className = "" }) => {
   return (
     <div className={`flex flex-col text-center ${className}`}>
       <h1 className="text-4xl font-bold text-accent mb-10">Fresh Catch</h1>
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4  gap-6 mb-8">
+      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4  gap-6 mb-8 mx-8">
         {freshCatchItems.map((item) => (
           <div
             key={item.id}

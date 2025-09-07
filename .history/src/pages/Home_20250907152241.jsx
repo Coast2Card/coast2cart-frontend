@@ -12,7 +12,7 @@ const Home = () => {
   return (
     <main className="relative overflow-x-hidden">
       {/* Home Banner */}
-      <section className="w-full h-[70vh] md:h-185 relative">
+      <section className="w-full max-w-8xl h-[70vh] md:h-185 relative">
         <img
           src={homeBanner}
           alt="Home Banner"
@@ -68,11 +68,9 @@ const Home = () => {
           className="min-w-60 sm:w-65 h-90 object-cover rounded-2xl"
         />
       </section>
-      <section className="max-w-8xl mx-auto p-4 flex flex-col">
-        <HomeFeatures className="mb-25" />
-        <HomeGallery />
-        <HomeFreshCatch />
-      </section>
+      <HomeFeatures className="mb-25" />
+      <HomeGallery />
+      <HomeFreshCatch />
     </main>
   );
 };
