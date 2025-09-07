@@ -7,7 +7,6 @@ import fish4 from "../assets/images/home_fish4.png";
 import fish5 from "../assets/images/home_fish5.png";
 import HomeFeatures from "../components/home/HomeFeatures";
 import HomeFreshCatch from "../components/home/HomeFreshCatch";
-import HomeGallery from "../components/home/HomeGallery";
 const Home = () => {
   return (
     <main className="relative overflow-x-hidden">
@@ -68,11 +67,8 @@ const Home = () => {
           className="min-w-60 sm:w-65 h-90 object-cover rounded-2xl"
         />
       </section>
-      <section className="max-w-8xl mx-auto p-4 flex flex-col">
-        <HomeFeatures className="mb-25" />
-        <HomeGallery />
-        <HomeFreshCatch />
-      </section>
+      <HomeFeatures className="mb-25" />
+      <HomeFreshCatch />
     </main>
   );
 };

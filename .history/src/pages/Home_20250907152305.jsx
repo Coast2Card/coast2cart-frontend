@@ -41,7 +41,7 @@ const Home = () => {
           </div>
         </div>
       </section>
-      <section className=" relative overflow-hidden w-[140vw] flex items-center justify-center gap-6 mb-25   z-30 -mt-61 sm:-mt-60 left-1/2 -translate-x-1/2">
+      <section className=" relative overflow-hidden w-[100vw] flex items-center justify-center gap-6 mb-25   z-30 -mt-61 sm:-mt-60 left-1/2 -translate-x-1/2">
         <img
           src={fish1}
           alt="Fish 1"
@@ -68,11 +68,9 @@ const Home = () => {
           className="min-w-60 sm:w-65 h-90 object-cover rounded-2xl"
         />
       </section>
-      <section className="max-w-8xl mx-auto p-4 flex flex-col">
-        <HomeFeatures className="mb-25" />
-        <HomeGallery />
-        <HomeFreshCatch />
-      </section>
+      <HomeFeatures className="mb-25" />
+      <HomeGallery />
+      <HomeFreshCatch />
     </main>
   );
 };
