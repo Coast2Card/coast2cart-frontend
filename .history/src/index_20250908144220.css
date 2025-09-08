@@ -1,0 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "coast2cart";
+  default: true;
+  prefersdark: false;
+  color-scheme: "light";
+
+  --color-base-100: #e2e8f0;
+  --color-base-200: #ffffff;
+  --color-base-300: #ffffff;
+  --color-base-content: #1e293b;
+  --color-primary: #012466;
+  --color-primary-content: #ffffff;
+  --color-secondary: #fdb815;
+  --color-secondary-content: #ffffff;
+  --color-accent: #f04c05;
+  --color-accent-content: #ffffff;
+  --color-neutral: #d9d9d9;
+  --color-neutral-content: #1e293b;
+  --color-info: #0ea5e9;
+  --color-info-content: #ffffff;
+  --color-success: #007a3f;
+  --color-success-content: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-content: #ffffff;
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
+
+  --color-lighter-secondary: #ffcd0f;
+
+  --radius-selector: 1rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* Custom Font Classes */
+.font-primary {
+  font-family: "Inter", sans-serif;
+}
+
+.font-display {
+  font-family: "Inter", serif;
+}
+
+.font-outfit {
+  font-family: "Outfit", sans-serif;
+}
+
+.font-inter {
+  font-family: "Inter", sans-serif;
+}
+
+/* Global Styles */
+body {
+  font-family: "Inter", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Inter", serif;
+}
+
+/* in src/index.css */
+@utility max-w-8xl {
+  max-width: 100rem;
+}
