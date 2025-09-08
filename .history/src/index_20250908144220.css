@@ -28,6 +28,8 @@
   --color-error: #ef4444;
   --color-error-content: #ffffff;
 
+  --color-lighter-secondary: #ffcd0f;
+
   --radius-selector: 1rem;
   --radius-field: 0.5rem;
   --radius-box: 1rem;
@@ -36,10 +38,6 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
-
-  /* 👇 New lighter secondary */
-  --color-secondary-light: #ffcd0f;
-  --color-secondary-light-content: #1e293b;
 }
 
 /* Custom Font Classes */
@@ -76,16 +74,4 @@ h6 {
 /* in src/index.css */
 @utility max-w-8xl {
   max-width: 100rem;
-}
-
-@layer utilities {
-  .bg-secondary-light {
-    background-color: var(--color-secondary-light);
-  }
-  .text-secondary-light {
-    color: var(--color-secondary-light);
-  }
-  .border-secondary-light {
-    border-color: var(--color-secondary-light);
-  }
 }

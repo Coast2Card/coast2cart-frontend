@@ -9,7 +9,7 @@ export const navLinks = [
   // { path: "/colors", label: "Colors" },
 ];
 
-export const freshCatchItems = [
+export const const freshCatchItems = [
   {
     id: 1,
     price: "₱360/kg",

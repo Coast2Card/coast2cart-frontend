@@ -37,7 +37,7 @@ const Home = () => {
               className="w-6/8 max-w-120 sm:w-6/8 md:4/8 lg:3/8 md:max-w-170 h-auto mx-auto "
               src={baybayonLogo}
             />
-            <CustomButton text="Shop Now" className="mt-0 sm:mt-[-10px]" />
+            <CustomButton text="Shop Now" />
           </div>
         </div>
       </section>

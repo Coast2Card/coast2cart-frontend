@@ -5,7 +5,7 @@ import ItemCard from "./ItemCard";
 const HomeSouvenirs = () => {
   return (
     <>
-      <div className="relative flex items-end justify-end h-155 w-full min-w-100 max-w-70">
+      <div className="relative flex items-end justify-end h-170 w-full min-w-100 max-w-70">
         <div className="absolute flex items-end justify-end p-6 px-8 inset-0  bg-black opacity-40"></div>
         <div className="absolute flex items-end justify-end p-6 px-8 inset-0 ">
           <div className="flex flex-col items-end">
@@ -29,7 +29,7 @@ const HomeSouvenirs = () => {
           connection to the sea—blending tradition, creativity, and the local
           way of life into memorable tokens you can bring home.
         </p>
-        <section className="flex grid-cols-1  w-[180%] max-h-100 gap-2">
+        <section className="flex grid-cols-1  w-[180%] max-h-110 gap-2">
           {freshCatchItems.map((item, index) => {
             return (
               <ItemCard

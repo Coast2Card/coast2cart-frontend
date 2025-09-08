@@ -81,6 +81,7 @@ h6 {
 @layer utilities {
   .bg-secondary-light {
     background-color: var(--color-secondary-light);
+    color: var(--color-secondary-light-content);
   }
   .text-secondary-light {
     color: var(--color-secondary-light);

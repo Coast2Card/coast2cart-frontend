@@ -5,7 +5,7 @@ import ItemCard from "./ItemCard";
 const HomeSouvenirs = () => {
   return (
     <>
-      <div className="relative flex items-end justify-end h-155 w-full min-w-100 max-w-70">
+      <div className="relative flex items-end justify-end h-180 w-full min-w-100 max-w-70">
         <div className="absolute flex items-end justify-end p-6 px-8 inset-0  bg-black opacity-40"></div>
         <div className="absolute flex items-end justify-end p-6 px-8 inset-0 ">
           <div className="flex flex-col items-end">

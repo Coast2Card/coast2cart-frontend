@@ -5,7 +5,7 @@ import ItemCard from "./ItemCard";
 const HomeSouvenirs = () => {
   return (
     <>
-      <div className="relative flex items-end justify-end h-155 w-full min-w-100 max-w-70">
+      <div className="relative flex items-end justify-end h-150 w-full min-w-100 max-w-70">
         <div className="absolute flex items-end justify-end p-6 px-8 inset-0  bg-black opacity-40"></div>
         <div className="absolute flex items-end justify-end p-6 px-8 inset-0 ">
           <div className="flex flex-col items-end">
@@ -22,7 +22,7 @@ const HomeSouvenirs = () => {
           src={souvenirBanner}
         />
       </div>
-      <article className="flex-1 flex flex-col justify-center p-6 text-white text-md gap-2">
+      <article className="flex-1 flex flex-col justify-center p-12 text-white text-md gap-2">
         <p className="mb-4">
           Discover handcrafted keepsakes inspired by the vibrant coastal living
           and rich fisheries of Baybayon. Each piece reflects the community’s
