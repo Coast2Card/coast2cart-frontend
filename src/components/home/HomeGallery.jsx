@@ -3,11 +3,11 @@ import homeGallery1 from "../../assets/images/home_gallery1.png";
 import FishIcon from "../icons/FishIcon";
 const HomeGallery = () => {
   return (
-    <div className="w-full flex flex-col sm:flex-row gap-9 lg:gap-12 p-4 mb-20 items-center justify-center mx-auto max-w-7xl  ">
+    <div className="w-full flex flex-col sm:flex-row gap-9 lg:gap-12 p-1 mb-20 items-center justify-center mx-auto max-w-8xl  ">
       <div className="flex flex-1 min-w-75 sm:h-150 md:min-w-105  w-full md:h-150 bg-blue-100 ">
         <img src={homeGallery1} className="w-full h-full object-cover  " />
       </div>
-      <div className=" flex flex-col min-w-20 max-w-200  gap-4 justify-center">
+      <div className=" flex flex-col min-w-20  gap-4 justify-center">
         <h2 className="font-bold text-3xl lg:text-4xl text-primary mb-1">
           Fresh From the Sea, Straight to You
         </h2>
