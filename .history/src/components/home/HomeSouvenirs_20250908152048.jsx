@@ -22,14 +22,14 @@ const HomeSouvenirs = () => {
           src={souvenirBanner}
         />
       </div>
-      <article className="flex-1 flex flex-col justify-center p-4 py-6 lg:p-6 text-white text-md gap-2">
+      <article className="flex-1 flex flex-col justify-center p-4 lg:p-6 text-white text-md gap-2">
         <p className="mb-4">
           Discover handcrafted keepsakes inspired by the vibrant coastal living
           and rich fisheries of Baybayon. Each piece reflects the community’s
           connection to the sea—blending tradition, creativity, and the local
           way of life into memorable tokens you can bring home.
         </p>
-        <section className="flex grid-cols-1  w-[260%] lg:w-[190%] max-h-100 gap-2">
+        <section className="flex grid-cols-1  w-[190%] max-h-100 gap-2">
           {freshCatchItems.map((item, index) => {
             return (
               <ItemCard

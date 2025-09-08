@@ -29,7 +29,7 @@ const HomeSouvenirs = () => {
           connection to the sea—blending tradition, creativity, and the local
           way of life into memorable tokens you can bring home.
         </p>
-        <section className="flex grid-cols-1  w-[260%] lg:w-[190%] max-h-100 gap-2">
+        <section className="flex grid-cols-1  w-[270%] lg:w-[190%] max-h-100 gap-2">
           {freshCatchItems.map((item, index) => {
             return (
               <ItemCard

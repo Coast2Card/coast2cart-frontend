@@ -73,7 +73,7 @@ const Home = () => {
         <HomeGallery />
         <HomeFreshCatch />
       </section>
-      <section className="flex flex-col lg:flex-row bg-primary w-full mb-60">
+      <section className="flex flex-col overflow-scroll lg:flex-row lg:bg-primary w-full mb-60">
         <HomeSouvenirs />
       </section>
     </main>
