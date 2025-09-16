@@ -10,10 +10,9 @@ import HomeFreshCatch from "../components/home/HomeFreshCatch";
 import HomeGallery from "../components/home/HomeGallery";
 import HomeSouvenirs from "../components/home/HomeSouvenirs";
 import CustomButton from "../components/CustomButton";
-import { HomeCarousel } from "../components/home/HomeCarousel";
 const Home = () => {
   return (
-    <main className="relative overflow-x-hidden bg-base-300">
+    <main className="relative overflow-x-hidden">
       {/* Home Banner */}
       <section className="w-full h-135 sm:h-[70vh] md:h-185 relative">
         <img
@@ -77,7 +76,31 @@ const Home = () => {
       <section className="flex flex-col lg:flex-row bg-primary max-w-8xl mx-auto w-full mb-60">
         <HomeSouvenirs />
       </section>
-      <HomeCarousel />
+      <section className="flex flex-col gap-4 mx-4">
+        <h1 className="text-primary text-center text-3xl font-bold mb-6">
+          Voices of Baybayon
+        </h1>
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-35 gap-6 h-100">
+            <div className="col-span-11 bg-red-100 rounded-xl h-[100%]"></div>
+            <div className="col-span-8 bg-red-100 rounded-xl h-[55%]"></div>
+            <div className="col-span-8 bg-red-100 rounded-xl h-[55%]"></div>
+            <div className="col-span-8 bg-red-100 rounded-xl h-[55%]"></div>
+          </div>
+          <div className="flex-flex-col gap-2 bg-secondary p-6 rounded-md text-[#012466] mx-auto w-[60%]  mt-[-19%]">
+            <h2 className="font-bold text-xl">John Ortazo</h2>
+            <p className="font-semibold">Barangay Chairman</p>
+            <p className="">
+              As chairman of Barangay Baybayon, I am proud to support our
+              hardworking fisherfolk. Our community has lived by the sea for
+              generations, and through this initiative, we aim to bring the
+              freshest catch directly from our waters to your table. Every
+              purchase supports not just our fishermen, but also the future of
+              our barangay.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 };

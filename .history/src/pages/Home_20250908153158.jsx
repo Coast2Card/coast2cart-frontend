@@ -10,10 +10,9 @@ import HomeFreshCatch from "../components/home/HomeFreshCatch";
 import HomeGallery from "../components/home/HomeGallery";
 import HomeSouvenirs from "../components/home/HomeSouvenirs";
 import CustomButton from "../components/CustomButton";
-import { HomeCarousel } from "../components/home/HomeCarousel";
 const Home = () => {
   return (
-    <main className="relative overflow-x-hidden bg-base-300">
+    <main className="relative overflow-x-hidden">
       {/* Home Banner */}
       <section className="w-full h-135 sm:h-[70vh] md:h-185 relative">
         <img
@@ -74,10 +73,11 @@ const Home = () => {
         <HomeGallery />
         <HomeFreshCatch />
       </section>
-      <section className="flex flex-col lg:flex-row bg-primary max-w-8xl mx-auto w-full mb-60">
-        <HomeSouvenirs />
-      </section>
-      <HomeCarousel />
+      <div className="bg-primary w-full  mb-60">
+        <section className="flex flex-col lg:flex-row max-w-8xl mx-auto ">
+          <HomeSouvenirs />
+        </section>
+      </div>
     </main>
   );
 };

@@ -8,7 +8,7 @@
   color-scheme: "light";
 
   --color-base-100: #e2e8f0;
-  --color-base-200: #c8d9e6;
+  --color-base-200: #ffffff;
   --color-base-300: #ffffff;
   --color-base-content: #1e293b;
   --color-primary: #012466;
@@ -88,20 +88,4 @@ h6 {
   .border-secondary-light {
     border-color: var(--color-secondary-light);
   }
-}
-
-/* Simple fade/scale in animation for carousel images */
-@keyframes c2c-fade-scale-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-fade-scale-in {
-  animation: c2c-fade-scale-in 250ms ease-out;
 }

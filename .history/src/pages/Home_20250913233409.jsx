@@ -10,7 +10,6 @@ import HomeFreshCatch from "../components/home/HomeFreshCatch";
 import HomeGallery from "../components/home/HomeGallery";
 import HomeSouvenirs from "../components/home/HomeSouvenirs";
 import CustomButton from "../components/CustomButton";
-import { HomeCarousel } from "../components/home/HomeCarousel";
 const Home = () => {
   return (
     <main className="relative overflow-x-hidden bg-base-300">
@@ -77,7 +76,19 @@ const Home = () => {
       <section className="flex flex-col lg:flex-row bg-primary max-w-8xl mx-auto w-full mb-60">
         <HomeSouvenirs />
       </section>
-      <HomeCarousel />
+      <section className="flex flex-col gap-4 mb-60">
+        <h1 className="text-primary text-center text-3xl font-bold mb-6">
+          Voices of Baybayon
+        </h1>
+        <div className="relative flex flex-col gap-3 mx-3 ml-18">
+          <div className="flex gap-2 h-100">
+            <div className="flex-3 min-w-[200px] bg-red-100 rounded-xl h-[100%]"></div>
+            <div className="flex-2 bg-red-100 rounded-xl h-[55%]"></div>
+            <div className="flex-2 bg-red-100 rounded-xl h-[55%]"></div>
+            <div className="flex-2 bg-red-100 rounded-xl h-[55%]"></div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 };

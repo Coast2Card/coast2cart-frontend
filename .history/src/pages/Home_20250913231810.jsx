@@ -10,7 +10,6 @@ import HomeFreshCatch from "../components/home/HomeFreshCatch";
 import HomeGallery from "../components/home/HomeGallery";
 import HomeSouvenirs from "../components/home/HomeSouvenirs";
 import CustomButton from "../components/CustomButton";
-import { HomeCarousel } from "../components/home/HomeCarousel";
 const Home = () => {
   return (
     <main className="relative overflow-x-hidden bg-base-300">
@@ -77,7 +76,57 @@ const Home = () => {
       <section className="flex flex-col lg:flex-row bg-primary max-w-8xl mx-auto w-full mb-60">
         <HomeSouvenirs />
       </section>
-      <HomeCarousel />
+      <section className="flex flex-col gap-4 mx-4 mb-20">
+        <h1 className="text-primary text-center text-3xl font-bold mb-6">
+          Voices of Baybayon
+        </h1>
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-6 h-100">
+            <div className="flex-1 min-w-[200px] bg-red-100 rounded-xl h-[100%]"></div>
+            <div className="flex-1 bg-red-100 rounded-xl h-[55%]"></div>
+            <div className="flex-1 bg-red-100 rounded-xl h-[55%]"></div>
+            <div className="flex-1 bg-red-100 rounded-xl h-[55%]"></div>
+          </div>
+          <div className="relative flex-flex-col gap-2 bg-[#FFCD0F] p-6 px-8 rounded-md text-[#012466] mx-auto w-[63%]  mt-[-19%]">
+            <h2 className="font-bold text-2xl mb-1">John Ortazo</h2>
+            <p className="font-semibold mb-5">Barangay Chairman</p>
+            <p className="">
+              As chairman of Barangay Baybayon, I am proud to support our
+              hardworking fisherfolk. Our community has lived by the sea for
+              generations, and through this initiative, we aim to bring the
+              freshest catch directly from our waters to your table. Every
+              purchase supports not just our fishermen, but also the future of
+              our barangay.
+            </p>
+            <div className="flex gap-2">
+              <button className="bg-base-200">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+                  <rect width="256" height="256" fill="none" />
+                  <line
+                    x1="216"
+                    y1="128"
+                    x2="40"
+                    y2="128"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="16"
+                  />
+                  <polyline
+                    points="112 56 40 128 112 200"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="16"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 };
