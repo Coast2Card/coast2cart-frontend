@@ -7,6 +7,8 @@ import About from "./pages/About";
 import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
 import Colors from "./pages/Colors";
+import Login from "./pages/Auth/Login";
+import Signup from "./pages/Auth/Signup";
 import "./App.css";
 
 function App() {
@@ -22,6 +24,9 @@ function App() {
         <Route path="profile" element={<Profile />} />
         <Route path="colors" element={<Colors />} />
       </Route>
+      {/* Auth routes without shared layout */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
     </Routes>
   );
 }

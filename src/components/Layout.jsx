@@ -3,7 +3,7 @@ import Navbar from "./Navbar";
 
 const Layout = () => {
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-base-300">
       {/* Navigation Header */}
       <Navbar />
 

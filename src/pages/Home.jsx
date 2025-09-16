@@ -70,11 +70,11 @@ const Home = () => {
         />
       </section>
       <section className="max-w-8xl mx-auto p-4 flex flex-col">
-        <HomeFeatures className="mb-25" />
+        <HomeFeatures className="mb-15" />
         <HomeGallery />
         <HomeFreshCatch />
       </section>
-      <section className="flex flex-col lg:flex-row bg-primary max-w-8xl mx-auto w-full mb-20">
+      <section className="flex flex-col lg:flex-row bg-primary max-w-8xl mx-auto w-full mb-25">
         <HomeSouvenirs />
       </section>
       <HomeCarousel />

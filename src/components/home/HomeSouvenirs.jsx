@@ -1,7 +1,10 @@
 import React from "react";
 import souvenirBanner from "../../assets/images/home_banner2.png";
-import { freshCatchItems } from "../../data/navigation";
 import ItemCard from "./ItemCard";
+import fishWallet from "../../assets/images/fish_wallet.jpg";
+import bottleOpener from "../../assets/images/bottle_opener.webp";
+import baybayonFan from "../../assets/images/baybayon_fan.jpg";
+import coconutMaracas from "../../assets/images/coconut_maracas.webp";
 const HomeSouvenirs = () => {
   return (
     <>
@@ -9,12 +12,15 @@ const HomeSouvenirs = () => {
         <div className="absolute flex items-end justify-end p-6 px-8 inset-0  bg-black opacity-40"></div>
         <div className="absolute flex items-end justify-start lg:justify-end  py-9 px-4 lg:px-8 inset-0 ">
           <div className="flex flex-col items-start lg:items-end">
-            <h2 className="text-5xl font-bold text-secondary-light mb-3">
+            <h1 className="text-5xl font-bold text-secondary-light mb-3">
               Souvenirs
-            </h2>
-            <button className=" bg-secondary-light text-primary uppercase  px-6 py-2 rounded-full text-md  font-semibold hover:bg-secondary/90 transition-colors cursor-pointer">
+            </h1>
+            <a
+              href="/souvenirs"
+              className=" bg-secondary-light text-primary uppercase  px-6 py-2 rounded-full text-md  font-semibold hover:bg-secondary/90 transition-colors cursor-pointer inline-block"
+            >
               view all
-            </button>
+            </a>
           </div>
         </div>
         <img
@@ -29,17 +35,23 @@ const HomeSouvenirs = () => {
           connection to the sea—blending tradition, creativity, and the local
           way of life into memorable tokens you can bring home.
         </p>
-        <section className="flex grid-cols-1  w-[260%] lg:w-[190%] max-h-100 gap-2">
-          {freshCatchItems.map((item, index) => {
-            return (
+        <section className="flex grid-cols-1 w-[260%] lg:w-[190%] max-h-100 gap-4">
+          {[
+            { id: 1, name: "Fish Wallet", image: fishWallet },
+            { id: 2, name: "Bottle Opener", image: bottleOpener },
+            { id: 3, name: "Baybayon Fan", image: baybayonFan },
+            { id: 4, name: "Coconut Maracas", image: coconutMaracas },
+          ].map((item) => (
+            <div key={item.id} className="w-64 sm:w-72 lg:w-80 flex-none">
               <ItemCard
-                name={item.name}
-                price={item.price}
-                description={item.description}
                 id={item.id}
+                name={item.name}
+                price=""
+                description=""
+                image={item.image}
               />
-            );
-          })}
+            </div>
+          ))}
         </section>
       </article>
     </>

@@ -69,7 +69,7 @@ export const HomeCarousel = () => {
 
   return (
     <section className="flex flex-col gap-4 mb-20 max-w-8xl mx-auto">
-      <h1 className="text-primary text-center text-3xl font-bold mb-6">
+      <h1 className="text-primary text-center text-4xl xl:text-5xl font-bold mb-12">
         Voices of Baybayon
       </h1>
       <div className="relative flex flex-col mx-3 ">
