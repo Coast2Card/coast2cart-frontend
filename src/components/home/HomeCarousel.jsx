@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+import home_test1 from "../../assets/images/home_test1.png";
+import home_test2 from "../../assets/images/home_test2.png";
+import home_test3 from "../../assets/images/home_test3.png";
+import home_test4 from "../../assets/images/home_test4.png";
+import home_test5 from "../../assets/images/home_test5.png";
 
 export const HomeCarousel = () => {
   const [cards] = useState([
@@ -8,8 +13,7 @@ export const HomeCarousel = () => {
       role: "Barangay Chairman",
       quote:
         "As chairman of Barangay Baybayon, I am proud to support our hardworking fisherfolk. Our community has lived by the sea for generations, and through this initiative, we aim to bring the freshest catch directly from our waters to your table. Every purchase supports not just our fishermen, but also the future of our barangay.",
-      imgUrl:
-        "https://images.unsplash.com/photo-1523913950023-c36abeef6c86?q=80&w=1600&auto=format&fit=crop",
+      imgUrl: home_test1,
     },
     {
       id: 2,
@@ -17,8 +21,7 @@ export const HomeCarousel = () => {
       role: "Fisherfolk Leader",
       quote:
         "Every dawn at sea is a promise. With your support, our catch becomes sustenance for families and strength for our community.",
-      imgUrl:
-        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop",
+      imgUrl: home_test2,
     },
     {
       id: 3,
@@ -26,8 +29,7 @@ export const HomeCarousel = () => {
       role: "Market Vendor",
       quote:
         "Freshness you can taste. This program connects our shores to your kitchen the right way.",
-      imgUrl:
-        "https://images.unsplash.com/photo-1498654200943-1088dd4438ae?q=80&w=1600&auto=format&fit=crop",
+      imgUrl: home_test3,
     },
     {
       id: 4,
@@ -35,8 +37,15 @@ export const HomeCarousel = () => {
       role: "Youth Volunteer",
       quote:
         "Buying local keeps our traditions alive and our oceans respected for generations to come.",
-      imgUrl:
-        "https://images.unsplash.com/photo-1504593811423-6dd665756598?q=80&w=1600&auto=format&fit=crop",
+      imgUrl: home_test4,
+    },
+    {
+      id: 5,
+      name: "Liza Ramos",
+      role: "Community Organizer",
+      quote:
+        "Stronger markets mean stronger families. Thank you for choosing local.",
+      imgUrl: home_test5,
     },
   ]);
 
@@ -59,30 +68,34 @@ export const HomeCarousel = () => {
   };
 
   return (
-    <section className="flex flex-col gap-4 mb-60">
+    <section className="flex flex-col gap-4 mb-20 max-w-8xl mx-auto">
       <h1 className="text-primary text-center text-3xl font-bold mb-6">
         Voices of Baybayon
       </h1>
-      <div className="relative flex flex-col gap-3 mx-3 ">
-        <div className="flex gap-2 h-100">
+      <div className="relative flex flex-col mx-3 ">
+        <div className="flex gap-4 h-100 overflow-hidden md:h-120 lg:h-140">
           <div
-            className="flex-3 min-w-[200px] rounded-xl h-[100%] bg-center bg-cover animate-fade-scale-in"
+            className="basis-[35%] lg:basis-[30%] min-w-[160px] rounded-xl h-[100%] bg-center bg-cover animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(0).imgUrl})` }}
           ></div>
           <div
-            className="hidden sm:block flex-2 rounded-xl h-[55%] bg-center bg-cover opacity-80 animate-fade-scale-in"
+            className="basis-[15%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(1).imgUrl})` }}
           ></div>
           <div
-            className="hidden lg:block flex-2 rounded-xl h-[55%] bg-center bg-cover opacity-80 animate-fade-scale-in"
+            className="basis-[15%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(2).imgUrl})` }}
           ></div>
           <div
-            className="hidden lg:block flex-2 rounded-xl h-[55%] bg-center bg-cover opacity-80 animate-fade-scale-in"
+            className="basis-[15%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(3).imgUrl})` }}
           ></div>
+          <div
+            className="basis-[15%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
+            style={{ backgroundImage: `url(${getCardAt(4).imgUrl})` }}
+          ></div>
         </div>
-        <div className="absolute top-[100%] -translate-y-5/6 left-1/2 -translate-x-1/2 w-[50%] flex flex-col items-center gap-4 relative">
+        <div className="absolute top-[100%] -translate-y-5/6 md:-translate-y-12/12  left-1/2 -translate-x-1/2 w-[50%] flex flex-col items-center gap-4 relative">
           <div className="w-full flex flex-col gap-2 bg-[#FFCD0F] p-6 px-8 rounded-md text-[#012466] ">
             <h2 className="font-bold text-2xl mb-1">{active.name}</h2>
             <p className="font-semibold mb-5">{active.role}</p>

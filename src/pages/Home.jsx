@@ -74,7 +74,7 @@ const Home = () => {
         <HomeGallery />
         <HomeFreshCatch />
       </section>
-      <section className="flex flex-col lg:flex-row bg-primary max-w-8xl mx-auto w-full mb-60">
+      <section className="flex flex-col lg:flex-row bg-primary max-w-8xl mx-auto w-full mb-20">
         <HomeSouvenirs />
       </section>
       <HomeCarousel />
