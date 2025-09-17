@@ -73,29 +73,29 @@ export const HomeCarousel = () => {
         Voices of Baybayon
       </h1>
       <div className="relative flex flex-col mx-3 ">
-        <div className="flex gap-4 h-100 overflow-hidden md:h-120 lg:h-140">
+        <div className="flex gap-4 h-80 sm:h-80 md:h-90 lg:h-96 overflow-hidden">
           <div
-            className="basis-[35%] lg:basis-[30%] min-w-[160px] rounded-xl h-[100%] bg-center bg-cover animate-fade-scale-in flex-none"
+            className="basis-[60%] sm:basis-[45%] lg:basis-[30%] min-w-[140px] rounded-xl h-[100%] bg-center bg-cover animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(0).imgUrl})` }}
           ></div>
           <div
-            className="basis-[15%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
+            className="hidden sm:block basis-[20%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(1).imgUrl})` }}
           ></div>
           <div
-            className="basis-[15%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
+            className="hidden md:block basis-[18%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(2).imgUrl})` }}
           ></div>
           <div
-            className="basis-[15%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
+            className="hidden lg:block basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(3).imgUrl})` }}
           ></div>
           <div
-            className="basis-[15%] lg:basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
+            className="hidden xl:block basis-[17%] rounded-xl h-[55%] bg-center bg-cover  animate-fade-scale-in flex-none"
             style={{ backgroundImage: `url(${getCardAt(4).imgUrl})` }}
           ></div>
         </div>
-        <div className="absolute top-[100%] -translate-y-5/6 md:-translate-y-12/12  left-1/2 -translate-x-1/2 w-[50%] flex flex-col items-center gap-4 relative">
+        <div className="absolute top-[100%] -translate-y-1/2 sm:-translate-y-2/3 lg:-translate-y-5/6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[70%] lg:w-[50%] flex flex-col items-center gap-4 relative">
           <div className="w-full flex flex-col gap-2 bg-[#FFCD0F] p-6 px-8 rounded-md text-[#012466] ">
             <h2 className="font-bold text-2xl mb-1">{active.name}</h2>
             <p className="font-semibold mb-5">{active.role}</p>

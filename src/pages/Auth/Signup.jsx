@@ -41,17 +41,19 @@ const Signup = () => {
       <section className="w-full md:max-w-[60vw] flex justify-center items-center px-4 md:px-6 py-8">
         <div className=" w-full max-w-lg h-full flex flex-col justify-around items-center">
           <div className="flex flex-col text-center">
-            <img
-              src={c2c_transparent}
-              alt="Coast2Cart Logo"
-              className="w-48 md:w-80 mb-1 mx-auto"
-            />
+            <a href="/">
+              <img
+                src={c2c_transparent}
+                alt="Coast2Cart Logo"
+                className="w-48 md:w-80 mb-1 mx-auto cursor-pointer"
+              />
+            </a>
             <h3 className="uppercase font-bold text-3xl">Create Account</h3>
             <p>Fill out the form</p>
           </div>
           <form
             onSubmit={handleSubmit}
-            className="flex flex-col w-full gap-4 mt-2"
+            className="flex flex-col w-full gap-4 mt-2 mb-7"
           >
             {step === 1 && (
               <>
@@ -158,7 +160,7 @@ const Signup = () => {
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase mb-4 md:mb-0"
+                    className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase cursor-pointer hover:bg-primary/90 transition-colors"
                   >
                     Next
                   </button>
@@ -250,17 +252,17 @@ const Signup = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-between gap-3 flex-col sm:flex-row">
+                <div className="flex justify-between gap-3">
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="rounded-full text-lg px-12 py-2.5 text-primary uppercase border-2 border-primary bg-transparent"
+                    className="rounded-full text-lg px-12 py-2.5 text-primary uppercase border-2 border-primary bg-transparent cursor-pointer hover:bg-primary/5 transition-colors"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
-                    className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase"
+                    className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase cursor-pointer hover:bg-primary/90 transition-colors"
                   >
                     Create account
                   </button>

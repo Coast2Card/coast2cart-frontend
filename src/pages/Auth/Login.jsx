@@ -22,14 +22,16 @@ const Login = () => {
           src={login_banner}
         />
       </div>
-      <section className="w-full md:max-w-[60vw] flex justify-center items-center px-4 md:px-6 py-8">
-        <div className=" w-full px-6 max-w-lg h-full flex flex-col justify-around items-center">
+      <section className="w-full md:max-w-[60vw] flex-1 flex justify-center items-center px-4 md:px-6 py-8">
+        <div className=" w-full px-6 max-w-lg flex flex-col justify-center md:justify-around items-center gap-6">
           <div className="flex flex-col text-center">
-            <img
-              src={c2c_transparent}
-              alt="Coast2Cart Logo"
-              className="w-48 md:w-80 mb-1 mx-auto"
-            />
+            <a href="/">
+              <img
+                src={c2c_transparent}
+                alt="Coast2Cart Logo"
+                className="w-48 md:w-80 mb-1 mx-auto cursor-pointer"
+              />
+            </a>
             <h3 className="uppercase font-bold text-3xl">Welcome Back</h3>
             <p>Fill out the form</p>
           </div>
@@ -83,7 +85,7 @@ const Login = () => {
           <div className="flex flex-col items-center gap-4">
             <button
               type="submit"
-              className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase text-white"
+              className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase cursor-pointer hover:bg-primary/90 transition-colors"
             >
               LOG IN
             </button>
