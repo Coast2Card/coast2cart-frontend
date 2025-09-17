@@ -6,9 +6,11 @@ import searchIcon from "../assets/icons/search.png";
 import cartIcon from "../assets/icons/cart.png";
 import profileIcon from "../assets/icons/profile.png";
 import commentIcon from "../assets/icons/comment.png";
+import ChatPopup from "./ChatPopup";
 const Navbar = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -20,6 +22,10 @@ const Navbar = () => {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
   };
 
   return (
@@ -59,6 +65,7 @@ const Navbar = () => {
             <img
               src={commentIcon}
               alt="Comment"
+              onClick={toggleChat}
               className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
             />
             <img
@@ -147,6 +154,7 @@ const Navbar = () => {
             <img
               src={commentIcon}
               alt="Comment"
+              onClick={toggleChat}
               className="h-6 w-6 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
             />
             <img
@@ -162,6 +170,9 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Chat Popup */}
+      <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </nav>
   );
 };
