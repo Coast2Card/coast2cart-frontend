@@ -34,7 +34,7 @@ const BuyerProfilePage = () => {
     updatedAt: '2025-01-15T10:30:00Z'
   });
 
-  const [recentOrders, setRecentOrders] = useState([
+  const [recentOrders, _setRecentOrders] = useState([
     {
       id: 'order_001',
       image: bisugotImg,
@@ -149,7 +149,7 @@ const BuyerProfilePage = () => {
     }
   ]);
 
-  const [favoriteSellers, setFavoriteSellers] = useState([
+  const [favoriteSellers, _setFavoriteSellers] = useState([
     {
       id: 'seller_001',
       name: 'Sarah Discaya',
@@ -180,7 +180,7 @@ const BuyerProfilePage = () => {
     }
   ]);
 
-  const [reviews, setReviews] = useState([
+  const [reviews, _setReviews] = useState([
     {
       id: 'review_001',
       seller: 'Sarah Discaya',
