@@ -6,6 +6,7 @@ import Souvenirs from "./pages/Souvenirs";
 import About from "./pages/About";
 import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
+import BuyerProfile from "./pages/BuyerProfile";
 import Colors from "./pages/Colors";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
@@ -22,6 +23,7 @@ function App() {
         <Route path="about" element={<About />} />
         <Route path="cart" element={<Cart />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="profile/buyer" element={<BuyerProfile />} />
         <Route path="colors" element={<Colors />} />
       </Route>
       {/* Auth routes without shared layout */}
