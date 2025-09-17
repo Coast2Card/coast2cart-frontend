@@ -597,20 +597,29 @@ const BuyerProfilePage = () => {
 
         {/* Product Filter Bar */}
         {activeTab === 'recent' && (
-          <div className="bg-white rounded-xl p-8 mb-8 shadow-sm border border-base-200">
+          <div className="bg-white rounded-xl p-6 mb-8 shadow-sm border border-base-200">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
               {/* Left Side - Product Count and Filters */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                <span className="font-semibold text-base-content text-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                <span className="font-semibold text-base-content text-xl whitespace-nowrap">
                   {getFilteredOrders().length} Products
                 </span>
-                <div className="flex flex-wrap gap-3">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full hidden sm:block"></div>
+                <div className="flex items-center gap-4">
                   <select
-                    className="select bg-base-200 border-none rounded-lg px-4 py-3 min-w-36 font-medium text-base hover:bg-base-300 transition-colors focus:ring-2 focus:ring-primary"
+                    className="select bg-[#B8D4E3] border-none rounded-lg px-6 py-4 pr-12 w-[180px] h-[52px] font-medium text-base text-gray-700 hover:bg-[#A5C9DC] transition-colors focus:ring-2 focus:ring-primary appearance-none focus:outline-none"
                     value={selectedCategory1}
                     onChange={(e) => {
                       setSelectedCategory1(e.target.value);
                       setShowSouvenirs(false);
+                    }}
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 12px center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '16px',
+                      border: 'none',
+                      outline: 'none'
                     }}
                   >
                     <option value="All">All Categories</option>
@@ -618,11 +627,19 @@ const BuyerProfilePage = () => {
                     <option value="Dried Seafood">Dried Seafood</option>
                   </select>
                   <select
-                    className="select bg-base-200 border-none rounded-lg px-4 py-3 min-w-36 font-medium text-base hover:bg-base-300 transition-colors focus:ring-2 focus:ring-primary"
+                    className="select bg-[#B8D4E3] border-none rounded-lg px-6 py-4 pr-12 w-[160px] h-[52px] font-medium text-base text-gray-700 hover:bg-[#A5C9DC] transition-colors focus:ring-2 focus:ring-primary appearance-none focus:outline-none"
                     value={selectedCategory2}
                     onChange={(e) => {
                       setSelectedCategory2(e.target.value);
                       setShowSouvenirs(false);
+                    }}
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 12px center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '16px',
+                      border: 'none',
+                      outline: 'none'
                     }}
                   >
                     <option value="All">All Types</option>
@@ -630,10 +647,10 @@ const BuyerProfilePage = () => {
                     <option value="Dried Seafood">Dried Seafood</option>
                   </select>
                   <button
-                    className={`btn border-none rounded-lg px-6 py-3 font-medium text-base transition-all duration-200 hover:scale-105 active:scale-95 ${
+                    className={`btn border-none rounded-lg px-8 py-4 font-medium text-base transition-all duration-200 hover:scale-105 active:scale-95 w-[140px] h-[52px] ${
                       showSouvenirs
                         ? 'bg-primary text-white shadow-lg hover:bg-primary/90'
-                        : 'bg-base-200 hover:bg-base-300'
+                        : 'bg-[#B8D4E3] text-gray-700 hover:bg-[#A5C9DC]'
                     }`}
                     onClick={() => {
                       setShowSouvenirs(!showSouvenirs);
@@ -652,7 +669,7 @@ const BuyerProfilePage = () => {
                   <input
                     type="text"
                     placeholder="Search products or sellers..."
-                    className="input bg-base-100 border border-base-300 rounded-lg pl-4 pr-12 py-3 w-64 font-medium focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
+                    className="input bg-base-100 border border-base-300 rounded-lg pl-4 pr-12 py-3 w-72 font-medium focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
