@@ -66,11 +66,13 @@ const Navbar = () => {
               alt="Cart"
               className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
             />
-            <img
-              src={profileIcon}
-              alt="Profile"
-              className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
-            />
+            <Link to="/profile/buyer">
+              <img
+                src={profileIcon}
+                alt="Profile"
+                className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
+              />
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -154,11 +156,13 @@ const Navbar = () => {
               alt="Cart"
               className="h-6 w-6 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
             />
-            <img
-              src={profileIcon}
-              alt="Profile"
-              className="h-6 w-6 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
-            />
+            <Link to="/profile/buyer" onClick={closeMobileMenu}>
+              <img
+                src={profileIcon}
+                alt="Profile"
+                className="h-6 w-6 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
+              />
+            </Link>
           </div>
         </div>
       </div>

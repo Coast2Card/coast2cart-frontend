@@ -1,7 +1,7 @@
 import BuyerProfilePage from '../components/BuyerProfilePage';
 
-const Profile = () => {
+const BuyerProfile = () => {
   return <BuyerProfilePage />;
 };
 
-export default Profile;
+export default BuyerProfile;
