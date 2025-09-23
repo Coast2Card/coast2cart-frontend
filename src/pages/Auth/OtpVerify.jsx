@@ -17,7 +17,13 @@ const OtpVerify = () => {
   const [contactNo] = useState(initialContact);
   const [otp, setOtp] = useState("");
   const [formError, setFormError] = useState("");
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sent = params.get("otpSent");
+    const cooldown = parseInt(params.get("otpCooldown") || "0", 10);
+    if (!Number.isNaN(cooldown) && cooldown > 0) return cooldown;
+    return sent ? 300 : 0;
+  });
 
   const [verifyOtp, { isLoading: verifying }] = useVerifyOtpMutation();
   const [resendOtp, { isLoading: resending }] = useResendOtpMutation();
@@ -45,7 +51,12 @@ const OtpVerify = () => {
       if (user) {
         localStorage.setItem("auth_user", JSON.stringify(user));
       }
-      toast.success(res?.message || "Account verified successfully");
+      const displayName = user?.username || user?.firstName || "";
+      toast.success(
+        displayName
+          ? `Account verified successfully. Welcome, ${displayName}`
+          : "Account verified successfully"
+      );
       navigate("/");
     } catch (err) {
       const apiMessage = err?.data?.message || err?.error;
@@ -164,9 +175,6 @@ const OtpVerify = () => {
                 ? `Resend OTP in ${formatTime(cooldownSeconds)}`
                 : "Resend OTP"}
             </button>
-            {userId && (
-              <span className="text-xs text-black/50">User ID: {userId}</span>
-            )}
           </div>
         </div>
       </section>

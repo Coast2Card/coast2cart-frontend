@@ -4,7 +4,7 @@ import c2c_transparent from "../../assets/logos/c2c_transparent.png";
 import { UserCircleIcon } from "@phosphor-icons/react/dist/csr/UserCircle";
 import { LockIcon, Calendar, Phone, MapPin, At } from "@phosphor-icons/react";
 import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
-import { useSignupMutation } from "../../services/api";
+import { useResendOtpMutation, useSignupMutation } from "../../services/api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +25,7 @@ const Signup = () => {
   const [step, setStep] = useState(1);
   const [formError, setFormError] = useState("");
   const [signup, { isLoading }] = useSignupMutation();
+  const [resendOtp] = useResendOtpMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
@@ -80,6 +81,18 @@ const Signup = () => {
       const payload = { ...form };
       const res = await signup(payload).unwrap();
       if (res?.success === false) {
+        if (res?.accountNotVerified && res?.contactNo) {
+          try {
+            await resendOtp({ contactNo: res.contactNo }).unwrap();
+          } catch {}
+          toast.success("OTP sent. Please verify your phone.");
+          navigate(
+            `/verify-otp?contactNo=${encodeURIComponent(
+              res.contactNo
+            )}&otpSent=1`
+          );
+          return;
+        }
         setFormError(res?.message || "Signup failed");
         return;
       }
@@ -120,6 +133,24 @@ const Signup = () => {
             <h3 className="uppercase font-bold text-3xl">Create Account</h3>
             <p>Fill out the form</p>
           </div>
+          {/* Step indicator */}
+          <div className="w-full mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-black">
+                Step {step} of 2
+              </span>
+              <span className="text-xs text-black/60">
+                {step === 1 ? "Personal details" : "Account details"}
+              </span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-base-200 overflow-hidden">
+              <div
+                className="h-2 bg-primary transition-all"
+                style={{ width: `${step === 1 ? 50 : 100}%` }}
+              />
+            </div>
+          </div>
+
           <form
             onSubmit={handleSubmit}
             className="flex flex-col w-full gap-4 mt-2 mb-7"

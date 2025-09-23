@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLoginMutation } from "../../services/api";
+import { useLoginMutation, useResendOtpMutation } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import login_banner from "../../assets/images/login_banner.png";
@@ -11,6 +11,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [login, { isLoading }] = useLoginMutation();
+  const [resendOtp] = useResendOtpMutation();
   const navigate = useNavigate();
   const [formError, setFormError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +22,19 @@ const Login = () => {
     try {
       const res = await login({ identifier: email, password }).unwrap();
       if (res?.success === false) {
+        // Handle unverified account flow
+        if (res?.accountNotVerified && res?.contactNo) {
+          try {
+            await resendOtp({ contactNo: res.contactNo }).unwrap();
+          } catch {}
+          toast.success("OTP sent. Please verify your phone.");
+          navigate(
+            `/verify-otp?contactNo=${encodeURIComponent(
+              res.contactNo
+            )}&otpSent=1`
+          );
+          return;
+        }
         setFormError(res?.message || "Login failed");
         return;
       }
@@ -36,6 +50,19 @@ const Login = () => {
       toast.success(displayName ? `Welcome, ${displayName}` : "Welcome");
       navigate("/");
     } catch (err) {
+      // Handle unverified account when server responds with non-2xx
+      if (err?.data?.accountNotVerified && err?.data?.contactNo) {
+        try {
+          await resendOtp({ contactNo: err.data.contactNo }).unwrap();
+        } catch {}
+        toast.success("OTP sent. Please verify your phone.");
+        navigate(
+          `/verify-otp?contactNo=${encodeURIComponent(
+            err.data.contactNo
+          )}&otpSent=1`
+        );
+        return;
+      }
       const apiMessage = err?.data?.message || err?.error;
       setFormError(apiMessage || "Login failed");
     }
