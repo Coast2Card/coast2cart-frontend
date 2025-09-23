@@ -95,19 +95,19 @@ const Login = () => {
           >
             <div className="label px-0 mb-[-19px]">
               <span className="label-text text-lg text-black font-normal">
-                Username
+                Username / Email / Contact No.
               </span>
             </div>
             <label className="mb-2 input input-lg rounded-2xl input-bordered border-2 border-black flex items-center gap-2 bg-white text-black w-full">
               <UserCircleIcon className="h-8 w-8" weight="light" />
               <input
-                type="email"
-                id="email"
-                name="email"
+                type="text"
+                id="identifier"
+                name="identifier"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="grow bg-white text-black placeholder:font-light placeholder:text-gray-400 w-full"
-                placeholder="Enter your username"
+                placeholder="Enter username, email, or 9XXXXXXXXX"
                 required
               />
             </label>

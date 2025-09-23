@@ -57,8 +57,7 @@ const Signup = () => {
     if (!/^\w{3,30}$/.test(form.username))
       return "Username must be 3-30 chars, letters/numbers/_ only";
     if (!isAdult) return "You must be at least 18 years old";
-    if (!/^9\d{9}$/.test(form.contactNo))
-      return "Contact no. must be 10 digits starting with 9";
+    if (!/^9\d{9}$/.test(form.contactNo)) return "Enter a valid phone number.";
     if (form.address.length < 10 || form.address.length > 200)
       return "Address must be 10-200 characters";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
@@ -68,6 +67,27 @@ const Signup = () => {
     if (form.password !== form.confirmPassword) return "Passwords do not match";
     if (!["buyer", "seller"].includes(form.role)) return "Select a valid role";
     return "";
+  };
+
+  const handleNextStep = () => {
+    setFormError("");
+    if (
+      !form.firstName.trim() ||
+      !form.lastName.trim() ||
+      !form.username.trim()
+    ) {
+      setFormError("Please complete your name and username.");
+      return;
+    }
+    if (!isAdult) {
+      setFormError("You must be at least 18 years old");
+      return;
+    }
+    if (!/^9\d{9}$/.test(form.contactNo)) {
+      setFormError("Enter a valid phone number.");
+      return;
+    }
+    setStep(2);
   };
 
   const handleSubmit = async (e) => {
@@ -287,10 +307,15 @@ const Signup = () => {
                   </label>
                 </div>
 
+                {formError && (
+                  <div className="text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+                    {formError}
+                  </div>
+                )}
                 <div className="flex justify-end gap-3">
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={handleNextStep}
                     className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase cursor-pointer hover:bg-primary/90 transition-colors"
                   >
                     Next
