@@ -45,9 +45,10 @@ const OtpVerify = () => {
       }
       const token = res?.data?.token;
       const user = res?.data?.user;
-      if (user?.role === "seller") {
+      const role = user?.role;
+      if (role === "seller") {
         toast.success(
-          "Your seller account is pending approval. Please wait for administrator review."
+          "Your seller account is now pending approval. Please wait for administrator review."
         );
         navigate("/login");
         return;

@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
+  const COUNTRY_CODE = "+63";
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -242,14 +243,24 @@ const Signup = () => {
                     </div>
                     <label className="mb-2 input input-lg rounded-2xl input-bordered border-2 border-black flex items-center gap-2 bg-white text-black w-full">
                       <Phone className="h-6 w-6" weight="light" />
+                      <span className="text-black/80">{COUNTRY_CODE}</span>
                       <input
                         type="tel"
                         name="contactNo"
                         value={form.contactNo}
-                        onChange={handleChange}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            contactNo: e.target.value
+                              .replace(/\D/g, "")
+                              .slice(0, 10),
+                          }))
+                        }
                         className="grow bg-white text-black placeholder:font-light placeholder:text-gray-400 w-full"
                         placeholder="9123456789"
+                        inputMode="numeric"
                         pattern="9[0-9]{9}"
+                        maxLength={10}
                         required
                       />
                     </label>
