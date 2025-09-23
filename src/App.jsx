@@ -11,13 +11,14 @@ import SellerProfile from "./pages/SellerProfile";
 import Colors from "./pages/Colors";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
+import OtpVerify from "./pages/Auth/OtpVerify";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
     <>
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
       <Routes>
         {/* Routes with shared layout */}
         <Route path="/" element={<Layout />}>
@@ -34,6 +35,7 @@ function App() {
         {/* Auth routes without shared layout */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/verify-otp" element={<OtpVerify />} />
       </Routes>
     </>
   );

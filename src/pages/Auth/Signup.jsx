@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import login_banner from "../../assets/images/login_banner.png";
 import c2c_transparent from "../../assets/logos/c2c_transparent.png";
 import { UserCircleIcon } from "@phosphor-icons/react/dist/csr/UserCircle";
 import { LockIcon, Calendar, Phone, MapPin, At } from "@phosphor-icons/react";
+import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
+import { useSignupMutation } from "../../services/api";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const [form, setForm] = useState({
@@ -15,19 +19,84 @@ const Signup = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "buyer",
   });
 
   const [step, setStep] = useState(1);
+  const [formError, setFormError] = useState("");
+  const [signup, { isLoading }] = useSignupMutation();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const isAdult = useMemo(() => {
+    if (!form.dateOfBirth) return false;
+    const dob = new Date(form.dateOfBirth);
+    const now = new Date();
+    const age =
+      now.getFullYear() -
+      dob.getFullYear() -
+      (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate())
+        ? 1
+        : 0);
+    return age >= 18;
+  }, [form.dateOfBirth]);
+
+  const validate = () => {
+    if (!/^[A-Za-z]{2,50}$/.test(form.firstName))
+      return "First name must be 2-50 letters";
+    if (!/^[A-Za-z]{2,50}$/.test(form.lastName))
+      return "Last name must be 2-50 letters";
+    if (!/^\w{3,30}$/.test(form.username))
+      return "Username must be 3-30 chars, letters/numbers/_ only";
+    if (!isAdult) return "You must be at least 18 years old";
+    if (!/^9\d{9}$/.test(form.contactNo))
+      return "Contact no. must be 10 digits starting with 9";
+    if (form.address.length < 10 || form.address.length > 200)
+      return "Address must be 10-200 characters";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      return "Enter a valid email";
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(form.password))
+      return "Password must be 8+ chars, include lower/upper/number";
+    if (form.password !== form.confirmPassword) return "Passwords do not match";
+    if (!["buyer", "seller"].includes(form.role)) return "Select a valid role";
+    return "";
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Hook up auth logic
-    console.log(form);
+    setFormError("");
+    const msg = validate();
+    if (msg) {
+      setFormError(msg);
+      return;
+    }
+    try {
+      const payload = { ...form };
+      const res = await signup(payload).unwrap();
+      if (res?.success === false) {
+        setFormError(res?.message || "Signup failed");
+        return;
+      }
+      toast.success(res?.message || "Account created successfully");
+      const userId = res?.data?.userId;
+      const contactNo = res?.data?.contactNo;
+      if (userId) {
+        navigate(
+          `/verify-otp?userId=${encodeURIComponent(
+            userId
+          )}&contactNo=${encodeURIComponent(contactNo || "")}`
+        );
+      }
+    } catch (err) {
+      const apiMessage = err?.data?.message || err?.error;
+      setFormError(apiMessage || "Signup failed");
+    }
   };
 
   return (
@@ -149,11 +218,31 @@ const Signup = () => {
                         onChange={handleChange}
                         className="grow bg-white text-black placeholder:font-light placeholder:text-gray-400 w-full"
                         placeholder="9123456789"
-                        pattern="[0-9]{10,11}"
+                        pattern="9[0-9]{9}"
                         required
                       />
                     </label>
                   </div>
+                </div>
+
+                <div>
+                  <div className="label px-0 mb-[-19px]">
+                    <span className="label-text text-lg text-black font-normal">
+                      Role
+                    </span>
+                  </div>
+                  <label className="mb-2 input input-lg rounded-2xl input-bordered border-2 border-black flex items-center gap-2 bg-white text-black w-full">
+                    <select
+                      name="role"
+                      value={form.role}
+                      onChange={handleChange}
+                      className="grow bg-white text-black w-full"
+                      required
+                    >
+                      <option value="buyer">Buyer</option>
+                      <option value="seller">Seller</option>
+                    </select>
+                  </label>
                 </div>
 
                 <div className="flex justify-end gap-3">
@@ -219,15 +308,30 @@ const Signup = () => {
                     <label className="mb-2 input input-lg rounded-2xl input-bordered border-2 border-black flex items-center gap-2 bg-white text-black w-full">
                       <LockIcon className="h-6 w-6" weight="regular" />
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         value={form.password}
                         onChange={handleChange}
                         className="grow bg-white text-black placeholder:font-light placeholder:text-gray-400 w-full"
                         placeholder="Enter your password"
-                        minLength={6}
+                        minLength={8}
                         required
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="text-black/80 hover:text-black focus:outline-none"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        title={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? (
+                          <EyeSlash className="h-6 w-6" weight="regular" />
+                        ) : (
+                          <Eye className="h-6 w-6" weight="regular" />
+                        )}
+                      </button>
                     </label>
                   </div>
                   <div>
@@ -239,18 +343,45 @@ const Signup = () => {
                     <label className="mb-2 input input-lg rounded-2xl input-bordered border-2 border-black flex items-center gap-2 bg-white text-black w-full">
                       <LockIcon className="h-6 w-6" weight="regular" />
                       <input
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"}
                         name="confirmPassword"
                         value={form.confirmPassword}
                         onChange={handleChange}
                         className="grow bg-white text-black placeholder:font-light placeholder:text-gray-400 w-full"
                         placeholder="Confirm your password"
-                        minLength={6}
+                        minLength={8}
                         required
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((v) => !v)}
+                        className="text-black/80 hover:text-black focus:outline-none"
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                        title={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeSlash className="h-6 w-6" weight="regular" />
+                        ) : (
+                          <Eye className="h-6 w-6" weight="regular" />
+                        )}
+                      </button>
                     </label>
                   </div>
                 </div>
+
+                {formError && (
+                  <div className="text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+                    {formError}
+                  </div>
+                )}
 
                 <div className="flex justify-between gap-3">
                   <button
@@ -262,9 +393,10 @@ const Signup = () => {
                   </button>
                   <button
                     type="submit"
-                    className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase cursor-pointer hover:bg-primary/90 transition-colors"
+                    disabled={isLoading}
+                    className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-60"
                   >
-                    Create account
+                    {isLoading ? "Creating..." : "Create account"}
                   </button>
                 </div>
               </>

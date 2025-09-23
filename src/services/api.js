@@ -92,7 +92,34 @@ export const api = createApi({
         },
       }),
     }),
+    signup: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/signup",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+    verifyOtp: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/verify-otp",
+        method: "POST",
+        body: payload, // { otp, contactNo }
+      }),
+    }),
+    resendOtp: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/resend-otp",
+        method: "POST",
+        body: payload, // { contactNo }
+      }),
+    }),
   }),
 });
 
-export const { useGetProductsQuery, useLoginMutation } = api;
+export const {
+  useGetProductsQuery,
+  useLoginMutation,
+  useSignupMutation,
+  useVerifyOtpMutation,
+  useResendOtpMutation,
+} = api;

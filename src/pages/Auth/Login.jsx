@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useLoginMutation } from "../../services/api";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import login_banner from "../../assets/images/login_banner.png";
 import c2c_transparent from "../../assets/logos/c2c_transparent.png";
@@ -10,6 +11,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [login, { isLoading }] = useLoginMutation();
+  const navigate = useNavigate();
   const [formError, setFormError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -30,8 +32,9 @@ const Login = () => {
       if (user) {
         localStorage.setItem("auth_user", JSON.stringify(user));
       }
-      toast.success("Login successful");
-      // TODO: navigate if needed
+      const displayName = user?.username || user?.firstName || "";
+      toast.success(displayName ? `Welcome, ${displayName}` : "Welcome");
+      navigate("/");
     } catch (err) {
       const apiMessage = err?.data?.message || err?.error;
       setFormError(apiMessage || "Login failed");
