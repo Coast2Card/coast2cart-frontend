@@ -1,17 +1,41 @@
 import React, { useState } from "react";
+import { useLoginMutation } from "../../services/api";
+import toast from "react-hot-toast";
 import login_banner from "../../assets/images/login_banner.png";
 import c2c_transparent from "../../assets/logos/c2c_transparent.png";
 import { UserCircleIcon } from "@phosphor-icons/react/dist/csr/UserCircle";
 import { LockIcon } from "@phosphor-icons/react/dist/ssr";
+import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [login, { isLoading }] = useLoginMutation();
+  const [formError, setFormError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Hook up auth logic
-    // For now, just log the values
-    console.log({ email, password });
+    setFormError("");
+    try {
+      const res = await login({ identifier: email, password }).unwrap();
+      if (res?.success === false) {
+        setFormError(res?.message || "Login failed");
+        return;
+      }
+      const token = res?.data?.token;
+      const user = res?.data?.user;
+      if (token) {
+        localStorage.setItem("auth_token", token);
+      }
+      if (user) {
+        localStorage.setItem("auth_user", JSON.stringify(user));
+      }
+      toast.success("Login successful");
+      // TODO: navigate if needed
+    } catch (err) {
+      const apiMessage = err?.data?.message || err?.error;
+      setFormError(apiMessage || "Login failed");
+    }
   };
 
   return (
@@ -65,7 +89,7 @@ const Login = () => {
             <label className="input input-lg rounded-2xl input-bordered border-2 border-black flex items-center gap-2 bg-white text-black w-full">
               <LockIcon className="h-6 w-6" weight="regular" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={password}
@@ -75,20 +99,39 @@ const Login = () => {
                 required
                 minLength={6}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="text-black/80 hover:text-black focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeSlash className="h-6 w-6" weight="regular" />
+                ) : (
+                  <Eye className="h-6 w-6" weight="regular" />
+                )}
+              </button>
             </label>
             <div className="flex w-full justify-end">
               <p className="text-lg text-black mb-6 mt-[-10px] hover:underline cursor-pointer">
                 Forgot password?
               </p>
             </div>
-          </form>
-          <div className="flex flex-col items-center gap-4">
+            {formError && (
+              <div className="text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 -mt-2">
+                {formError}
+              </div>
+            )}
             <button
               type="submit"
-              className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase cursor-pointer hover:bg-primary/90 transition-colors"
+              disabled={isLoading}
+              className="bg-primary rounded-full text-lg px-12 py-2.5 text-white uppercase cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
-              LOG IN
+              {isLoading ? "Logging in..." : "LOG IN"}
             </button>
+          </form>
+          <div className="flex flex-col items-center gap-4">
             <p className="text-center font-normal text-md">
               Don't have an account?{" "}
               <a href="/signup" className="text-black underline">

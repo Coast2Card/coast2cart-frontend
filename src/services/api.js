@@ -1,0 +1,98 @@
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+const rawBaseQuery = fetchBaseQuery({
+  baseUrl,
+  prepareHeaders: (headers) => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
+    return headers;
+  },
+});
+
+const baseQueryWithFriendlyErrors = async (args, apiCtx, extraOptions) => {
+  let result;
+  try {
+    const path = typeof args === "string" ? args : args?.url;
+    const method = typeof args === "string" ? "GET" : args?.method || "GET";
+    const body = typeof args === "string" ? undefined : args?.body;
+    const normalizedBase = (baseUrl || "").replace(/\/$/, "");
+    const normalizedPath = (path || "").startsWith("/")
+      ? path
+      : `/${path || ""}`;
+    const fullUrl = `${normalizedBase}${normalizedPath}`;
+    console.log("[RTKQ] Request:", { method, url: fullUrl, body });
+    result = await rawBaseQuery(args, apiCtx, extraOptions);
+  } catch (e) {
+    return {
+      error: {
+        status: "REQUEST_ERROR",
+        data: { message: e?.message || "Request failed" },
+      },
+    };
+  }
+  if (
+    result?.error &&
+    (result.error.status === "PARSING_ERROR" ||
+      String(result.error?.error || "").includes("Unexpected token"))
+  ) {
+    console.error("[RTKQ] Response parsing error:", {
+      url: `${(baseUrl || "").replace(/\/$/, "")}${
+        (typeof args === "string" ? args : args?.url) || ""
+      }`,
+      status: result.error.status,
+      error: result.error.error,
+      data: result.error.data,
+    });
+    return {
+      error: {
+        status: result.error.status,
+        data: {
+          message:
+            "Received non-JSON response from server. Check VITE_API_BASE_URL and that the endpoint returns JSON.",
+        },
+      },
+    };
+  }
+  if (result?.error) {
+    console.error("[RTKQ] Response error:", {
+      url: `${(baseUrl || "").replace(/\/$/, "")}${
+        (typeof args === "string" ? args : args?.url) || ""
+      }`,
+      status: result.error.status,
+      error: result.error.error,
+      data: result.error.data,
+    });
+  }
+  return result;
+};
+
+export const api = createApi({
+  reducerPath: "api",
+  baseQuery: baseQueryWithFriendlyErrors,
+  tagTypes: ["Products", "Users"],
+  endpoints: (builder) => ({
+    getProducts: builder.query({
+      query: () => "/products",
+      providesTags: (result) =>
+        result?.map?.((p) => ({ type: "Products", id: p.id })) ?? [
+          { type: "Products", id: "LIST" },
+        ],
+    }),
+    login: builder.mutation({
+      query: (credentials) => ({
+        url: "/auth/login",
+        method: "POST",
+        body: {
+          identifier: credentials?.identifier ?? credentials?.email ?? "",
+          password: credentials?.password ?? "",
+        },
+      }),
+    }),
+  }),
+});
+
+export const { useGetProductsQuery, useLoginMutation } = api;

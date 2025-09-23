@@ -12,26 +12,30 @@ import Colors from "./pages/Colors";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import "./App.css";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
-    <Routes>
-      {/* Routes with shared layout */}
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="seafood" element={<Seafood />} />
-        <Route path="souvenirs" element={<Souvenirs />} />
-        <Route path="about" element={<About />} />
-        <Route path="cart" element={<Cart />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="profile/buyer" element={<BuyerProfile />} />
-        <Route path="profile/seller" element={<SellerProfile />} />
-        <Route path="colors" element={<Colors />} />
-      </Route>
-      {/* Auth routes without shared layout */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-    </Routes>
+    <>
+      <Toaster position="top-right" />
+      <Routes>
+        {/* Routes with shared layout */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="seafood" element={<Seafood />} />
+          <Route path="souvenirs" element={<Souvenirs />} />
+          <Route path="about" element={<About />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="profile/buyer" element={<BuyerProfile />} />
+          <Route path="profile/seller" element={<SellerProfile />} />
+          <Route path="colors" element={<Colors />} />
+        </Route>
+        {/* Auth routes without shared layout */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </>
   );
 }
 
