@@ -5,6 +5,7 @@ import Seafood from "./pages/Seafood";
 import Souvenirs from "./pages/Souvenirs";
 import About from "./pages/About";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import BuyerProfile from "./pages/BuyerProfile";
 import SellerProfile from "./pages/SellerProfile";
@@ -27,6 +28,7 @@ function App() {
           <Route path="souvenirs" element={<Souvenirs />} />
           <Route path="about" element={<About />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="checkout" element={<Checkout />} />
           <Route path="profile" element={<Profile />} />
           <Route path="profile/buyer" element={<BuyerProfile />} />
           <Route path="profile/seller" element={<SellerProfile />} />

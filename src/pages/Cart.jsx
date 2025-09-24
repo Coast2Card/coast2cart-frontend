@@ -116,14 +116,15 @@ const Cart = () => {
       toast.error("Please select items to checkout");
       return;
     }
-    toast.success(
-      `Proceeding to checkout with ${selectedItemsList.length} item(s)`
-    );
-    // TODO: integrate real checkout flow
+    navigate("/checkout", {
+      state: {
+        selectedItems: selectedItems,
+      },
+    });
   };
 
   return (
-    <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full min-h-screen">
       <h1 className="text-xl sm:text-3xl font-bold text-black mb-6">
         Your Cart ({items.length})
       </h1>
@@ -183,7 +184,7 @@ const Cart = () => {
             </div>
 
             {/* Cart Items Header */}
-            <div className="bg-gray-100 text-base-content rounded-t-xl px-4 py-5">
+            <div className="bg-base-100 text-base-content rounded-t-xl px-4 py-5">
               <div className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-1"></div>
                 <div className="col-span-4 font-medium">Product</div>
@@ -289,7 +290,7 @@ const Cart = () => {
           {/* Order Summary */}
           <aside className="border border-base-300 rounded-xl bg-base-300 h-fit shadow-sm">
             {/* Order Summary Header */}
-            <div className="bg-gray-100 text-base-content rounded-t-xl px-4 py-5">
+            <div className="bg-base-200 text-base-content rounded-t-xl px-4 py-5">
               <h2 className="font-medium">
                 {selectedItemsList.length > 0
                   ? `Order Summary (${selectedItemsList.length} item${
