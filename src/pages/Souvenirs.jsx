@@ -108,7 +108,7 @@ const Souvenirs = () => {
 
   return (
     <div className="px-4 py-6 sm:px-0 max-w-8xl mx-auto">
-      <div className="flex flex-col  lg:flex-row b  items-center justify-center gap-12 mb-16 max-w-6xl mx-auto mt-16">
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-12 mb-16 w-full mx-auto mt-16">
         {/* Left side - Text content */}
         <div className="lg:w-1/2 text-left">
           <h1
@@ -137,7 +137,7 @@ const Souvenirs = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto flex flex-col gap-8">
+      <div className="w-full mx-auto flex flex-col gap-8">
         {/* Sorting and Search Section */}
         <div className="bg-white rounded-md p-6 [box-shadow:0_0_6px_rgba(0,0,0,0.25)] ">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -227,27 +227,26 @@ const Souvenirs = () => {
 
         {/* Souvenir Grid or No Results */}
         {filteredAndSortedSouvenirs.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {filteredAndSortedSouvenirs.map((souvenir) => (
               <div
                 key={souvenir.id}
-                className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="aspect-[4/5] overflow-hidden">
+                <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
                   <img
                     src={souvenir.image}
                     alt={souvenir.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="p-4 text-center">
-                  <p
-                    className="text-xl font-bold mb-2"
-                    style={{ color: "#007A3F" }}
-                  >
-                    {souvenir.price}
-                  </p>
-                  <h3 className="text-lg text-black font-primary font-medium">
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-outfit font-bold text-lg text-success">
+                      {souvenir.price}
+                    </span>
+                  </div>
+                  <h3 className="font-outfit font-bold text-lg text-gray-800">
                     {souvenir.name}
                   </h3>
                 </div>

@@ -17,6 +17,8 @@
   --color-secondary-content: #ffffff;
   --color-accent: #f04c05;
   --color-accent-content: #ffffff;
+  /* Wave primary color */
+  --color-wave: #f04c05;
   --color-neutral: #d9d9d9;
   --color-neutral-content: #1e293b;
   --color-info: #0ea5e9;
@@ -87,6 +89,24 @@ h6 {
   }
   .border-secondary-light {
     border-color: var(--color-secondary-light);
+  }
+  .bg-ocean {
+    background-color: var(--color-ocean);
+  }
+  .text-ocean {
+    color: var(--color-ocean);
+  }
+  .border-ocean {
+    border-color: var(--color-ocean);
+  }
+  .bg-wave {
+    background-color: var(--color-wave);
+  }
+  .text-wave {
+    color: var(--color-wave);
+  }
+  .border-wave {
+    border-color: var(--color-wave);
   }
 }
 

@@ -8,6 +8,7 @@ import About from "./pages/About";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
+import ProductDetail from "./pages/ProductDetail";
 import BuyerProfile from "./pages/BuyerProfile";
 import SellerProfile from "./pages/SellerProfile";
 import Colors from "./pages/Colors";
@@ -26,6 +27,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="seafood" element={<Seafood />} />
+          <Route path="seafood/:slug" element={<ProductDetail />} />
           <Route path="souvenirs" element={<Souvenirs />} />
           <Route path="about" element={<About />} />
           <Route

@@ -13,7 +13,7 @@ import CustomButton from "../components/CustomButton";
 import { HomeCarousel } from "../components/home/HomeCarousel";
 const Home = () => {
   return (
-    <main className="relative overflow-x-hidden bg-base-300">
+    <main className="relative overflow-x-hidden bg-base-300 mb-[-100px]">
       {/* Home Banner */}
       <section className="w-full h-135 sm:h-[70vh] md:h-185 relative">
         <img
