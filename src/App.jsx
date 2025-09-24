@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Seafood from "./pages/Seafood";
 import Souvenirs from "./pages/Souvenirs";
@@ -27,11 +28,46 @@ function App() {
           <Route path="seafood" element={<Seafood />} />
           <Route path="souvenirs" element={<Souvenirs />} />
           <Route path="about" element={<About />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="profile/buyer" element={<BuyerProfile />} />
-          <Route path="profile/seller" element={<SellerProfile />} />
+          <Route
+            path="cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile/buyer"
+            element={
+              <ProtectedRoute>
+                <BuyerProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile/seller"
+            element={
+              <ProtectedRoute>
+                <SellerProfile />
+              </ProtectedRoute>
+            }
+          />
           <Route path="colors" element={<Colors />} />
         </Route>
         {/* Auth routes without shared layout */}
