@@ -1,14 +1,359 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
+const CART_STORAGE_KEY = "cart_items";
+
 const Cart = () => {
+  const navigate = useNavigate();
+  const [items, setItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(new Set());
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!parsed || parsed.length === 0) {
+        const sample = [
+          { id: "sample-1", name: "Fresh Bangus", price: 199, quantity: 1 },
+          { id: "sample-2", name: "Sweet Shrimp", price: 249, quantity: 2 },
+          { id: "sample-3", name: "Premium Tuna", price: 349, quantity: 1 },
+        ];
+        setItems(sample);
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(sample));
+      } else {
+        setItems(parsed);
+      }
+    } catch {
+      setItems([]);
+    }
+  }, []);
+
+  const persist = (next) => {
+    setItems(next);
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(next));
+  };
+
+  const updateQty = (id, delta) => {
+    persist(
+      items
+        .map((it) =>
+          it.id === id
+            ? {
+                ...it,
+                quantity: Math.max(1, Math.min(99, (it.quantity || 1) + delta)),
+              }
+            : it
+        )
+        .filter(Boolean)
+    );
+  };
+
+  const removeItem = (id) => {
+    const next = items.filter((it) => it.id !== id);
+    persist(next);
+    toast.success("Removed from cart");
+  };
+
+  const clearCart = () => {
+    persist([]);
+    setSelectedItems(new Set());
+    toast.success("Cart cleared");
+  };
+
+  const toggleItemSelection = (id) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const selectAllItems = () => {
+    setSelectedItems(new Set(items.map((item) => item.id)));
+  };
+
+  const deselectAllItems = () => {
+    setSelectedItems(new Set());
+  };
+
+  const deleteSelectedItems = () => {
+    const remainingItems = items.filter((item) => !selectedItems.has(item.id));
+    persist(remainingItems);
+    setSelectedItems(new Set());
+    toast.success(`${selectedItems.size} item(s) removed from cart`);
+  };
+
+  const selectedItemsList = useMemo(
+    () => items.filter((item) => selectedItems.has(item.id)),
+    [items, selectedItems]
+  );
+
+  const subtotal = useMemo(
+    () =>
+      selectedItemsList.reduce(
+        (sum, it) => sum + (Number(it.price) || 0) * (it.quantity || 1),
+        0
+      ),
+    [selectedItemsList]
+  );
+  const shipping = useMemo(
+    () => (selectedItemsList.length > 0 ? 99 : 0),
+    [selectedItemsList.length]
+  );
+  const total = subtotal + shipping;
+
+  const handleCheckout = () => {
+    const isLoggedIn = Boolean(localStorage.getItem("auth_token"));
+    if (!isLoggedIn) {
+      toast.error("Please log in to checkout");
+      navigate("/login");
+      return;
+    }
+    if (selectedItemsList.length === 0) {
+      toast.error("Please select items to checkout");
+      return;
+    }
+    toast.success(
+      `Proceeding to checkout with ${selectedItemsList.length} item(s)`
+    );
+    // TODO: integrate real checkout flow
+  };
+
   return (
-    <div className="px-4 py-6 sm:px-0">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-base-content mb-4 font-display">
-          Cart Page
-        </h1>
-        <p className="text-xl text-base-content/70 font-primary">
-          This page is currently under development.
-        </p>
-      </div>
+    <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <h1 className="text-xl sm:text-3xl font-bold text-black mb-6">
+        Your Cart ({items.length})
+      </h1>
+
+      {items.length === 0 ? (
+        <div className="text-center py-20 bg-base-200 rounded-xl">
+          <p className="text-black/70 mb-4">Your cart is empty.</p>
+          <button
+            onClick={() => navigate("/seafood")}
+            className="bg-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-primary/90"
+          >
+            Start shopping
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            {/* Cart Controls */}
+            <div className="mb-4 flex justify-between items-center">
+              <div className="flex gap-4">
+                <button
+                  onClick={selectAllItems}
+                  className="btn btn-sm btn-outline btn-primary"
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={deselectAllItems}
+                  className="text-sm text-base-content/60 hover:text-base-content/80  cursor-pointer transition-colors duration-200"
+                >
+                  Deselect All
+                </button>
+              </div>
+              <div className="flex gap-2">
+                {selectedItems.size > 0 && (
+                  <button
+                    onClick={deleteSelectedItems}
+                    className="btn btn-sm btn-outline btn-error"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    Remove Selected ({selectedItems.size})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Cart Items Header */}
+            <div className="bg-gray-100 text-base-content rounded-t-xl px-4 py-5">
+              <div className="grid grid-cols-12 gap-4 items-center">
+                <div className="col-span-1"></div>
+                <div className="col-span-4 font-medium">Product</div>
+                <div className="col-span-3 font-medium text-center">
+                  Quantity
+                </div>
+                <div className="col-span-4 font-medium text-right">Total</div>
+              </div>
+            </div>
+
+            {/* Cart Items */}
+            <div className="border border-base-300 rounded-b-xl bg-base-300 shadow-sm">
+              {items.map((it, index) => (
+                <div
+                  key={it.id}
+                  className={`grid grid-cols-12 gap-4 items-center p-4 py-6 ${
+                    index !== items.length - 1 ? "border-b border-base-200" : ""
+                  }`}
+                >
+                  {/* Selection Checkbox */}
+                  <div className="col-span-1 flex justify-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.has(it.id)}
+                      onChange={() => toggleItemSelection(it.id)}
+                      className="checkbox checkbox-primary"
+                    />
+                  </div>
+
+                  {/* Product Image and Details */}
+                  <div className="col-span-4 flex items-center gap-3">
+                    <div className="w-16 h-16 bg-base-200 rounded-lg flex-shrink-0">
+                      {it.image ? (
+                        <img
+                          src={it.image}
+                          alt={it.name}
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) =>
+                            (e.currentTarget.style.display = "none")
+                          }
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-base-200 rounded-lg"></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-base-content truncate">
+                        {it.name}
+                      </p>
+                      <p className="text-base-content/60 text-sm">
+                        ₱{Number(it.price).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Quantity Controls */}
+                  <div className="col-span-3 flex justify-center">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateQty(it.id, -1)}
+                        className="w-8 h-8 rounded-full border-2 border-base-300 hover:bg-base-200 flex items-center justify-center text-base-content"
+                      >
+                        –
+                      </button>
+                      <input
+                        type="number"
+                        value={it.quantity || 1}
+                        onChange={(e) => {
+                          const newQty = Math.max(
+                            1,
+                            Math.min(99, parseInt(e.target.value) || 1)
+                          );
+                          persist(
+                            items.map((item) =>
+                              item.id === it.id
+                                ? { ...item, quantity: newQty }
+                                : item
+                            )
+                          );
+                        }}
+                        className="w-12 h-8 text-center border-2 border-base-300 rounded text-sm text-base-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        min="1"
+                        max="99"
+                      />
+                      <button
+                        onClick={() => updateQty(it.id, 1)}
+                        className="w-8 h-8 rounded-full border-2 border-base-300 hover:bg-base-200 flex items-center justify-center text-base-content"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Total Price */}
+                  <div className="col-span-4 text-right font-semibold text-base-content">
+                    ₱{((Number(it.price) || 0) * (it.quantity || 1)).toFixed(2)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Order Summary */}
+          <aside className="border border-base-300 rounded-xl bg-base-300 h-fit shadow-sm">
+            {/* Order Summary Header */}
+            <div className="bg-gray-100 text-base-content rounded-t-xl px-4 py-5">
+              <h2 className="font-medium">
+                {selectedItemsList.length > 0
+                  ? `Order Summary (${selectedItemsList.length} item${
+                      selectedItemsList.length > 1 ? "s" : ""
+                    })`
+                  : "Order Summary"}
+              </h2>
+            </div>
+
+            {/* Order Summary Content */}
+            <div className="">
+              <div className="space-y-6 p-4 text-sm">
+                {selectedItemsList.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-base-content/70 mb-2">
+                      No items selected
+                    </p>
+                    <p className="text-xs text-base-content/50">
+                      Select items to see order summary
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-base-content">SUBTOTAL</span>
+                      <span className="font-medium text-base-content">
+                        ₱{subtotal.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-base-content">DISCOUNT</span>
+                      <span className="font-medium text-base-content">---</span>
+                    </div>
+                    <div className="h-px bg-base-200" />
+                    <div className="flex justify-between text-base">
+                      <span className="font-semibold text-base-content">
+                        TOTAL
+                      </span>
+                      <span className="font-bold text-base-content">
+                        ₱{total.toFixed(2)}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={handleCheckout}
+                disabled={selectedItemsList.length === 0}
+                className={`mt-1.5 w-full rounded-b-xl px-6 py-4 text-sm font-semibold transition-colors duration-200 ${
+                  selectedItemsList.length === 0
+                    ? "bg-base-200 text-base-content/50 cursor-not-allowed"
+                    : "bg-primary text-primary-content hover:bg-primary/90"
+                }`}
+              >
+                {selectedItemsList.length === 0
+                  ? "Select items to checkout"
+                  : `Checkout ${selectedItemsList.length} item${
+                      selectedItemsList.length > 1 ? "s" : ""
+                    }`}
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 };
