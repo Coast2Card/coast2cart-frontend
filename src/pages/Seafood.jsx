@@ -1,15 +1,67 @@
 import seafoodBanner from "../assets/images/fisher_man.png";
 import { Link } from "react-router-dom";
-import alumahan from "../assets/images/alumahan.png";
-import hipon from "../assets/images/hipon.png";
-import tuna from "../assets/images/tuna.png";
-import pusit from "../assets/images/pusit.png";
-import talakitok from "../assets/images/talakitok.png";
-import hasa from "../assets/images/hasa_hasa.png";
+import { useEffect, useState } from "react";
+import { useGetItemsQuery } from "../services/api";
+import CategoriesFilter from "../components/seafood/CategoriesFilter";
+import PriceRangeFilter from "../components/seafood/PriceRangeFilter";
+// local fallback image for items without image
 import bisugo from "../assets/images/bisugo.png";
 // Footer comes from Layout; not needed here
 
 const Seafood = () => {
+  const [page, setPage] = useState(1);
+  const [accumulatedItems, setAccumulatedItems] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
+
+  const { data, isLoading, isFetching, isError } = useGetItemsQuery({
+    page,
+    // Temporarily disable filters until backend supports them
+    // ...(selectedCategory && { itemType: selectedCategory }),
+  });
+  const items = data && Array.isArray(data.items) ? data.items : [];
+  const pagination = data?.pagination ?? null;
+
+  // Debug logging
+  console.log("Seafood Debug:", {
+    selectedCategory,
+    selectedPriceRanges,
+    page,
+    data,
+    items,
+    isLoading,
+    isError,
+    accumulatedItems: accumulatedItems.length,
+  });
+
+  useEffect(() => {
+    if (page === 1) {
+      setAccumulatedItems(items);
+    } else if (items?.length) {
+      setAccumulatedItems((prev) => [...prev, ...items]);
+    }
+  }, [items, page]);
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    // Don't reset data since filters aren't applied to API yet
+    // setPage(1);
+    // setAccumulatedItems([]);
+  };
+
+  const handlePriceRangeChange = (ranges) => {
+    setSelectedPriceRanges(ranges);
+    // Don't reset data since filters aren't applied to API yet
+    // setPage(1);
+    // setAccumulatedItems([]);
+  };
+
+  const totalItems = pagination?.totalItems ?? accumulatedItems.length;
+  // const itemsPerPage = pagination?.itemsPerPage ?? (items.length || 0);
+  const currentStart = accumulatedItems.length > 0 ? 1 : 0;
+  const currentEnd = accumulatedItems.length;
+  const hasMore = pagination ? page < (pagination.totalPages || 1) : false;
+
   return (
     <>
       <main className="relative overflow-x-hidden">
@@ -59,79 +111,9 @@ const Seafood = () => {
             {/* Seafood Products Section */}
             <div className="flex flex-col lg:flex-row gap-8">
               {/* Left Sidebar - Filters */}
-              <div className="lg:w-1/4 space-y-8 bg-r">
-                {/* Categories Filter */}
-                <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
-                  <h3 className="font-outfit font-bold text-xl text-primary mb-4">
-                    Categories
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { name: "Fresh Fish", count: 35 },
-                      { name: "Shrimp & Prawns", count: 20 },
-                      { name: "Crabs", count: 5 },
-                      { name: "Squid & Octopus", count: 12 },
-                      { name: "Shellfish", count: 8 },
-                      { name: "Seaweed", count: 10 },
-                    ].map((category, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between cursor-pointer hover:text-primary transition-colors"
-                      >
-                        <span className="font-inter font-medium text-gray-700">
-                          {category.name}
-                        </span>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">
-                            ({category.count})
-                          </span>
-                          <svg
-                            className="w-4 h-4 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Range Filter */}
-                <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
-                  <h3 className="font-outfit font-bold text-xl text-primary mb-4">
-                    Price Range
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { range: "P100.00 - P199.00", checked: true },
-                      { range: "P200.00 - P399.00", checked: false },
-                      { range: "P400.00 - P699.00", checked: false },
-                      { range: "P700.00 and above", checked: false },
-                    ].map((price, index) => (
-                      <label
-                        key={index}
-                        className="flex items-center space-x-3 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          defaultChecked={price.checked}
-                          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                        />
-                        <span className="font-inter font-medium text-gray-700">
-                          {price.range}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+              <div className="lg:w-1/4 space-y-8">
+                <CategoriesFilter onCategoryChange={handleCategoryChange} />
+                <PriceRangeFilter onPriceRangeChange={handlePriceRangeChange} />
               </div>
 
               {/* Right Side - Products */}
@@ -163,7 +145,9 @@ const Seafood = () => {
                     </div>
                     <div className="text-left">
                       <p className="font-inter font-bold text-gray-700 mb-1">
-                        Showing 1-9 of 36 item(s)
+                        {isLoading && !accumulatedItems.length
+                          ? "Loading items…"
+                          : `Showing ${currentStart}-${currentEnd} of ${totalItems} item(s)`}
                       </p>
                       <p className="font-inter text-sm text-gray-500">
                         Below is the list of our available fresh fish for
@@ -174,134 +158,89 @@ const Seafood = () => {
                 </div>
 
                 {/* Product Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  {[
-                    {
-                      name: "Dalagang Bukid Bilog",
-                      price: "₱360/kg",
-                      description: "Fresh Chilled Twinstripe Fusiller",
-                      image: "fish1",
-                    },
-                    {
-                      name: "Bangus",
-                      price: "₱289/kg",
-                      description: "Fresh Chilled Milkfish",
-                      image: "fish2",
-                    },
-                    {
-                      name: "Bisugo",
-                      price: "₱380/kg",
-                      description: "Fresh Chilled Threadfin Bream",
-                      image: "fish3",
-                    },
-                    {
-                      name: "Hasa-Hasa",
-                      price: "₱170/kg",
-                      description: "Fresh Chilled Short Mackerel",
-                      image: "fish4",
-                    },
-                    {
-                      name: "Talakitok",
-                      price: "₱255/kg",
-                      description: "Fresh Chilled Golden Trevally",
-                      image: "fish5",
-                    },
-                    {
-                      name: "Pusit",
-                      price: "₱239/kg",
-                      description: "Fresh Chilled Squid",
-                      image: "fish1",
-                    },
-                    {
-                      name: "Alumahan",
-                      price: "₱240/kg",
-                      description: "Fresh Chilled Indian Mackerel",
-                      image: "fish2",
-                    },
-                    {
-                      name: "Hipon",
-                      price: "₱325/kg",
-                      description: "Fresh Chilled Shrimp",
-                      image: "fish3",
-                    },
-                    {
-                      name: "Tuna",
-                      price: "₱280/kg",
-                      description: "Fresh Chilled Tuna",
-                      image: "fish4",
-                    },
-                  ].map((product, index) => (
-                    <Link
-                      key={index}
-                      to={`/seafood/${encodeURIComponent(
-                        product.name.toLowerCase().replace(/\s+/g, "-")
-                      )}`}
-                      state={{ product }}
-                      className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-                    >
-                      <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
-                        {/* Product Image */}
-                        <img
-                          src={
-                            product.name === "Dalagang Bukid Bilog"
-                              ? bisugo
-                              : product.name === "Bangus"
-                              ? hasa
-                              : product.name === "Bisugo"
-                              ? bisugo
-                              : product.name === "Hasa-Hasa"
-                              ? hasa
-                              : product.name === "Talakitok"
-                              ? talakitok
-                              : product.name === "Pusit"
-                              ? pusit
-                              : product.name === "Alumahan"
-                              ? alumahan
-                              : product.name === "Hipon"
-                              ? hipon
-                              : product.name === "Tuna"
-                              ? tuna
-                              : bisugo // fallback
-                          }
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="font-outfit font-bold text-lg text-success">
-                            {product.price}
-                          </span>
+                {isLoading && !accumulatedItems.length ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {Array.from({ length: 9 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="block bg-white rounded-lg shadow-sm overflow-hidden"
+                      >
+                        <div className="h-48 bg-gray-100 relative overflow-hidden">
+                          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
                         </div>
-                        <h3 className="font-outfit font-bold text-lg text-gray-800 mb-2">
-                          {product.name}
-                        </h3>
-                        <p className="font-inter text-sm text-gray-600">
-                          {product.description}
-                        </p>
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 w-28 bg-gray-200 rounded animate-pulse" />
+                          <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                          <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                        </div>
                       </div>
-                    </Link>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : isError ? (
+                  <div className="py-12 text-center text-red-600">
+                    Failed to load items.
+                  </div>
+                ) : accumulatedItems.length === 0 ? (
+                  <div className="py-12 text-center text-gray-500">
+                    No items available.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {accumulatedItems.map((product) => (
+                      <Link
+                        key={product.id || product._id || product.name}
+                        to={`/seafood/${product.id || product._id}`}
+                        className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                      >
+                        <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                          <img
+                            src={product.imageUrl || product.image || bisugo}
+                            alt={product.itemName || product.name || "Item"}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-outfit font-bold text-lg text-success">
+                              {product.priceDisplay ??
+                                (product.itemPrice != null
+                                  ? `₱${Number(
+                                      product.itemPrice
+                                    ).toLocaleString()}/${product.unit || ""}`
+                                  : product.price != null
+                                  ? `₱${Number(product.price).toLocaleString()}`
+                                  : "")}
+                            </span>
+                          </div>
+                          <h3 className="font-outfit font-bold text-lg text-gray-800 mb-2">
+                            {product.itemName || product.name || "Unnamed Item"}
+                          </h3>
+                          {product.description && (
+                            <p className="font-inter text-sm text-gray-600">
+                              {product.description}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
 
                 {/* Load More Section */}
-                <div className="text-center">
-                  <p className="font-inter font-medium text-gray-600 mb-4">
-                    Showing 1-9 of 36 item(s)
-                  </p>
-                  {/* Progress Bar */}
-                  <div className="w-full max-w-md mx-auto mb-6">
-                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full"
-                        style={{ width: "25%" }}
-                      ></div>
-                    </div>
+                {hasMore && (
+                  <div className="text-center">
+                    <p className="font-inter font-medium text-gray-600 mb-4">
+                      Showing {currentEnd} of {totalItems} item(s)
+                    </p>
+                    <button
+                      disabled={isFetching}
+                      onClick={() => setPage((p) => p + 1)}
+                      className="bg-secondary text-primary font-outfit font-bold px-8 py-3 rounded-full hover:bg-secondary/90 transition-colors disabled:opacity-60"
+                    >
+                      {isFetching ? "LOADING…" : "LOAD MORE >"}
+                    </button>
                   </div>
-                  <button className="bg-secondary text-primary font-outfit font-bold px-8 py-3 rounded-full hover:bg-secondary/90 transition-colors">
-                    LOAD MORE &gt;
-                  </button>
-                </div>
+                )}
               </div>
             </div>
           </div>

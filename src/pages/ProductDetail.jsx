@@ -1,76 +1,84 @@
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import SellerSection from "../components/seafood/SellerSection";
-import RelatedProducts from "../components/seafood/RelatedProducts";
+import { useNavigate, useParams } from "react-router-dom";
+import { useGetItemByIdQuery } from "../services/api";
+import SellerSection from "../components/productDetail/SellerSection";
+import RelatedProducts from "../components/productDetail/RelatedProducts";
 import bisugo from "../assets/images/bisugo.png";
-import hasa from "../assets/images/hasa_hasa.png";
-import talakitok from "../assets/images/talakitok.png";
-import pusit from "../assets/images/pusit.png";
-import alumahan from "../assets/images/alumahan.png";
-import hipon from "../assets/images/hipon.png";
-import tuna from "../assets/images/tuna.png";
 
-const productImageForName = (name) => {
-  if (name === "Dalagang Bukid Bilog") return bisugo;
-  if (name === "Bangus") return hasa;
-  if (name === "Bisugo") return bisugo;
-  if (name === "Hasa-Hasa") return hasa;
-  if (name === "Talakitok") return talakitok;
-  if (name === "Pusit") return pusit;
-  if (name === "Alumahan") return alumahan;
-  if (name === "Hipon") return hipon;
-  if (name === "Tuna") return tuna;
-  return bisugo;
-};
+// Fallback image for items without image
 
 const ProductDetail = () => {
-  const { state } = useLocation();
   const navigate = useNavigate();
-  const { slug } = useParams();
+  const { itemId } = useParams();
 
-  const slugify = (text) =>
-    text
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
+  // Fetch item by ID from API
+  const {
+    data: product,
+    isLoading,
+    isError,
+    error,
+  } = useGetItemByIdQuery(itemId, {
+    skip: !itemId, // Skip query if no itemId
+  });
 
-  const fallbackProducts = [
-    {
-      name: "Dalagang Bukid Bilog",
-      price: "₱360/kg",
-      description: "Fresh Chilled Twinstripe Fusiller",
-    },
-    { name: "Bangus", price: "₱289/kg", description: "Fresh Chilled Milkfish" },
-    {
-      name: "Bisugo",
-      price: "₱380/kg",
-      description: "Fresh Chilled Threadfin Bream",
-    },
-    {
-      name: "Hasa-Hasa",
-      price: "₱170/kg",
-      description: "Fresh Chilled Short Mackerel",
-    },
-    {
-      name: "Talakitok",
-      price: "₱255/kg",
-      description: "Fresh Chilled Golden Trevally",
-    },
-    { name: "Pusit", price: "₱239/kg", description: "Fresh Chilled Squid" },
-    {
-      name: "Alumahan",
-      price: "₱240/kg",
-      description: "Fresh Chilled Indian Mackerel",
-    },
-    { name: "Hipon", price: "₱325/kg", description: "Fresh Chilled Shrimp" },
-    { name: "Tuna", price: "₱280/kg", description: "Fresh Chilled Tuna" },
-  ];
+  // Debug logging
+  console.log("ProductDetail Debug:", {
+    itemId,
+    product,
+    isLoading,
+    isError,
+    error,
+  });
 
-  let product =
-    state?.product ||
-    fallbackProducts.find((p) => slug && slugify(p.name) === slug) ||
-    fallbackProducts.find((p) => p.name === "Bangus");
+  // Loading state with skeletons
+  if (isLoading) {
+    return (
+      <div className="bg-white">
+        <div className="max-w-8xl mx-auto px-4 py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Gallery skeleton */}
+            <div className="flex gap-5">
+              <div className="hidden sm:flex flex-col gap-4 w-24">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-24 h-24 rounded-md overflow-hidden bg-gray-100 shadow-sm animate-pulse"
+                  />
+                ))}
+              </div>
+              <div className="flex-1">
+                <div
+                  className="rounded-lg overflow-hidden bg-gray-100 shadow-sm animate-pulse"
+                  style={{ height: "540px" }}
+                />
+              </div>
+            </div>
 
-  if (!product) {
+            {/* Details skeleton */}
+            <div className="pt-2">
+              <div className="h-8 w-3/4 bg-gray-200 rounded mb-3 animate-pulse" />
+              <div className="h-3 w-1/2 bg-gray-200 rounded mb-6 animate-pulse" />
+              <div className="h-8 w-40 bg-gray-200 rounded mb-4 animate-pulse" />
+              <hr className="border-base-300 mb-4" />
+              <div className="space-y-3 mb-6">
+                <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-64 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-56 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-60 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="flex items-stretch gap-3 mb-3">
+                <div className="h-11 w-28 rounded-full bg-gray-100 border border-gray-200 animate-pulse" />
+                <div className="h-11 flex-1 rounded-full bg-gray-200 animate-pulse" />
+              </div>
+              <div className="w-full h-11 rounded-full border border-gray-200 bg-gray-50 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError || !product) {
     return (
       <div className="bg-white">
         <div className="max-w-8xl mx-auto px-4 py-16">
@@ -78,7 +86,7 @@ const ProductDetail = () => {
             Product not found
           </h1>
           <p className="text-gray-600 mb-6">
-            Please go back and select a product.
+            The product you're looking for doesn't exist or has been removed.
           </p>
           <button
             className="btn btn-primary"
@@ -91,7 +99,8 @@ const ProductDetail = () => {
     );
   }
 
-  const imageSrc = productImageForName(product.name);
+  // Use item image or fallback
+  const imageSrc = product.image || product.imageUrl || bisugo;
 
   return (
     <div className="bg-white">
@@ -130,37 +139,56 @@ const ProductDetail = () => {
           {/* Details */}
           <div className="pt-2">
             <h1 className="font-outfit font-bold text-[28px] md:text-[36px] text-gray-900 mb-1">
-              {product.name}
+              {product.itemName || product.name}
             </h1>
             <p className="text-gray-500 text-xs md:text-[11px] mb-3">
-              Fresh Chilled Milkfish All Sizes
+              {product.description || "Fresh seafood from Barangay Baybayon"}
             </p>
             <div className="text-success font-outfit font-bold text-2xl md:text-3xl mb-4">
-              {product.price}
+              {product.priceDisplay ??
+                (product.itemPrice != null
+                  ? `₱${Number(product.itemPrice).toLocaleString()}/${
+                      product.unit || ""
+                    }`
+                  : product.price != null
+                  ? `₱${Number(product.price).toLocaleString()}`
+                  : "")}
             </div>
             <hr className="border-base-300 mb-4" />
 
             <div className="space-y-2 text-sm text-gray-700 mb-6">
-              <p className="text-sm text-gray-600">Bangus (Milkfish)</p>
+              <p className="text-sm text-gray-600">
+                {product.itemName || product.name}
+              </p>
               <div className="space-y-2 mt-2">
                 <div className="flex items-start gap-2">
                   <span className="text-[12px]">📦</span>
-                  <span>₱289 per kilo</span>
+                  <span>
+                    {product.itemPrice != null
+                      ? `₱${Number(product.itemPrice).toLocaleString()} per ${
+                          product.unit || "unit"
+                        }`
+                      : "Price available on request"}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-[12px]">🐟</span>
-                  <span>Freshly caught this morning</span>
+                  <span>Freshly caught and carefully handled</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-[12px]">⚖️</span>
                   <span>
-                    Sold per kilogram. Average weight per fish: 300–500g (1 kg ≈
-                    2–3 pieces)
+                    Available quantity: {product.quantity || 0}{" "}
+                    {product.unit || "units"}
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-[12px]">📍</span>
-                  <span>Pickup at: Baybayon Market / agreed location</span>
+                  <span>
+                    {product.location
+                      ? `Catch location: ${product.location}`
+                      : "Pickup at: Baybayon Market / agreed location"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -190,7 +218,7 @@ const ProductDetail = () => {
       {/* Seller info and reviews */}
       <SellerSection />
       {/* Related products */}
-      <RelatedProducts />
+      <RelatedProducts currentItemId={itemId} />
     </div>
   );
 };

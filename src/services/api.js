@@ -75,6 +75,29 @@ export const api = createApi({
   baseQuery: baseQueryWithFriendlyErrors,
   tagTypes: ["Products", "Users"],
   endpoints: (builder) => ({
+    getItems: builder.query({
+      query: (params) => ({
+        url: "/items",
+        params,
+      }),
+      transformResponse: (response) => {
+        // Expect { success, data, pagination }
+        const items = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+          ? response
+          : [];
+        const pagination = response?.pagination || null;
+        return { items, pagination };
+      },
+    }),
+    getItemById: builder.query({
+      query: (itemId) => `/items/${itemId}`,
+      transformResponse: (response) => {
+        // Expect { success, data }
+        return response?.data || response;
+      },
+    }),
     getProducts: builder.query({
       query: () => "/products",
       providesTags: (result) =>
@@ -117,6 +140,8 @@ export const api = createApi({
 });
 
 export const {
+  useGetItemsQuery,
+  useGetItemByIdQuery,
   useGetProductsQuery,
   useLoginMutation,
   useSignupMutation,
