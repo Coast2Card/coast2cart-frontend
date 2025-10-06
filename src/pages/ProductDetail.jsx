@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useGetItemByIdQuery } from "../services/api";
 import SellerSection from "../components/productDetail/SellerSection";
 import RelatedProducts from "../components/productDetail/RelatedProducts";
-import CartConfirmationModal from "../components/CartConfirmationModal";
+import CartConfirmationModal from "../components/productDetail/CartConfirmationModal";
 import bisugo from "../assets/images/bisugo.png";
 import { useState } from "react";
 
@@ -118,7 +118,7 @@ const ProductDetail = () => {
   // Handle add to cart with animation
   const handleAddToCart = () => {
     setShowAnimation(true);
-    
+
     // Show modal after animation completes
     setTimeout(() => {
       setShowCartModal(true);
@@ -131,13 +131,13 @@ const ProductDetail = () => {
     name: product.itemName || product.name,
     description: product.description || "Fresh seafood from Barangay Baybayon",
     price: product.itemPrice || product.price || 0,
-    image: imageSrc
+    image: imageSrc,
   };
 
   // Prepare seller data for modal (you can customize this based on your data structure)
   const modalSeller = {
     name: "Juan Dela Cruz", // You can get this from product.seller or API
-    profileImage: "/src/assets/icons/profile.png"
+    profileImage: "/src/assets/icons/profile.png",
   };
 
   return (
@@ -234,21 +234,21 @@ const ProductDetail = () => {
             <div className="mb-6">
               <div className="flex items-stretch gap-3 mb-3">
                 <div className="flex items-center justify-between rounded-full border border-gray-300 h-11 px-3 min-w-[112px] select-none">
-                  <button 
+                  <button
                     className="text-gray-600 hover:text-gray-900"
                     onClick={() => handleQuantityChange(-1)}
                   >
                     −
                   </button>
                   <span className="font-medium text-gray-800">{quantity}</span>
-                  <button 
+                  <button
                     className="text-gray-600 hover:text-gray-900"
                     onClick={() => handleQuantityChange(1)}
                   >
                     +
                   </button>
                 </div>
-                <button 
+                <button
                   className="flex-1 h-11 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold"
                   onClick={handleAddToCart}
                 >
@@ -266,17 +266,17 @@ const ProductDetail = () => {
       <SellerSection />
       {/* Related products */}
       <RelatedProducts currentItemId={itemId} />
-      
+
       {/* Flying Animation */}
       {showAnimation && (
         <div className="fixed inset-0 pointer-events-none z-50">
           <div
             className="absolute w-24 h-24 rounded-xl overflow-hidden shadow-2xl"
             style={{
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              animation: 'flyToCart 1.0s ease-out forwards'
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+              animation: "flyToCart 1.0s ease-out forwards",
             }}
           >
             <img
