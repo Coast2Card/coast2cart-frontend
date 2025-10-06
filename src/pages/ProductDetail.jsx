@@ -2,13 +2,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useGetItemByIdQuery } from "../services/api";
 import SellerSection from "../components/productDetail/SellerSection";
 import RelatedProducts from "../components/productDetail/RelatedProducts";
+import CartConfirmationModal from "../components/CartConfirmationModal";
 import bisugo from "../assets/images/bisugo.png";
+import { useState } from "react";
 
 // Fallback image for items without image
 
 const ProductDetail = () => {
   const navigate = useNavigate();
   const { itemId } = useParams();
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [showAnimation, setShowAnimation] = useState(false);
 
   // Fetch item by ID from API
   const {
@@ -101,6 +106,39 @@ const ProductDetail = () => {
 
   // Use item image or fallback
   const imageSrc = product.image || product.imageUrl || bisugo;
+
+  // Handle quantity changes
+  const handleQuantityChange = (change) => {
+    const newQuantity = quantity + change;
+    if (newQuantity >= 1) {
+      setQuantity(newQuantity);
+    }
+  };
+
+  // Handle add to cart with animation
+  const handleAddToCart = () => {
+    setShowAnimation(true);
+    
+    // Show modal after animation completes
+    setTimeout(() => {
+      setShowCartModal(true);
+      setShowAnimation(false);
+    }, 1000); // Animation duration
+  };
+
+  // Prepare product data for modal
+  const modalProduct = {
+    name: product.itemName || product.name,
+    description: product.description || "Fresh seafood from Barangay Baybayon",
+    price: product.itemPrice || product.price || 0,
+    image: imageSrc
+  };
+
+  // Prepare seller data for modal (you can customize this based on your data structure)
+  const modalSeller = {
+    name: "Juan Dela Cruz", // You can get this from product.seller or API
+    profileImage: "/src/assets/icons/profile.png"
+  };
 
   return (
     <div className="bg-white">
@@ -196,15 +234,24 @@ const ProductDetail = () => {
             <div className="mb-6">
               <div className="flex items-stretch gap-3 mb-3">
                 <div className="flex items-center justify-between rounded-full border border-gray-300 h-11 px-3 min-w-[112px] select-none">
-                  <button className="text-gray-600 hover:text-gray-900">
+                  <button 
+                    className="text-gray-600 hover:text-gray-900"
+                    onClick={() => handleQuantityChange(-1)}
+                  >
                     −
                   </button>
-                  <span className="font-medium text-gray-800">1</span>
-                  <button className="text-gray-600 hover:text-gray-900">
+                  <span className="font-medium text-gray-800">{quantity}</span>
+                  <button 
+                    className="text-gray-600 hover:text-gray-900"
+                    onClick={() => handleQuantityChange(1)}
+                  >
                     +
                   </button>
                 </div>
-                <button className="flex-1 h-11 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold">
+                <button 
+                  className="flex-1 h-11 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold"
+                  onClick={handleAddToCart}
+                >
                   Add to Cart
                 </button>
               </div>
@@ -219,6 +266,35 @@ const ProductDetail = () => {
       <SellerSection />
       {/* Related products */}
       <RelatedProducts currentItemId={itemId} />
+      
+      {/* Flying Animation */}
+      {showAnimation && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <div
+            className="absolute w-24 h-24 rounded-xl overflow-hidden shadow-2xl"
+            style={{
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              animation: 'flyToCart 1.0s ease-out forwards'
+            }}
+          >
+            <img
+              src={imageSrc}
+              alt={product?.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Cart Confirmation Modal */}
+      <CartConfirmationModal
+        isOpen={showCartModal}
+        onClose={() => setShowCartModal(false)}
+        product={modalProduct}
+        seller={modalSeller}
+      />
     </div>
   );
 };

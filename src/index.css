@@ -125,3 +125,19 @@ h6 {
 .animate-fade-scale-in {
   animation: c2c-fade-scale-in 250ms ease-out;
 }
+
+/* Flying to cart animation */
+@keyframes flyToCart {
+  0% {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 80px);
+    top: 20px;
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+  }
+}

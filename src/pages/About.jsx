@@ -1,5 +1,5 @@
 import React from "react";
-import heroBgImg from "../assets/images/about/HeroBg.jpg";
+import AboutHero from "../components/about/AboutHero";
 import fishermenImg from "../assets/images/about/Fishermen.jpg";
 import souvenirImg from "../assets/images/about/Souvenir.jpg";
 
@@ -7,34 +7,7 @@ const About = () => {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative">
-        {/* Hero Background Image */}
-        <div
-          className="w-full h-[500px] bg-cover bg-center relative"
-          style={{ backgroundImage: `url(${heroBgImg})` }}
-        >
-          <div className="absolute inset-0 bg-slate-900/60"></div>
-
-          {/* Hero Content */}
-          <div className="relative z-10 flex items-center h-full px-6 md:px-12 lg:px-24 max-w-8xl mx-auto w-full">
-            <div className="max-w-4xl">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight">
-                FRESH FROM THE SEA
-                <br />
-                TO YOUR TABLE
-              </h1>
-
-              <div className="flex items-start gap-4">
-                <div className="w-1 bg-blue-700 h-24 flex-shrink-0"></div>
-                <p className="text-lg md:text-xl text-white max-w-2xl leading-relaxed">
-                  Coast2Cart has a clear and simple vision: "Bringing Baybayon's
-                  Fresh Catch and Local Treasures Closer to Every Home."
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <AboutHero />
 
       {/* About Us Section */}
       <section className="py-16 px-6 md:px-12 lg:px-24 max-w-8xl mx-auto">
