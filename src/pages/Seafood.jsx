@@ -66,29 +66,22 @@ const Seafood = () => {
     <>
       <main className="relative overflow-x-hidden">
         {/* Seafood Banner */}
-        <section className="w-full relative overflow-hidden h-[420px] sm:h-[500px] md:h-[560px] lg:h-[640px]">
+        <section className="w-full relative overflow-hidden h-[420px] sm:h-[480px] md:h-[520px] lg:h-[480px] xl:h-[540px] max-h-[420px] sm:max-h-[500px] md:max-h-[560px] lg:max-h-[640px] xl:max-h-[720px]">
           <div className="absolute inset-0 bg-primary opacity-100 z-10"></div>
 
           {/* Content Container */}
           <div className="relative z-20 h-full">
-            <div className="h-full max-w-8xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center py-6 sm:py-8 md:py-0">
-              {/* Left Side - Text Content */}
-              <div className="w-full md:w-1/2 h-full flex items-center">
-                <div className="text-white pt-6 sm:pt-8 md:pt-0">
-                  <h1 className="font-outfit font-bold text-[24px] sm:text-[32px] md:text-[48px] lg:text-[64px] leading-tight md:leading-[1.15] lg:leading-[1.05] tracking-[0%] mb-4 sm:mb-5 md:mb-8 lg:mb-10">
-                    <div className="mb-4">Discover the</div>
-                    <div className="mb-4">Finest Seafood</div>
+            <div className="h-full max-w-8xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center py-4 sm:py-6 md:py-0">
+              {/* Text Content - Full width on mobile, half on desktop */}
+              <div className="w-full md:w-1/2 h-full flex items-center md:items-start justify-center md:justify-start">
+                <div className="text-white pt-0 sm:pt-2 md:pt-8 lg:pt-5 xl:pt-8 text-center md:text-left max-w-full md:max-w-none">
+                  <h1 className="font-outfit font-bold text-[35px] sm:text-[48px] md:text-[36px] lg:text-[48px] xl:text-[56px] leading-tight md:leading-[1.15] lg:leading-[1.05] tracking-[0%] mb-3 sm:mb-4 md:mb-6 lg:mb-8">
+                    <div className="mb-1 sm:mb-2 md:mb-3">Discover the</div>
+                    <div className="mb-1 sm:mb-2 md:mb-3">Finest Seafood</div>
                     <div>Selection</div>
                   </h1>
-                  <p className="font-inter font-normal text-[14px] sm:text-[16px] md:text-[18px] lg:text-[20px] leading-relaxed md:leading-[1.6] tracking-[0%] mb-4 sm:mb-5 md:mb-6 opacity-90 pb-8 md:pb-6">
-                    From the shores of Barangay Baybayon to your table, our{" "}
-                    <br />
-                    fisherfolk bring in daily catches that are fresh, flavorful,{" "}
-                    <br />
-                    and carefully handled. Every purchase lets you enjoy the
-                    <br />
-                    best of the ocean while supporting our community's <br />
-                    livelihood.
+                  <p className="font-inter font-normal text-[15px] sm:text-[18px] md:text-[16px] lg:text-[18px] xl:text-[20px] leading-relaxed md:leading-[1.6] tracking-[0%] mb-4 sm:mb-5 md:mb-6 opacity-90 pb-8 sm:pb-12 md:pb-16 lg:pb-20 max-w-lg mx-auto md:mx-0">
+                    From the shores of Barangay Baybayon to your table, our fisherfolk bring in daily catches that are fresh, flavorful, and carefully handled. Every purchase lets you enjoy the best of the ocean while supporting our community's livelihood.
                   </p>
                 </div>
               </div>
@@ -98,7 +91,7 @@ const Seafood = () => {
                 <img
                   src={seafoodBanner}
                   alt="Fresh Seafood"
-                  className="w-auto object-contain -mr-8 md:-mr-12 lg:-mr-16 xl:-mr-24 -mb-8 md:-mb-12 lg:-mb-14 md:h-[520px] lg:h-[720px] xl:h-[930px]"
+                  className="w-auto object-contain -mr-8 md:-mr-12 lg:-mr-16 xl:-mr-24 md:h-[520px] lg:h-[600px] xl:h-[720px] transform md:translate-y-0 lg:translate-y-6 xl:translate-y-8"
                 />
               </div>
             </div>

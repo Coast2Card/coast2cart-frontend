@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-const CartConfirmationModal = ({ isOpen, onClose, product, seller }) => {
+const CartConfirmationModal = ({ isOpen, onClose, product, seller, quantity: initialQuantity = 1 }) => {
   const navigate = useNavigate();
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [arrowPosition, setArrowPosition] = useState({ right: "5rem" });
   const modalRef = useRef(null);
 
@@ -31,6 +31,11 @@ const CartConfirmationModal = ({ isOpen, onClose, product, seller }) => {
       setArrowPosition({ right: `${finalPosition}px` });
     }
   };
+
+  // Update quantity when initialQuantity prop changes
+  useEffect(() => {
+    setQuantity(initialQuantity);
+  }, [initialQuantity]);
 
   useEffect(() => {
     if (isOpen) {
