@@ -1,12 +1,42 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useGetItemsQuery } from "../../services/api";
+import { useGetItemsQuery, useGetSouvenirsQuery } from "../../services/api";
 import bisugo from "../../assets/images/bisugo.png";
 
-const RelatedProducts = ({ currentItemId }) => {
-  const { data, isLoading, isError, isFetching } = useGetItemsQuery({
+const RelatedProducts = ({ currentItemId, currentItem }) => {
+  // Determine item type from current item
+  const itemType = currentItem?.itemType || "fish"; // Default to fish if not specified
+  
+  // Fetch items based on the current item type
+  const { 
+    data: fishData, 
+    isLoading: fishLoading, 
+    isError: fishError, 
+    isFetching: fishFetching 
+  } = useGetItemsQuery({
     limit: 12,
+    itemType: "fish",
+  }, {
+    skip: itemType !== "fish" // Skip if current item is not fish
   });
+
+  const { 
+    data: souvenirData, 
+    isLoading: souvenirLoading, 
+    isError: souvenirError, 
+    isFetching: souvenirFetching 
+  } = useGetSouvenirsQuery({
+    limit: 12,
+  }, {
+    skip: itemType !== "souvenirs" // Skip if current item is not souvenir
+  });
+
+  // Use the appropriate data based on item type
+  const data = itemType === "fish" ? fishData : souvenirData;
+  const isLoading = itemType === "fish" ? fishLoading : souvenirLoading;
+  const isError = itemType === "fish" ? fishError : souvenirError;
+  const isFetching = itemType === "fish" ? fishFetching : souvenirFetching;
+
   const items = Array.isArray(data?.items) ? data.items : [];
   const related = items
     .filter((i) => (i.id || i._id) !== currentItemId)
