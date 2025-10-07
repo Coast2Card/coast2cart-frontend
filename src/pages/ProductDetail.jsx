@@ -294,6 +294,7 @@ const ProductDetail = () => {
         onClose={() => setShowCartModal(false)}
         product={modalProduct}
         seller={modalSeller}
+        quantity={quantity}
       />
     </div>
   );
