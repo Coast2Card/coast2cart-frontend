@@ -1,19 +1,21 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { useGetSouvenirsQuery } from "../services/api";
 import FishImage from "../assets/souvenir-items/fish.png";
-import Souvenir1 from "../assets/souvenir-items/souvenir1.png";
-import Souvenir2 from "../assets/souvenir-items/souvenir2.png";
-import Souvenir3 from "../assets/souvenir-items/souvenir3.png";
-import Souvenir4 from "../assets/souvenir-items/souvenir4.png";
-import Souvenir5 from "../assets/souvenir-items/souvenir5.png";
-import Souvenir6 from "../assets/souvenir-items/souvenir6.png";
-import Souvenir7 from "../assets/souvenir-items/souvenir7.png";
-import Souvenir8 from "../assets/souvenir-items/souvenir8.png";
+import bisugo from "../assets/images/bisugo.png";
 
 const Souvenirs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Fetch souvenirs from API
+  const { data, isLoading, isError } = useGetSouvenirsQuery({
+    // Add any additional params here if needed
+  });
+
+  const allSouvenirs = data?.items || [];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -29,72 +31,25 @@ const Souvenirs = () => {
     };
   }, []);
 
-  const allSouvenirs = [
-    {
-      id: 1,
-      image: Souvenir1,
-      name: "Baybayon Fan",
-      price: "P95",
-      priceValue: 95,
-    },
-    {
-      id: 2,
-      image: Souvenir2,
-      name: "Fish Wallet",
-      price: "P70",
-      priceValue: 70,
-    },
-    {
-      id: 3,
-      image: Souvenir3,
-      name: "Shell Necklace",
-      price: "P65",
-      priceValue: 65,
-    },
-    { id: 4, image: Souvenir4, name: "Keychain", price: "P55", priceValue: 55 },
-    {
-      id: 5,
-      image: Souvenir5,
-      name: "Boat Keychain",
-      price: "P55",
-      priceValue: 55,
-    },
-    {
-      id: 6,
-      image: Souvenir6,
-      name: "Coconut Maracas",
-      price: "P80",
-      priceValue: 80,
-    },
-    {
-      id: 7,
-      image: Souvenir7,
-      name: "Rattan Bag",
-      price: "P340",
-      priceValue: 340,
-    },
-    {
-      id: 8,
-      image: Souvenir8,
-      name: "Bottle Opener",
-      price: "P53",
-      priceValue: 53,
-    },
-  ];
-
   // Filter and sort souvenirs
   const filteredAndSortedSouvenirs = allSouvenirs
-    .filter((souvenir) =>
-      souvenir.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((souvenir) => {
+      const name = souvenir.itemName || souvenir.name || "";
+      return name.toLowerCase().includes(searchTerm.toLowerCase());
+    })
     .sort((a, b) => {
+      const nameA = a.itemName || a.name || "";
+      const nameB = b.itemName || b.name || "";
+      const priceA = parseFloat(a.itemPrice || a.price || 0);
+      const priceB = parseFloat(b.itemPrice || b.price || 0);
+
       switch (sortBy) {
         case "name":
-          return a.name.localeCompare(b.name);
+          return nameA.localeCompare(nameB);
         case "price-low":
-          return a.priceValue - b.priceValue;
+          return priceA - priceB;
         case "price-high":
-          return b.priceValue - a.priceValue;
+          return priceB - priceA;
         default:
           return 0;
       }
@@ -225,32 +180,72 @@ const Souvenirs = () => {
           </div>
         </div>
 
-        {/* Souvenir Grid or No Results */}
-        {filteredAndSortedSouvenirs.length > 0 ? (
+        {/* Souvenir Grid, Loading, Error, or No Results */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="block bg-white rounded-lg shadow-sm overflow-hidden"
+              >
+                <div className="h-48 bg-gray-100 relative overflow-hidden">
+                  <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
+                </div>
+                <div className="p-4 space-y-3">
+                  <div className="h-5 w-28 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : isError ? (
+          <div className="text-center py-16">
+            <div className="max-w-md mx-auto">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-gray-700 mb-2 font-display">
+                Failed to load souvenirs
+              </h3>
+              <p className="text-gray-500 font-primary">
+                We couldn't load the souvenirs. Please try again later.
+              </p>
+            </div>
+          </div>
+        ) : filteredAndSortedSouvenirs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {filteredAndSortedSouvenirs.map((souvenir) => (
-              <div
-                key={souvenir.id}
+              <Link
+                key={souvenir.id || souvenir._id || souvenir.name}
+                to={`/seafood/${souvenir.id || souvenir._id}`}
                 className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
                   <img
-                    src={souvenir.image}
-                    alt={souvenir.name}
+                    src={souvenir.imageUrl || souvenir.image || bisugo}
+                    alt={souvenir.itemName || souvenir.name || "Souvenir"}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-outfit font-bold text-lg text-success">
-                      {souvenir.price}
+                      {souvenir.priceDisplay ??
+                        (souvenir.itemPrice != null
+                          ? `₱${Number(souvenir.itemPrice).toLocaleString()}`
+                          : souvenir.price != null
+                          ? `₱${Number(souvenir.price).toLocaleString()}`
+                          : "")}
                     </span>
                   </div>
                   <h3 className="font-outfit font-bold text-lg text-gray-800">
-                    {souvenir.name}
+                    {souvenir.itemName || souvenir.name || "Unnamed Souvenir"}
                   </h3>
+                  {souvenir.description && (
+                    <p className="font-inter text-sm text-gray-600 mt-1">
+                      {souvenir.description}
+                    </p>
+                  )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (

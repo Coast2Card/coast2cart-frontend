@@ -265,7 +265,7 @@ const ProductDetail = () => {
       {/* Seller info and reviews */}
       <SellerSection />
       {/* Related products */}
-      <RelatedProducts currentItemId={itemId} />
+      <RelatedProducts currentItemId={itemId} currentItem={product} />
 
       {/* Flying Animation */}
       {showAnimation && (

@@ -16,6 +16,7 @@ const Seafood = () => {
 
   const { data, isLoading, isFetching, isError } = useGetItemsQuery({
     page,
+    itemType: "fish",
     // Temporarily disable filters until backend supports them
     // ...(selectedCategory && { itemType: selectedCategory }),
   });

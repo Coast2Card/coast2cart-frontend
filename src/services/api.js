@@ -98,6 +98,25 @@ export const api = createApi({
         return response?.data || response;
       },
     }),
+    getSouvenirs: builder.query({
+      query: (params) => ({
+        url: "/items",
+        params: {
+          itemType: "souvenirs",
+          ...params,
+        },
+      }),
+      transformResponse: (response) => {
+        // Expect { success, data, pagination }
+        const items = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+          ? response
+          : [];
+        const pagination = response?.pagination || null;
+        return { items, pagination };
+      },
+    }),
     getProducts: builder.query({
       query: () => "/products",
       providesTags: (result) =>
@@ -142,6 +161,7 @@ export const api = createApi({
 export const {
   useGetItemsQuery,
   useGetItemByIdQuery,
+  useGetSouvenirsQuery,
   useGetProductsQuery,
   useLoginMutation,
   useSignupMutation,
