@@ -36,11 +36,30 @@ const Seafood = () => {
   });
 
   useEffect(() => {
-    if (page === 1) {
-      setAccumulatedItems(items);
-    } else if (items?.length) {
-      setAccumulatedItems((prev) => [...prev, ...items]);
-    }
+    // Guard against unnecessary state updates that cause render loops
+    setAccumulatedItems((prev) => {
+      const normalizeId = (it) => it?.id || it?._id || it?.name;
+
+      if (page === 1) {
+        // If contents are effectively the same, do not update
+        if (
+          Array.isArray(items) &&
+          prev.length === items.length &&
+          prev.every((p, i) => normalizeId(p) === normalizeId(items[i]))
+        ) {
+          return prev;
+        }
+        return Array.isArray(items) ? items : [];
+      }
+
+      if (Array.isArray(items) && items.length > 0) {
+        const existingIds = new Set(prev.map((p) => normalizeId(p)));
+        const dedupedNew = items.filter((it) => !existingIds.has(normalizeId(it)));
+        if (dedupedNew.length === 0) return prev;
+        return [...prev, ...dedupedNew];
+      }
+      return prev;
+    });
   }, [items, page]);
 
   const handleCategoryChange = (category) => {
