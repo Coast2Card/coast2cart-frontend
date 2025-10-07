@@ -15,6 +15,7 @@ import Colors from "./pages/Colors";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import OtpVerify from "./pages/Auth/OtpVerify";
+import NotFound from "./pages/NotFound";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
 
@@ -76,6 +77,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify-otp" element={<OtpVerify />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
