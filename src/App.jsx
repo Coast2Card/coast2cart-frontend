@@ -16,6 +16,7 @@ import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import OtpVerify from "./pages/Auth/OtpVerify";
 import NotFound from "./pages/NotFound";
+import SuperAdmin from "./pages/SuperAdmin";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
 
@@ -58,7 +59,7 @@ function App() {
           <Route
             path="profile/buyer"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["buyer"]}>
                 <BuyerProfile />
               </ProtectedRoute>
             }
@@ -66,8 +67,16 @@ function App() {
           <Route
             path="profile/seller"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["seller"]}>
                 <SellerProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile/superadmin"
+            element={
+              <ProtectedRoute allowedRoles={["superadmin"]}>
+                <SuperAdmin />
               </ProtectedRoute>
             }
           />

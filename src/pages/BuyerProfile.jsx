@@ -1,4 +1,4 @@
-import BuyerProfilePage from '../components/BuyerProfilePage';
+import BuyerProfilePage from "../components/BuyerProfilePage";
 
 const BuyerProfile = () => {
   return <BuyerProfilePage />;

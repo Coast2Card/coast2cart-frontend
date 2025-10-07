@@ -42,8 +42,13 @@ const Navbar = () => {
     setIsChatOpen(!isChatOpen);
   };
 
-  const profilePath =
-    currentUser?.role === "seller" ? "/profile/seller" : "/profile/buyer";
+  const roleToProfilePath = (role) => {
+    if (role === "seller") return "/profile/seller";
+    if (role === "buyer") return "/profile/buyer";
+    if (role === "superadmin") return "/profile/superadmin";
+    return "/profile";
+  };
+  const profilePath = roleToProfilePath(currentUser?.role);
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
