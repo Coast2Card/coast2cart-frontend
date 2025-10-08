@@ -6,6 +6,7 @@ import {
   Calendar,
   MagnifyingGlass,
   Star,
+  CheckCircle,
 } from "@phosphor-icons/react";
 import c2cLogo from "../assets/logos/c2c_white_transparent.png";
 import bisugotImg from "../assets/images/bisugo.png";
@@ -293,10 +294,20 @@ const SellerProfilePage = ({ sellerId }) => {
 
   // Seller Profile Header Component
   const SellerProfileHeader = () => (
-    <div className="bg-gradient-to-r from-primary via-[#0058BA] to-primary rounded-lg p-6 md:p-8 mb-6 relative overflow-hidden">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-        <div className="avatar">
-          <div className="w-32 h-32 rounded-full ring ring-white ring-offset-2">
+    <div className="bg-gradient-to-r from-[#0058BA] via-[#002854] via-30% to-[#002854] text-white rounded-2xl p-8 md:p-12 mb-6 relative overflow-hidden shadow-lg">
+      {/* Coast2Cart Logo - Top Right */}
+      <div className="absolute top-6 right-6 md:top-8 md:right-8">
+        <img
+          src={c2cLogo}
+          alt="Coast2Cart"
+          className="h-14 md:h-16 w-auto opacity-95"
+        />
+      </div>
+
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+        {/* Left Side - Avatar */}
+        <div className="flex-shrink-0">
+          <div className="w-40 h-40 md:w-48 md:h-48 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
             <img
               src={sellerData.profileImage}
               alt={sellerData.name}
@@ -305,60 +316,41 @@ const SellerProfilePage = ({ sellerId }) => {
           </div>
         </div>
 
-        <div className="flex-1 text-center md:text-left text-white">
-          <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
-            <h1 className="text-3xl font-bold font-display">
+        {/* Right Side - Seller Info */}
+        <div className="flex-1 text-center md:text-left mt-4 md:mt-0">
+          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+            <h1 className="text-4xl md:text-5xl font-bold text-white">
               {sellerData.name}
             </h1>
-            {sellerData.isVerified && (
-              <div className="badge badge-accent text-white">
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Verified Seller
-              </div>
-            )}
+            <CheckCircle size={32} weight="fill" className="text-white" />
           </div>
 
-          <div className="space-y-2 text-white/90">
-            <div className="flex items-center justify-center md:justify-start gap-2 p-1.5 rounded-lg">
-              <MapPin size={18} />
-              <span className="text-lg">{sellerData.location}</span>
+          <div className="mb-6 text-center md:text-left">
+            <span className="text-sm md:text-base font-normal text-white/90">Verified Seller</span>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <MapPin size={22} weight="fill" className="text-white" />
+              <span className="text-lg md:text-xl font-normal">{sellerData.location}</span>
             </div>
-            <div className="flex items-center justify-center md:justify-start gap-2 p-1.5 rounded-lg">
-              <Phone size={18} />
-              <span className="text-lg">{sellerData.phone}</span>
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <Phone size={22} weight="fill" className="text-white" />
+              <span className="text-lg md:text-xl font-normal">{sellerData.phone}</span>
             </div>
-            <div className="flex items-center justify-center md:justify-start gap-2 p-1.5 rounded-lg">
-              <Envelope size={18} />
-              <span className="text-lg">{sellerData.email}</span>
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <Envelope size={22} weight="fill" className="text-white" />
+              <span className="text-lg md:text-xl font-normal">{sellerData.email}</span>
             </div>
-            <div className="flex items-center justify-center md:justify-start gap-2 p-1.5 rounded-lg">
-              <Calendar size={18} />
-              <span className="text-lg">
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <Calendar size={22} weight="fill" className="text-white" />
+              <span className="text-lg md:text-xl font-normal">
                 Seller Since {sellerData.memberSince}
               </span>
             </div>
           </div>
         </div>
-
-        <div className="hidden md:block flex-shrink-0">
-          <img
-            src={c2cLogo}
-            alt="Coast2Cart"
-            className="h-12 w-auto opacity-90"
-          />
-        </div>
       </div>
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/10"></div>
     </div>
   );
 
@@ -774,15 +766,19 @@ const SellerProfilePage = ({ sellerId }) => {
 
   // Main Render
   return (
-    <div className="max-w-6xl mx-auto px-4 pt-8">
-      <SellerProfileHeader />
-      <div className="mb-6">
-        <TabNavigation />
+    <div className="min-h-screen bg-base-300">
+      <div className="w-full px-8 pt-8">
+        <SellerProfileHeader />
       </div>
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="mb-6">
+          <TabNavigation />
+        </div>
 
-      {activeTab === "active" && <ActiveListingsContent />}
-      {activeTab === "sold" && <SoldItemsContent />}
-      {activeTab === "reviews" && <ReviewsContent />}
+        {activeTab === "active" && <ActiveListingsContent />}
+        {activeTab === "sold" && <SoldItemsContent />}
+        {activeTab === "reviews" && <ReviewsContent />}
+      </div>
     </div>
   );
 };

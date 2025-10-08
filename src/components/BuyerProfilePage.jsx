@@ -471,39 +471,47 @@ const BuyerProfilePage = () => {
   return (
     <div className="min-h-screen bg-base-300">
       {/* Profile Header */}
-      <div className="max-w-6xl mx-auto px-4 pt-8">
-        <div className="bg-gradient-to-r from-[#FF6A2E] via-[#FFB357] to-[#FF6A2E] text-white rounded-lg p-6 md:p-8 mb-6 relative overflow-hidden shadow-sm">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            {/* Left Side - Avatar and User Info */}
-            <div className="flex flex-col md:flex-row items-center gap-6 flex-1">
-              {/* Avatar */}
-              <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 hover:bg-white/30 hover:scale-105 transition-all duration-200 cursor-pointer active:scale-95 group">
-                <div className="w-24 h-24 bg-white/40 rounded-full flex items-center justify-center group-hover:bg-white/50 transition-colors duration-200">
-                  <Users
-                    size={48}
-                    className="text-white group-hover:scale-110 transition-transform duration-200"
-                  />
-                </div>
+      <div className="w-full px-8 pt-8">
+        <div className="bg-gradient-to-r from-[#FF773C] via-[#E14400] via-30% to-[#E14400] text-white rounded-2xl p-8 md:p-12 mb-6 relative overflow-hidden shadow-lg">
+          {/* Coast2Cart Logo - Top Right */}
+          <div className="absolute top-6 right-6 md:top-8 md:right-8">
+            <img
+              src={c2cLogo}
+              alt="Coast2Cart"
+              className="h-14 md:h-16 w-auto opacity-95"
+            />
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+            {/* Left Side - Avatar */}
+            <div className="flex-shrink-0">
+              <div className="w-40 h-40 md:w-48 md:h-48 bg-white rounded-full flex items-center justify-center shadow-lg">
+                <Users
+                  size={80}
+                  weight="light"
+                  className="text-gray-400"
+                />
+              </div>
+            </div>
+
+            {/* Right Side - User Info */}
+            <div className="flex-1 text-center md:text-left mt-4 md:mt-0">
+              <div className="flex flex-col md:flex-row items-center md:items-center gap-3 mb-6">
+                <h1 className="text-4xl md:text-5xl font-bold text-white">
+                  {userData.name}
+                </h1>
+                {!isEditing && (
+                  <button
+                    onClick={handleEditProfile}
+                    className="px-6 py-2 bg-white/90 hover:bg-white rounded-full text-[#FF773C] font-semibold transition-all duration-200 hover:scale-105 active:scale-95 text-sm md:text-base"
+                  >
+                    Edit Profile
+                  </button>
+                )}
               </div>
 
-              {/* User Info */}
-              <div className="text-center md:text-left">
-                <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
-                  <h1 className="text-3xl md:text-4xl font-bold">
-                    {userData.name}
-                  </h1>
-                  {!isEditing && (
-                    <button
-                      onClick={handleEditProfile}
-                      className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105 active:scale-95"
-                    >
-                      Edit Profile
-                    </button>
-                  )}
-                </div>
-
-                {isEditing ? (
-                  <div className="space-y-4 max-w-md">
+              {isEditing ? (
+                <div className="space-y-4 max-w-md">
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Name
@@ -572,49 +580,43 @@ const BuyerProfilePage = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-center md:justify-start gap-2 p-1.5 rounded-lg hover:text-white/90 hover:scale-105 transition-all duration-200 cursor-pointer hover:bg-white/10">
+                <div className="space-y-4">
+                    <div className="flex items-center justify-center md:justify-start gap-3">
                       <MapPin
-                        size={18}
-                        className="hover:scale-110 transition-transform duration-200"
+                        size={22}
+                        weight="fill"
+                        className="text-white"
                       />
-                      <span className="text-lg">{userData.location}</span>
+                      <span className="text-lg md:text-xl font-normal">{userData.location}</span>
                     </div>
-                    <div className="flex items-center justify-center md:justify-start gap-2 p-1.5 rounded-lg hover:text-white/90 hover:scale-105 transition-all duration-200 cursor-pointer hover:bg-white/10">
+                    <div className="flex items-center justify-center md:justify-start gap-3">
                       <Phone
-                        size={18}
-                        className="hover:scale-110 transition-transform duration-200"
+                        size={22}
+                        weight="fill"
+                        className="text-white"
                       />
-                      <span className="text-lg">{userData.phone}</span>
+                      <span className="text-lg md:text-xl font-normal">{userData.phone}</span>
                     </div>
-                    <div className="flex items-center justify-center md:justify-start gap-2 p-1.5 rounded-lg hover:text-white/90 hover:scale-105 transition-all duration-200 cursor-pointer hover:bg-white/10">
+                    <div className="flex items-center justify-center md:justify-start gap-3">
                       <EnvelopeSimple
-                        size={18}
-                        className="hover:scale-110 transition-transform duration-200"
+                        size={22}
+                        weight="fill"
+                        className="text-white"
                       />
-                      <span className="text-lg">{userData.email}</span>
+                      <span className="text-lg md:text-xl font-normal">{userData.email}</span>
                     </div>
-                    <div className="flex items-center justify-center md:justify-start gap-2 p-1.5 rounded-lg hover:text-white/90 hover:scale-105 transition-all duration-200 cursor-pointer hover:bg-white/10">
+                    <div className="flex items-center justify-center md:justify-start gap-3">
                       <Users
-                        size={18}
-                        className="hover:scale-110 transition-transform duration-200"
+                        size={22}
+                        weight="fill"
+                        className="text-white"
                       />
-                      <span className="text-lg">
+                      <span className="text-lg md:text-xl font-normal">
                         Buyer Since {userData.memberSince}
                       </span>
-                    </div>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right Side - Coast2Cart Logo */}
-            <div className="flex-shrink-0 hidden md:block">
-              <img
-                src={c2cLogo}
-                alt="Coast2Cart"
-                className="h-12 w-auto opacity-90"
-              />
+                </div>
+              )}
             </div>
           </div>
         </div>
