@@ -5,12 +5,12 @@ const CategoriesFilter = ({ onCategoryChange }) => {
 
   const categories = [
     { name: "All", count: 0 },
-    { name: "Fresh Fish", count: 35 },
-    { name: "Shrimp & Prawns", count: 20 },
-    { name: "Crabs", count: 5 },
-    { name: "Squid & Octopus", count: 12 },
-    { name: "Shellfish", count: 8 },
-    { name: "Seaweed", count: 10 },
+    { name: "Fresh Fish", count: 0 },
+    { name: "Shrimp & Prawns", count: 0 },
+    { name: "Crabs", count: 0 },
+    { name: "Squid & Octopus", count: 0 },
+    { name: "Shellfish", count: 0 },
+    { name: "Seaweed", count: 0 },
   ];
 
   const handleCategoryClick = (category) => {

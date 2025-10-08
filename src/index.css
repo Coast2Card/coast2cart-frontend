@@ -108,6 +108,15 @@ h6 {
   .border-wave {
     border-color: var(--color-wave);
   }
+  .bg-primary {
+    background-color: var(--color-primary);
+  }
+  .text-primary {
+    color: var(--color-primary);
+  }
+  .border-primary {
+    border-color: var(--color-primary);
+  }
 }
 
 /* Simple fade/scale in animation for carousel images */
