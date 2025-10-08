@@ -1,9 +1,10 @@
 import seafoodBanner from "../assets/images/fisher_man.png";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useGetItemsQuery } from "../services/api";
 import CategoriesFilter from "../components/seafood/CategoriesFilter";
 import PriceRangeFilter from "../components/seafood/PriceRangeFilter";
+import SearchBar from "../components/seafood/SearchBar";
 // local fallback image for items without image
 import bisugo from "../assets/images/bisugo.png";
 // Footer comes from Layout; not needed here
@@ -13,6 +14,7 @@ const Seafood = () => {
   const [accumulatedItems, setAccumulatedItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data, isLoading, isFetching, isError } = useGetItemsQuery({
     page,
@@ -20,19 +22,40 @@ const Seafood = () => {
     // Temporarily disable filters until backend supports them
     // ...(selectedCategory && { itemType: selectedCategory }),
   });
-  const items = data && Array.isArray(data.items) ? data.items : [];
+  const items = useMemo(() => {
+    return data && Array.isArray(data.items) ? data.items : [];
+  }, [data]);
   const pagination = data?.pagination ?? null;
+
+  // Filter items based on search term
+  const filteredItems = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return accumulatedItems;
+    }
+
+    const searchLower = searchTerm.toLowerCase().trim();
+    return accumulatedItems.filter((item) => {
+      const itemName = (item.itemName || item.name || "").toLowerCase();
+      const description = (item.description || "").toLowerCase();
+
+      return (
+        itemName.includes(searchLower) || description.includes(searchLower)
+      );
+    });
+  }, [accumulatedItems, searchTerm]);
 
   // Debug logging
   console.log("Seafood Debug:", {
     selectedCategory,
     selectedPriceRanges,
+    searchTerm,
     page,
     data,
     items,
     isLoading,
     isError,
     accumulatedItems: accumulatedItems.length,
+    filteredItems: filteredItems.length,
   });
 
   useEffect(() => {
@@ -54,7 +77,9 @@ const Seafood = () => {
 
       if (Array.isArray(items) && items.length > 0) {
         const existingIds = new Set(prev.map((p) => normalizeId(p)));
-        const dedupedNew = items.filter((it) => !existingIds.has(normalizeId(it)));
+        const dedupedNew = items.filter(
+          (it) => !existingIds.has(normalizeId(it))
+        );
         if (dedupedNew.length === 0) return prev;
         return [...prev, ...dedupedNew];
       }
@@ -76,11 +101,21 @@ const Seafood = () => {
     // setAccumulatedItems([]);
   };
 
-  const totalItems = pagination?.totalItems ?? accumulatedItems.length;
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+
+  const totalItems = searchTerm.trim()
+    ? filteredItems.length
+    : pagination?.totalItems ?? accumulatedItems.length;
   // const itemsPerPage = pagination?.itemsPerPage ?? (items.length || 0);
-  const currentStart = accumulatedItems.length > 0 ? 1 : 0;
-  const currentEnd = accumulatedItems.length;
-  const hasMore = pagination ? page < (pagination.totalPages || 1) : false;
+  const currentStart = filteredItems.length > 0 ? 1 : 0;
+  const currentEnd = filteredItems.length;
+  const hasMore = searchTerm.trim()
+    ? false
+    : pagination
+    ? page < (pagination.totalPages || 1)
+    : false;
 
   return (
     <>
@@ -101,7 +136,11 @@ const Seafood = () => {
                     <div>Selection</div>
                   </h1>
                   <p className="font-inter font-normal text-[15px] sm:text-[18px] md:text-[16px] lg:text-[18px] xl:text-[20px] leading-relaxed md:leading-[1.6] tracking-[0%] mb-4 sm:mb-5 md:mb-6 opacity-90 pb-8 sm:pb-12 md:pb-16 lg:pb-20 max-w-lg mx-auto md:mx-0">
-                    From the shores of Barangay Baybayon to your table, our fisherfolk bring in daily catches that are fresh, flavorful, and carefully handled. Every purchase lets you enjoy the best of the ocean while supporting our community's livelihood.
+                    From the shores of Barangay Baybayon to your table, our
+                    fisherfolk bring in daily catches that are fresh, flavorful,
+                    and carefully handled. Every purchase lets you enjoy the
+                    best of the ocean while supporting our community's
+                    livelihood.
                   </p>
                 </div>
               </div>
@@ -134,32 +173,13 @@ const Seafood = () => {
                 {/* Search and Info Bar */}
                 <div className="bg-white p-6 mb-8">
                   <div className="flex flex-col gap-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Search...."
-                        className="w-full pl-4 pr-16 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-primary focus:border-transparent"
-                      />
-                      <button className="absolute right-1 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-primary rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                    <SearchBar onSearch={handleSearch} />
                     <div className="text-left">
                       <p className="font-inter font-bold text-gray-700 mb-1">
                         {isLoading && !accumulatedItems.length
                           ? "Loading items…"
+                          : searchTerm.trim()
+                          ? `Found ${totalItems} item(s) matching "${searchTerm}"`
                           : `Showing ${currentStart}-${currentEnd} of ${totalItems} item(s)`}
                       </p>
                       <p className="font-inter text-sm text-gray-500">
@@ -193,13 +213,15 @@ const Seafood = () => {
                   <div className="py-12 text-center text-red-600">
                     Failed to load items.
                   </div>
-                ) : accumulatedItems.length === 0 ? (
+                ) : filteredItems.length === 0 ? (
                   <div className="py-12 text-center text-gray-500">
-                    No items available.
+                    {searchTerm.trim()
+                      ? `No items found matching "${searchTerm}". Try a different search term.`
+                      : "No items available."}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {accumulatedItems.map((product) => (
+                    {filteredItems.map((product) => (
                       <Link
                         key={product.id || product._id || product.name}
                         to={`/seafood/${product.id || product._id}`}
