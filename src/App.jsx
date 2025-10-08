@@ -17,6 +17,8 @@ import Signup from "./pages/Auth/Signup";
 import OtpVerify from "./pages/Auth/OtpVerify";
 import NotFound from "./pages/NotFound";
 import SuperAdmin from "./pages/SuperAdmin";
+import AdminLayout from "./components/AdminLayout";
+import Dashbord from "./pages/Admin/Dashboard";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
 
@@ -81,6 +83,10 @@ function App() {
             }
           />
           <Route path="colors" element={<Colors />} />
+        </Route>
+        {/* Admin routes with AdminLayout */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Dashbord />} />
         </Route>
         {/* Auth routes without shared layout */}
         <Route path="/login" element={<Login />} />
