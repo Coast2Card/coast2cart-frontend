@@ -19,6 +19,8 @@ import NotFound from "./pages/NotFound";
 import SuperAdmin from "./pages/SuperAdmin";
 import AdminLayout from "./components/AdminLayout";
 import Dashbord from "./pages/Admin/Dashboard";
+import BuyerAccountManagement from "./pages/Admin/BuyerAccountManagement";
+import SellerAccountManagement from "./pages/Admin/SellerAccountManagement";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
 
@@ -87,6 +89,8 @@ function App() {
         {/* Admin routes with AdminLayout */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashbord />} />
+          <Route path="sellers" element={<SellerAccountManagement />} />
+          <Route path="buyers" element={<BuyerAccountManagement />} />
         </Route>
         {/* Auth routes without shared layout */}
         <Route path="/login" element={<Login />} />
