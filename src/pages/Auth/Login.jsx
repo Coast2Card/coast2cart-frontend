@@ -48,7 +48,12 @@ const Login = () => {
       }
       const displayName = user?.username || user?.firstName || "";
       toast.success(displayName ? `Welcome, ${displayName}` : "Welcome");
-      navigate("/");
+      const role = (user?.role || "").toLowerCase();
+      if (role === "admin" || role === "super_admin" || role === "superadmin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       // Handle unverified account when server responds with non-2xx
       if (err?.data?.accountNotVerified && err?.data?.contactNo) {

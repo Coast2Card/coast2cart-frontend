@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import ViewSellerModal from "../../modals/ViewSellerModal";
+import AddSellerModal from "../../modals/AddSellerModal";
 import { User, Plus, Minus, UploadSimple, ArrowsClockwise, FunnelSimple, Eye } from "@phosphor-icons/react";
 
 const sellersSeed = [
@@ -32,7 +34,10 @@ const SellerAccountManagement = () => {
   const data = useMemo(generateSellers, []);
   const [selected, setSelected] = useState(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const allSelected = selected.size > 0 && selected.size === data.length;
+  const selectedSeller = selected.size === 1 ? data.find((d) => d.id === Array.from(selected)[0]) : null;
 
   const toggleAll = () => {
     if (allSelected) setSelected(new Set());
@@ -72,7 +77,7 @@ const SellerAccountManagement = () => {
             </button>
             <div className="text-sm md:text-base text-base-content/70">120 Results</div>
             <div className="flex-1"></div>
-            <button className="btn btn-sm md:btn-md bg-primary text-primary-content border border-primary">
+            <button className="btn btn-sm md:btn-md bg-primary text-primary-content border border-primary" onClick={() => setIsAddOpen(true)}>
               <Plus size={16} weight="bold" className="mr-1" /> Add
             </button>
             <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
@@ -81,7 +86,15 @@ const SellerAccountManagement = () => {
             <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
               <UploadSimple size={16} weight="bold" className="mr-1" /> Import/Export
             </button>
-            <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"><Eye size={16} weight="bold" className="mr-1" /> View</button>
+            <button
+              className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"
+              disabled={selected.size !== 1}
+              onClick={() => {
+                if (selected.size === 1) setIsViewOpen(true);
+              }}
+            >
+              <Eye size={16} weight="bold" className="mr-1" /> View
+            </button>
             <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">⋮</button>
           </div>
         </div>
@@ -135,6 +148,8 @@ const SellerAccountManagement = () => {
           </table>
         </div>
       </div>
+      <ViewSellerModal open={isViewOpen} onClose={() => setIsViewOpen(false)} seller={selectedSeller} />
+      <AddSellerModal open={isAddOpen} onClose={() => setIsAddOpen(false)} />
     </div>
   );
 };

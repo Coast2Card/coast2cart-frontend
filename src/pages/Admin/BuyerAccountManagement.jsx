@@ -1,98 +1,26 @@
 import { useMemo, useState } from "react";
 import { User, Plus, Minus, UploadSimple, ArrowsClockwise, FunnelSimple, Eye } from "@phosphor-icons/react";
+import { useGetAccountsQuery } from "../../services/api";
 import AddBuyerModal from "../../modals/AddBuyerModal";
+import ViewBuyerModal from "../../modals/ViewBuyerModal";
 
-const buyersSeed = [
-  {
-    id: 1,
-    name: "Nisha Kumari",
-    email: "example@email.com",
-    contact: "09122343523",
-    address: "123Fda",
-    status: "Active",
-    created: "2025-02-18",
-    lastActive: "2025-02-18",
-  },
-  {
-    id: 2,
-    name: "Sophia",
-    email: "example@email.com",
-    contact: "09122343523",
-    address: "123Fda",
-    status: "Inactive",
-    created: "2025-02-18",
-    lastActive: "2025-10-28",
-  },
-  {
-    id: 3,
-    name: "Rudra Pratap",
-    email: "example@email.com",
-    contact: "09122343523",
-    address: "123Fda",
-    status: "Active",
-    created: "2025-02-18",
-    lastActive: "2025-02-18",
-  },
-  {
-    id: 4,
-    name: "Trisha Norton",
-    email: "example@email.com",
-    contact: "09122343523",
-    address: "123Fda",
-    status: "Active",
-    created: "2025-02-18",
-    lastActive: "2025-02-18",
-  },
-  {
-    id: 5,
-    name: "Jolene Orr",
-    email: "example@email.com",
-    contact: "09122343523",
-    address: "123Fda",
-    status: "Inactive",
-    created: "2025-02-18",
-    lastActive: "2025-02-14",
-  },
-  {
-    id: 6,
-    name: "Aryan Roy",
-    email: "example@email.com",
-    contact: "09122343523",
-    address: "123Fda",
-    status: "Active",
-    created: "2025-02-18",
-    lastActive: "2025-02-18",
-  },
-  {
-    id: 7,
-    name: "Elvin Bond",
-    email: "example@email.com",
-    contact: "09122343523",
-    address: "123Fda",
-    status: "Active",
-    created: "2025-02-18",
-    lastActive: "2025-02-18",
-  },
-  {
-    id: 8,
-    name: "Huzaifa Anas",
-    email: "example@email.com",
-    contact: "09122343523",
-    address: "123Fda",
-    status: "Inactive",
-    created: "2025-02-18",
-    lastActive: "2024-12-13",
-  },
-];
-
-const generateBuyers = () => {
-  const rows = [];
-  for (let i = 0; i < 15; i++) {
-    buyersSeed.forEach((b) => {
-      rows.push({ ...b, id: rows.length + 1 });
-    });
-  }
-  return rows.slice(0, 120);
+// Fetch buyers from backend and map to UI rows
+const useBuyersData = () => {
+  const { data, isFetching, isError } = useGetAccountsQuery({ role: "buyer" });
+  const accounts = data?.accounts ?? [];
+  const rows = accounts.map((a, idx) => ({
+    id: a._id || idx + 1,
+    name: `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim() || a.username || "",
+    email: a.email || "",
+    contact: a.contactNo || "",
+    address: a.address || "",
+    status: a.isVerified ? "Active" : "Inactive",
+    created: (a.createdAt || "").slice(0, 10),
+    lastActive: (a.updatedAt || a.createdAt || "").slice(0, 10),
+    raw: a,
+  }));
+  const total = data?.pagination?.totalAccounts ?? rows.length;
+  return { rows, total, isFetching, isError };
 };
 
 const StatusPill = ({ value }) => {
@@ -110,10 +38,12 @@ const ToolbarBadge = ({ count }) => (
 );
 
 const BuyerAccountManagement = () => {
-  const data = useMemo(generateBuyers, []);
+  const { rows: data, total, isFetching } = useBuyersData();
   const [selected, setSelected] = useState(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const selectedBuyer = selected.size === 1 ? data.find((d) => d.id === Array.from(selected)[0])?.raw : null;
   const allSelected = selected.size > 0 && selected.size === data.length;
 
   const toggleAll = () => {
@@ -156,7 +86,7 @@ const BuyerAccountManagement = () => {
             <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
               <FunnelSimple size={16} weight="bold" className="mr-1" /> Filter <ToolbarBadge count={4} />
             </button>
-            <div className="text-sm md:text-base text-base-content/70">120 Results</div>
+            <div className="text-sm md:text-base text-base-content/70">{isFetching ? "Loading..." : `${total} Results`}</div>
             <div className="flex-1"></div>
             <button className="btn btn-sm md:btn-md bg-primary text-primary-content border border-primary" onClick={() => setIsAddOpen(true)}>
               <Plus size={16} weight="bold" className="mr-1" /> Add
@@ -167,7 +97,15 @@ const BuyerAccountManagement = () => {
             <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
               <UploadSimple size={16} weight="bold" className="mr-1" /> Import/Export
             </button>
-            <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"><Eye size={16} weight="bold" className="mr-1" /> View</button>
+            <button
+              className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"
+              disabled={selected.size !== 1}
+              onClick={() => {
+                if (selected.size === 1) setIsViewOpen(true);
+              }}
+            >
+              <Eye size={16} weight="bold" className="mr-1" /> View
+            </button>
             <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">⋮</button>
           </div>
         </div>
@@ -222,6 +160,7 @@ const BuyerAccountManagement = () => {
         </div>
       </div>
       <AddBuyerModal open={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <ViewBuyerModal open={isViewOpen} onClose={() => setIsViewOpen(false)} buyer={selectedBuyer} />
     </div>
   );
 };
