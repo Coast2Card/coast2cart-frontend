@@ -1,24 +1,42 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import chartpie from "../../assets/icons/ChartPieSlice.png";
 import person from "../../assets/icons/person.png";
 import logo from "../../assets/logos/c2c_white_transparent.png";
 import AdminNavItem from "./AdminNavItem";
-
-const navItemClass = ({ isActive }) =>
-  `flex relative items-center gap-3 px-4 py-3 rounded-l-2xl rounded-r-7xl transition shadow-none relative ${
-    isActive
-      ? "bg-white text-base-content -mr-6"
-      : "text-primary-content/90 hover:bg-primary/70 hover:text-primary-content"
-  }`;
+import { api } from "../../services/api";
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [authUser, setAuthUser] = useState(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      if (raw) setAuthUser(JSON.parse(raw));
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
 
   const handleLogout = () => {
-    // Navigate to home page after logout. Hook up auth clearing here if needed.
-    navigate("/");
+    try {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+    } catch {
+      // ignore storage errors
+    }
+    try {
+      dispatch(api.util.resetApiState());
+    } catch {
+      // ignore dispatch errors
+    }
+    setAuthUser(null);
+    setIsProfileOpen(false);
+    navigate("/", { replace: true });
   };
 
   return (
@@ -84,9 +102,12 @@ const Sidebar = () => {
             👤
           </div>
           <div className="leading-tight text-left">
-            <p className="font-semibold">Admin1</p>
+            <p className="font-semibold">
+              {(authUser?.firstName || authUser?.username || "").toString()}{" "}
+              {authUser?.lastName || ""}
+            </p>
             <p className="text-primary-content/80 text-sm">
-              admin123@email.com
+              {authUser?.email || ""}
             </p>
           </div>
         </button>
