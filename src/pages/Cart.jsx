@@ -15,6 +15,7 @@ const Cart = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
   const { data: cartData, isLoading, isError, refetch } = useGetCartQuery();
 
   // Load cart items from API
@@ -98,22 +99,23 @@ const Cart = () => {
     const ids = Array.from(selectedItems);
     console.log("[Cart] deleteSelectedItems submit:", ids);
     if (ids.length === 0) return;
+    setIsBulkRemoving(true);
+    let removed = 0;
     try {
-      const results = await Promise.all(
-        ids.map(async (id) => {
+      for (const id of ids) {
+        try {
           console.log("[Cart] removeItem submit:", id);
-          const res = await removeFromCart(id).unwrap();
-          console.log("[Cart] removeItem success:", { id, res });
-          return res;
-        })
-      );
-      console.log("[Cart] deleteSelectedItems all success:", results.length);
+          await removeFromCart(id).unwrap();
+          removed += 1;
+        } catch (err) {
+          console.warn("[Cart] removeItem error (continuing):", err);
+        }
+      }
       setSelectedItems(new Set());
       await refetch();
-      toast.success(`${ids.length} item(s) removed from cart`);
-    } catch (e) {
-      console.error("[Cart] deleteSelectedItems error:", e);
-      toast.error(e?.data?.message || "Failed to remove selected items");
+      toast.success(`${removed} item(s) removed from cart`);
+    } finally {
+      setIsBulkRemoving(false);
     }
   };
 
@@ -177,12 +179,6 @@ const Cart = () => {
             ₱{Number(serverCartTotal).toFixed(2)}
           </span>
         </span>
-        <button
-          onClick={() => refetch()}
-          className="ml-auto btn btn-xs btn-outline"
-        >
-          Refresh
-        </button>
       </div>
 
       {isLoading ? (
@@ -233,6 +229,7 @@ const Cart = () => {
                   <button
                     onClick={deleteSelectedItems}
                     className="btn btn-sm btn-outline btn-error"
+                    disabled={isBulkRemoving}
                   >
                     <svg
                       className="w-4 h-4"
