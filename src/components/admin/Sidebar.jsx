@@ -45,6 +45,13 @@ const Sidebar = () => {
           label="Buyer Account Management"
           iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
         />
+        <AdminNavItem
+          to="/admin/sellers"
+          iconSrc={person}
+          iconAlt="Sellers"
+          label="Seller Account Management"
+          iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
+        />
       </nav>
 
       <div className="mt-auto p-4 border-t border-primary/40 relative">
