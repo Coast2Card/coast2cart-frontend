@@ -75,6 +75,18 @@ export const api = createApi({
   baseQuery: baseQueryWithFriendlyErrors,
   tagTypes: ["Products", "Users", "Cart"],
   endpoints: (builder) => ({
+    getAccounts: builder.query({
+      query: (params) => ({
+        url: "/accounts",
+        params,
+      }),
+      transformResponse: (response) => {
+        const accounts = response?.data?.accounts ?? [];
+        const pagination = response?.data?.pagination ?? null;
+        const roleCounts = response?.data?.roleCounts ?? null;
+        return { accounts, pagination, roleCounts };
+      },
+    }),
     getCart: builder.query({
       query: () => ({
         url: "/cart",
@@ -245,6 +257,7 @@ export const api = createApi({
 });
 
 export const {
+  useGetAccountsQuery,
   useGetCartQuery,
   useGetCartSummaryQuery,
   useAddToCartMutation,

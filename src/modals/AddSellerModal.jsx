@@ -18,7 +18,7 @@ const Step = ({ index, topLabel, bottomLabel, active }) => (
   </div>
 );
 
-const AddBuyerModal = ({ open, onClose }) => {
+const AddSellerModal = ({ open, onClose }) => {
   const [step, setStep] = useState(1); // 1..3
   const progressPercent = ((step - 1) / 2) * 90; // 0, 45, 90 within rail inset
   const [showPw, setShowPw] = useState(false);
@@ -39,7 +39,7 @@ const AddBuyerModal = ({ open, onClose }) => {
             ×
           </button>
           <h2 className="text-4xl font-extrabold tracking-wide">ADD</h2>
-          <p className="text-3xl font-extrabold tracking-wide">BUYER ACCOUNT</p>
+          <p className="text-3xl font-extrabold tracking-wide">SELLER ACCOUNT</p>
         </div>
 
         {/* Stepper */}
@@ -76,31 +76,38 @@ const AddBuyerModal = ({ open, onClose }) => {
             {step === 1 && (
               <>
                 <div>
+                  <label className="block text-lg sm:text-xl font-semibold mb-2">Store Name</label>
+                  <div className="relative">
+                    <UserCircle size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter Store Name" />
+                  </div>
+                </div>
+                <div>
                   <label className="block text-lg sm:text-xl font-semibold mb-2">First Name</label>
                   <div className="relative">
                     <UserCircle size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter your First Name" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter First Name" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Middle Name (optional)</label>
                   <div className="relative">
                     <UserCircle size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter your Middle Name" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter Middle Name" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Last Name</label>
                   <div className="relative">
                     <UserCircle size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter your Last Name" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter Last Name" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Suffix (optional)</label>
                   <div className="relative">
                     <UserCircle size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter your Suffix" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter Suffix" />
                   </div>
                 </div>
               </>
@@ -112,21 +119,21 @@ const AddBuyerModal = ({ open, onClose }) => {
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Email Address (optional)</label>
                   <div className="relative">
                     <EnvelopeSimple size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter your Email Address" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter Email Address" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Contact Number</label>
                   <div className="relative">
                     <Phone size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter your Contact Number" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter Contact Number" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Address</label>
                   <div className="relative">
                     <MapPin size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter you Address" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter Address" />
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -152,14 +159,14 @@ const AddBuyerModal = ({ open, onClose }) => {
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Username</label>
                   <div className="relative">
                     <UserCircle size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter your Username" />
+                    <input className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-4 placeholder:text-base-content/40" placeholder="Enter Username" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Password</label>
                   <div className="relative">
                     <Lock size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input type={showPw ? "text" : "password"} className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-12 placeholder:text-base-content/40" placeholder="Enter your Password" />
+                    <input type={showPw ? "text" : "password"} className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-12 placeholder:text-base-content/40" placeholder="Enter Password" />
                     <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/70" onClick={() => setShowPw((v) => !v)}>
                       {showPw ? <EyeSlash size={22} /> : <Eye size={22} />}
                     </button>
@@ -169,7 +176,7 @@ const AddBuyerModal = ({ open, onClose }) => {
                   <label className="block text-lg sm:text-xl font-semibold mb-2">Confirm Password</label>
                   <div className="relative">
                     <Lock size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/70" />
-                    <input type={showPw2 ? "text" : "password"} className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-12 placeholder:text-base-content/40" placeholder="Re-enter your Password" />
+                    <input type={showPw2 ? "text" : "password"} className="w-full h-12 sm:h-14 rounded-full border-2 border-black pl-12 pr-12 placeholder:text-base-content/40" placeholder="Re-enter Password" />
                     <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/70" onClick={() => setShowPw2((v) => !v)}>
                       {showPw2 ? <EyeSlash size={22} /> : <Eye size={22} />}
                     </button>
@@ -194,12 +201,12 @@ const AddBuyerModal = ({ open, onClose }) => {
               ) : (
                 <span />
               )}
-            <button
-              className="btn rounded-full bg-primary text-primary-content px-8"
-              onClick={() => setStep((s) => Math.min(3, s + 1))}
-            >
-              {step === 3 ? "CONFIRM" : "NEXT"}
-            </button>
+              <button
+                className="btn rounded-full bg-primary text-primary-content px-8"
+                onClick={() => setStep((s) => Math.min(3, s + 1))}
+              >
+                {step === 3 ? "CONFIRM" : "NEXT"}
+              </button>
             </div>
           </div>
         </div>
@@ -208,6 +215,7 @@ const AddBuyerModal = ({ open, onClose }) => {
   );
 };
 
-export default AddBuyerModal;
+export default AddSellerModal;
+
 
 
