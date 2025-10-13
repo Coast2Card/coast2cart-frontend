@@ -73,7 +73,7 @@ const baseQueryWithFriendlyErrors = async (args, apiCtx, extraOptions) => {
 export const api = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithFriendlyErrors,
-  tagTypes: ["Products", "Users"],
+  tagTypes: ["Products", "Users", "Cart"],
   endpoints: (builder) => ({
     getAccounts: builder.query({
       query: (params) => ({
@@ -86,6 +86,92 @@ export const api = createApi({
         const roleCounts = response?.data?.roleCounts ?? null;
         return { accounts, pagination, roleCounts };
       },
+    }),
+    getCart: builder.query({
+      query: () => ({
+        url: "/cart",
+        method: "GET",
+      }),
+      providesTags: ["Cart"],
+      transformResponse: (response) => {
+        // Expect { success: boolean, data: array, cartTotal: number, itemCount: number, sellerCount: number }
+        const rawItems = Array.isArray(response?.data) ? response.data : [];
+        const items = rawItems.map((entry) => {
+          const item = entry?.item || {};
+          return {
+            id: entry?.itemId || entry?._id || item?._id || entry?.id,
+            name: item?.itemName || item?.name || entry?.name || "",
+            price:
+              item?.itemPrice != null
+                ? Number(item.itemPrice)
+                : entry?.price != null
+                ? Number(entry.price)
+                : 0,
+            image: item?.image || entry?.image || "",
+            quantity: Number(entry?.quantity) || 1,
+            totalPrice:
+              entry?.totalPrice != null ? Number(entry.totalPrice) : undefined,
+            raw: entry,
+          };
+        });
+        return {
+          items,
+          cartTotal: Number(response?.cartTotal) || 0,
+          itemCount: Number(response?.itemCount) || items.length,
+          sellerCount: Number(response?.sellerCount) || 0,
+          raw: response,
+        };
+      },
+    }),
+    getCartSummary: builder.query({
+      query: () => ({
+        url: "/cart/summary",
+        method: "GET",
+      }),
+      providesTags: ["Cart"],
+      transformResponse: (response) => {
+        const data = response?.data || response || {};
+        return {
+          itemCount: Number(data?.itemCount) || 0,
+          sellerCount: Number(data?.sellerCount) || 0,
+          cartTotal: Number(data?.cartTotal) || 0,
+          formattedTotal: data?.formattedTotal || undefined,
+        };
+      },
+    }),
+    addToCart: builder.mutation({
+      query: ({ itemId, quantity }) => ({
+        url: "/cart/add",
+        method: "POST",
+        body: { itemId, quantity },
+      }),
+      invalidatesTags: ["Cart"],
+      transformResponse: (response) => response?.data || response,
+    }),
+    removeFromCart: builder.mutation({
+      query: (itemId) => ({
+        url: `/cart/remove/${itemId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Cart"],
+      transformResponse: (response) => response?.data || response,
+    }),
+    clearCart: builder.mutation({
+      query: () => ({
+        url: "/cart/clear",
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Cart"],
+      transformResponse: (response) => response?.data || response,
+    }),
+    updateCartItem: builder.mutation({
+      query: ({ itemId, quantity }) => ({
+        url: `/cart/update`,
+        method: "PUT",
+        body: { itemId, quantity },
+      }),
+      invalidatesTags: ["Cart"],
+      transformResponse: (response) => response?.data || response,
     }),
     getItems: builder.query({
       query: (params) => ({
@@ -172,6 +258,12 @@ export const api = createApi({
 
 export const {
   useGetAccountsQuery,
+  useGetCartQuery,
+  useGetCartSummaryQuery,
+  useAddToCartMutation,
+  useRemoveFromCartMutation,
+  useClearCartMutation,
+  useUpdateCartItemMutation,
   useGetItemsQuery,
   useGetItemByIdQuery,
   useGetSouvenirsQuery,

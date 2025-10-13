@@ -21,6 +21,7 @@ import AdminLayout from "./components/AdminLayout";
 import Dashbord from "./pages/Admin/Dashboard";
 import BuyerAccountManagement from "./pages/Admin/BuyerAccountManagement";
 import SellerAccountManagement from "./pages/Admin/SellerAccountManagement";
+import AdminAccountManagement from "./pages/Admin/AdminAccountManagement";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
 
@@ -91,6 +92,7 @@ function App() {
           <Route index element={<Dashbord />} />
           <Route path="sellers" element={<SellerAccountManagement />} />
           <Route path="buyers" element={<BuyerAccountManagement />} />
+          <Route path="admins" element={<AdminAccountManagement />} />
         </Route>
         {/* Auth routes without shared layout */}
         <Route path="/login" element={<Login />} />

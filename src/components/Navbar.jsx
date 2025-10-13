@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useGetCartSummaryQuery } from "../services/api";
 import { UserCircle, SignOut } from "@phosphor-icons/react";
 import toast from "react-hot-toast";
 import { useState } from "react";
@@ -49,6 +50,9 @@ const Navbar = () => {
     return "/profile";
   };
   const profilePath = roleToProfilePath(currentUser?.role);
+  const { data: cartSummary } = useGetCartSummaryQuery(undefined, {
+    skip: !isLoggedIn,
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
@@ -98,12 +102,17 @@ const Navbar = () => {
               onClick={toggleChat}
               className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
             />
-            <Link to="/cart">
+            <Link to="/cart" className="relative">
               <img
                 src={cartIcon}
                 alt="Cart"
                 className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
               />
+              {cartSummary?.itemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] leading-none px-1.5 py-1 rounded-full">
+                  {cartSummary.itemCount}
+                </span>
+              )}
             </Link>
             {isLoggedIn ? (
               <div className="relative">

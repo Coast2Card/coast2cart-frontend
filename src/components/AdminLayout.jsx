@@ -4,10 +4,10 @@ import Topbar from "./admin/Topbar";
 
 const AdminLayout = () => {
   return (
-    <div className="min-h-screen bg-base-300 flex">
+    <div className="min-h-screen bg-base-300">
       {/* Sidebar */}
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="pl-86 flex flex-col min-h-screen">
         {/* Topbar */}
         <Topbar />
         {/* Main Content */}

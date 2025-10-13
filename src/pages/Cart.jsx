@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import {
+  useGetCartQuery,
+  useRemoveFromCartMutation,
+  useUpdateCartItemMutation,
+  useClearCartMutation,
+} from "../services/api";
+import CartSkeleton from "../components/skeleton/CartSkeleton";
 
 const CART_STORAGE_KEY = "cart_items";
 
@@ -8,57 +15,66 @@ const Cart = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
+  const { data: cartData, isLoading, isError, refetch } = useGetCartQuery();
 
+  // Load cart items from API
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(CART_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (!parsed || parsed.length === 0) {
-        const sample = [
-          { id: "sample-1", name: "Fresh Bangus", price: 199, quantity: 1 },
-          { id: "sample-2", name: "Sweet Shrimp", price: 249, quantity: 2 },
-          { id: "sample-3", name: "Premium Tuna", price: 349, quantity: 1 },
-        ];
-        setItems(sample);
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(sample));
-      } else {
-        setItems(parsed);
-      }
-    } catch {
-      setItems([]);
+    if (cartData && Array.isArray(cartData.items)) {
+      setItems(cartData.items);
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartData.items));
+      } catch {}
     }
-  }, []);
+  }, [cartData]);
 
   const persist = (next) => {
     setItems(next);
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(next));
   };
 
-  const updateQty = (id, delta) => {
-    persist(
-      items
-        .map((it) =>
-          it.id === id
-            ? {
-                ...it,
-                quantity: Math.max(1, Math.min(99, (it.quantity || 1) + delta)),
-              }
-            : it
-        )
-        .filter(Boolean)
+  const [removeFromCart] = useRemoveFromCartMutation();
+  const [updateCartItem] = useUpdateCartItemMutation();
+  const [clearCartApi] = useClearCartMutation();
+
+  const updateQty = async (id, delta) => {
+    const current = items.find((i) => i.id === id);
+    if (!current) return;
+    const nextQty = Math.max(1, Math.min(99, (current.quantity || 1) + delta));
+    const previous = items;
+    setItems(
+      items.map((it) => (it.id === id ? { ...it, quantity: nextQty } : it))
     );
+    try {
+      await updateCartItem({ itemId: id, quantity: nextQty }).unwrap();
+      await refetch();
+      toast.success("Quantity updated");
+    } catch (e) {
+      setItems(previous);
+      toast.error(e?.data?.message || "Failed to update quantity");
+    }
   };
 
-  const removeItem = (id) => {
-    const next = items.filter((it) => it.id !== id);
-    persist(next);
-    toast.success("Removed from cart");
+  const removeItem = async (id) => {
+    try {
+      await removeFromCart(id).unwrap();
+      toast.success("Removed from cart");
+      await refetch();
+    } catch (e) {
+      toast.error("Failed to remove item");
+    }
   };
 
-  const clearCart = () => {
-    persist([]);
-    setSelectedItems(new Set());
-    toast.success("Cart cleared");
+  const clearCart = async () => {
+    try {
+      await clearCartApi().unwrap();
+      setItems([]);
+      setSelectedItems(new Set());
+      toast.success("Cart cleared");
+      await refetch();
+    } catch (e) {
+      toast.error(e?.data?.message || "Failed to clear cart");
+    }
   };
 
   const toggleItemSelection = (id) => {
@@ -79,11 +95,28 @@ const Cart = () => {
     setSelectedItems(new Set());
   };
 
-  const deleteSelectedItems = () => {
-    const remainingItems = items.filter((item) => !selectedItems.has(item.id));
-    persist(remainingItems);
-    setSelectedItems(new Set());
-    toast.success(`${selectedItems.size} item(s) removed from cart`);
+  const deleteSelectedItems = async () => {
+    const ids = Array.from(selectedItems);
+    console.log("[Cart] deleteSelectedItems submit:", ids);
+    if (ids.length === 0) return;
+    setIsBulkRemoving(true);
+    let removed = 0;
+    try {
+      for (const id of ids) {
+        try {
+          console.log("[Cart] removeItem submit:", id);
+          await removeFromCart(id).unwrap();
+          removed += 1;
+        } catch (err) {
+          console.warn("[Cart] removeItem error (continuing):", err);
+        }
+      }
+      setSelectedItems(new Set());
+      await refetch();
+      toast.success(`${removed} item(s) removed from cart`);
+    } finally {
+      setIsBulkRemoving(false);
+    }
   };
 
   const selectedItemsList = useMemo(
@@ -105,6 +138,10 @@ const Cart = () => {
   );
   const total = subtotal + shipping;
 
+  const serverItemCount = cartData?.itemCount ?? items.length;
+  const serverSellerCount = cartData?.sellerCount ?? 0;
+  const serverCartTotal = cartData?.cartTotal ?? 0;
+
   const handleCheckout = () => {
     const isLoggedIn = Boolean(localStorage.getItem("auth_token"));
     if (!isLoggedIn) {
@@ -125,11 +162,40 @@ const Cart = () => {
 
   return (
     <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full min-h-screen">
-      <h1 className="text-xl sm:text-3xl font-bold text-black mb-6">
-        Your Cart ({items.length})
+      <h1 className="text-xl sm:text-3xl font-bold text-black mb-2">
+        Your Cart ({serverItemCount})
       </h1>
+      <div className="mb-6 text-sm text-base-content/60 flex items-center gap-3">
+        <span>
+          Seller count:{" "}
+          <span className="text-base-content font-medium">
+            {serverSellerCount}
+          </span>
+        </span>
+        <span className="opacity-30">|</span>
+        <span>
+          Cart total:{" "}
+          <span className="text-base-content font-medium">
+            ₱{Number(serverCartTotal).toFixed(2)}
+          </span>
+        </span>
+      </div>
 
-      {items.length === 0 ? (
+      {isLoading ? (
+        <CartSkeleton />
+      ) : isError ? (
+        <div className="text-center py-20 bg-base-200 rounded-xl">
+          <p className="text-black/70 mb-4">
+            Failed to load cart. Please try again.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="bg-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      ) : items.length === 0 ? (
         <div className="text-center py-20 bg-base-200 rounded-xl">
           <p className="text-black/70 mb-4">Your cart is empty.</p>
           <button
@@ -163,6 +229,7 @@ const Cart = () => {
                   <button
                     onClick={deleteSelectedItems}
                     className="btn btn-sm btn-outline btn-error"
+                    disabled={isBulkRemoving}
                   >
                     <svg
                       className="w-4 h-4"
