@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useGetCartQuery } from "../services/api";
+import CartSkeleton from "../components/skeleton/CartSkeleton";
 
 const CART_STORAGE_KEY = "cart_items";
 
@@ -8,26 +10,17 @@ const Cart = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const { data: cartData, isLoading, isError, refetch } = useGetCartQuery();
 
+  // Load cart items from API
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(CART_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (!parsed || parsed.length === 0) {
-        const sample = [
-          { id: "sample-1", name: "Fresh Bangus", price: 199, quantity: 1 },
-          { id: "sample-2", name: "Sweet Shrimp", price: 249, quantity: 2 },
-          { id: "sample-3", name: "Premium Tuna", price: 349, quantity: 1 },
-        ];
-        setItems(sample);
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(sample));
-      } else {
-        setItems(parsed);
-      }
-    } catch {
-      setItems([]);
+    if (cartData && Array.isArray(cartData.items)) {
+      setItems(cartData.items);
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartData.items));
+      } catch {}
     }
-  }, []);
+  }, [cartData]);
 
   const persist = (next) => {
     setItems(next);
@@ -105,6 +98,10 @@ const Cart = () => {
   );
   const total = subtotal + shipping;
 
+  const serverItemCount = cartData?.itemCount ?? items.length;
+  const serverSellerCount = cartData?.sellerCount ?? 0;
+  const serverCartTotal = cartData?.cartTotal ?? 0;
+
   const handleCheckout = () => {
     const isLoggedIn = Boolean(localStorage.getItem("auth_token"));
     if (!isLoggedIn) {
@@ -125,11 +122,46 @@ const Cart = () => {
 
   return (
     <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full min-h-screen">
-      <h1 className="text-xl sm:text-3xl font-bold text-black mb-6">
-        Your Cart ({items.length})
+      <h1 className="text-xl sm:text-3xl font-bold text-black mb-2">
+        Your Cart ({serverItemCount})
       </h1>
+      <div className="mb-6 text-sm text-base-content/60 flex items-center gap-3">
+        <span>
+          Seller count:{" "}
+          <span className="text-base-content font-medium">
+            {serverSellerCount}
+          </span>
+        </span>
+        <span className="opacity-30">|</span>
+        <span>
+          Cart total:{" "}
+          <span className="text-base-content font-medium">
+            ₱{Number(serverCartTotal).toFixed(2)}
+          </span>
+        </span>
+        <button
+          onClick={() => refetch()}
+          className="ml-auto btn btn-xs btn-outline"
+        >
+          Refresh
+        </button>
+      </div>
 
-      {items.length === 0 ? (
+      {isLoading ? (
+        <CartSkeleton />
+      ) : isError ? (
+        <div className="text-center py-20 bg-base-200 rounded-xl">
+          <p className="text-black/70 mb-4">
+            Failed to load cart. Please try again.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="bg-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      ) : items.length === 0 ? (
         <div className="text-center py-20 bg-base-200 rounded-xl">
           <p className="text-black/70 mb-4">Your cart is empty.</p>
           <button

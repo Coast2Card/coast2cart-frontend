@@ -75,6 +75,23 @@ export const api = createApi({
   baseQuery: baseQueryWithFriendlyErrors,
   tagTypes: ["Products", "Users"],
   endpoints: (builder) => ({
+    getCart: builder.query({
+      query: () => ({
+        url: "/cart",
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Expect { success: boolean, data: array, cartTotal: number, itemCount: number, sellerCount: number }
+        const items = Array.isArray(response?.data) ? response.data : [];
+        return {
+          items,
+          cartTotal: Number(response?.cartTotal) || 0,
+          itemCount: Number(response?.itemCount) || items.length,
+          sellerCount: Number(response?.sellerCount) || 0,
+          raw: response,
+        };
+      },
+    }),
     getItems: builder.query({
       query: (params) => ({
         url: "/items",
@@ -159,6 +176,7 @@ export const api = createApi({
 });
 
 export const {
+  useGetCartQuery,
   useGetItemsQuery,
   useGetItemByIdQuery,
   useGetSouvenirsQuery,
