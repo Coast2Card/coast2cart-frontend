@@ -67,7 +67,7 @@ const Souvenirs = () => {
   ];
 
   return (
-    <div className="px-4 py-6 sm:px-0 max-w-8xl mx-auto">
+    <div className="max-w-8xl mx-auto px-4 md:px-8 py-8 md:py-12">
       <div className="flex flex-col lg:flex-row items-center justify-center gap-12 mb-16 w-full mx-auto mt-16">
         {/* Left side - Text content */}
         <div className="lg:w-1/2 text-left">
