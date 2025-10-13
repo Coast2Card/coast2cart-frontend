@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { useGetCartQuery } from "../services/api";
+import {
+  useGetCartQuery,
+  useRemoveFromCartMutation,
+  useUpdateCartItemMutation,
+  useClearCartMutation,
+} from "../services/api";
 import CartSkeleton from "../components/skeleton/CartSkeleton";
 
 const CART_STORAGE_KEY = "cart_items";
@@ -10,6 +15,7 @@ const Cart = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
   const { data: cartData, isLoading, isError, refetch } = useGetCartQuery();
 
   // Load cart items from API
@@ -27,31 +33,48 @@ const Cart = () => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(next));
   };
 
-  const updateQty = (id, delta) => {
-    persist(
-      items
-        .map((it) =>
-          it.id === id
-            ? {
-                ...it,
-                quantity: Math.max(1, Math.min(99, (it.quantity || 1) + delta)),
-              }
-            : it
-        )
-        .filter(Boolean)
+  const [removeFromCart] = useRemoveFromCartMutation();
+  const [updateCartItem] = useUpdateCartItemMutation();
+  const [clearCartApi] = useClearCartMutation();
+
+  const updateQty = async (id, delta) => {
+    const current = items.find((i) => i.id === id);
+    if (!current) return;
+    const nextQty = Math.max(1, Math.min(99, (current.quantity || 1) + delta));
+    const previous = items;
+    setItems(
+      items.map((it) => (it.id === id ? { ...it, quantity: nextQty } : it))
     );
+    try {
+      await updateCartItem({ itemId: id, quantity: nextQty }).unwrap();
+      await refetch();
+      toast.success("Quantity updated");
+    } catch (e) {
+      setItems(previous);
+      toast.error(e?.data?.message || "Failed to update quantity");
+    }
   };
 
-  const removeItem = (id) => {
-    const next = items.filter((it) => it.id !== id);
-    persist(next);
-    toast.success("Removed from cart");
+  const removeItem = async (id) => {
+    try {
+      await removeFromCart(id).unwrap();
+      toast.success("Removed from cart");
+      await refetch();
+    } catch (e) {
+      toast.error("Failed to remove item");
+    }
   };
 
-  const clearCart = () => {
-    persist([]);
-    setSelectedItems(new Set());
-    toast.success("Cart cleared");
+  const clearCart = async () => {
+    try {
+      await clearCartApi().unwrap();
+      setItems([]);
+      setSelectedItems(new Set());
+      toast.success("Cart cleared");
+      await refetch();
+    } catch (e) {
+      toast.error(e?.data?.message || "Failed to clear cart");
+    }
   };
 
   const toggleItemSelection = (id) => {
@@ -72,11 +95,28 @@ const Cart = () => {
     setSelectedItems(new Set());
   };
 
-  const deleteSelectedItems = () => {
-    const remainingItems = items.filter((item) => !selectedItems.has(item.id));
-    persist(remainingItems);
-    setSelectedItems(new Set());
-    toast.success(`${selectedItems.size} item(s) removed from cart`);
+  const deleteSelectedItems = async () => {
+    const ids = Array.from(selectedItems);
+    console.log("[Cart] deleteSelectedItems submit:", ids);
+    if (ids.length === 0) return;
+    setIsBulkRemoving(true);
+    let removed = 0;
+    try {
+      for (const id of ids) {
+        try {
+          console.log("[Cart] removeItem submit:", id);
+          await removeFromCart(id).unwrap();
+          removed += 1;
+        } catch (err) {
+          console.warn("[Cart] removeItem error (continuing):", err);
+        }
+      }
+      setSelectedItems(new Set());
+      await refetch();
+      toast.success(`${removed} item(s) removed from cart`);
+    } finally {
+      setIsBulkRemoving(false);
+    }
   };
 
   const selectedItemsList = useMemo(
@@ -139,12 +179,6 @@ const Cart = () => {
             ₱{Number(serverCartTotal).toFixed(2)}
           </span>
         </span>
-        <button
-          onClick={() => refetch()}
-          className="ml-auto btn btn-xs btn-outline"
-        >
-          Refresh
-        </button>
       </div>
 
       {isLoading ? (
@@ -195,6 +229,7 @@ const Cart = () => {
                   <button
                     onClick={deleteSelectedItems}
                     className="btn btn-sm btn-outline btn-error"
+                    disabled={isBulkRemoving}
                   >
                     <svg
                       className="w-4 h-4"
