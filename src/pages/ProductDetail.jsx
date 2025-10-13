@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useGetItemByIdQuery } from "../services/api";
+import { useGetItemByIdQuery, useAddToCartMutation } from "../services/api";
+import toast from "react-hot-toast";
 import SellerSection from "../components/productDetail/SellerSection";
 import RelatedProducts from "../components/productDetail/RelatedProducts";
 import CartConfirmationModal from "../components/productDetail/CartConfirmationModal";
@@ -14,6 +15,7 @@ const ProductDetail = () => {
   const [showCartModal, setShowCartModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
 
   // Fetch item by ID from API
   const {
@@ -115,15 +117,28 @@ const ProductDetail = () => {
     }
   };
 
-  // Handle add to cart with animation
-  const handleAddToCart = () => {
-    setShowAnimation(true);
-
-    // Show modal after animation completes
-    setTimeout(() => {
-      setShowCartModal(true);
-      setShowAnimation(false);
-    }, 1000); // Animation duration
+  // Handle add to cart with debug logs
+  const handleAddToCart = async () => {
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      console.log("[AddToCart] No auth token → redirecting to login");
+      navigate("/login");
+      return;
+    }
+    const payload = { itemId, quantity };
+    console.log("[AddToCart] Submitting:", payload);
+    try {
+      const res = await addToCart(payload).unwrap();
+      console.log("[AddToCart] Success:", res);
+      setShowAnimation(true);
+      setTimeout(() => {
+        setShowCartModal(true);
+        setShowAnimation(false);
+      }, 800);
+    } catch (e) {
+      console.error("[AddToCart] Error:", e);
+      toast.error(e?.data?.message || "Failed to add to cart");
+    }
   };
 
   // Prepare product data for modal
@@ -249,10 +264,11 @@ const ProductDetail = () => {
                   </button>
                 </div>
                 <button
-                  className="flex-1 h-11 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold"
+                  className="flex-1 h-11 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold disabled:opacity-60"
                   onClick={handleAddToCart}
+                  disabled={isAdding}
                 >
-                  Add to Cart
+                  {isAdding ? "Adding..." : "Add to Cart"}
                 </button>
               </div>
               <button className="w-full h-11 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium">

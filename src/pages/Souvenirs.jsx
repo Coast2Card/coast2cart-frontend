@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useGetSouvenirsQuery } from "../services/api";
+import { useGetSouvenirsQuery, useAddToCartMutation } from "../services/api";
+import CartConfirmationModal from "../components/productDetail/CartConfirmationModal";
+import toast from "react-hot-toast";
 import FishImage from "../assets/souvenir-items/fish.png";
 import bisugo from "../assets/images/bisugo.png";
 
@@ -14,6 +16,9 @@ const Souvenirs = () => {
   const { data, isLoading, isError } = useGetSouvenirsQuery({
     // Add any additional params here if needed
   });
+  const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [modalProduct, setModalProduct] = useState(null);
 
   const allSouvenirs = data?.items || [];
 
@@ -213,18 +218,19 @@ const Souvenirs = () => {
         ) : filteredAndSortedSouvenirs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {filteredAndSortedSouvenirs.map((souvenir) => (
-              <Link
+              <div
                 key={souvenir.id || souvenir._id || souvenir.name}
-                to={`/seafood/${souvenir.id || souvenir._id}`}
                 className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
-                  <img
-                    src={souvenir.imageUrl || souvenir.image || bisugo}
-                    alt={souvenir.itemName || souvenir.name || "Souvenir"}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <Link to={`/seafood/${souvenir.id || souvenir._id}`}>
+                  <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                    <img
+                      src={souvenir.imageUrl || souvenir.image || bisugo}
+                      alt={souvenir.itemName || souvenir.name || "Souvenir"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </Link>
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-outfit font-bold text-lg text-success">
@@ -244,8 +250,45 @@ const Souvenirs = () => {
                       {souvenir.description}
                     </p>
                   )}
+                  <div className="mt-3">
+                    <button
+                      disabled={isAdding}
+                      onClick={async () => {
+                        const itemId = souvenir.id || souvenir._id;
+                        if (!itemId) return;
+                        try {
+                          console.log("[AddToCart:Souvenirs] Submitting:", {
+                            itemId,
+                            quantity: 1,
+                          });
+                          const res = await addToCart({
+                            itemId,
+                            quantity: 1,
+                          }).unwrap();
+                          console.log("[AddToCart:Souvenirs] Success:", res);
+                          setModalProduct({
+                            name: souvenir.itemName || souvenir.name,
+                            description:
+                              souvenir.description || "Local souvenir",
+                            price: souvenir.itemPrice ?? souvenir.price ?? 0,
+                            image:
+                              souvenir.imageUrl || souvenir.image || bisugo,
+                          });
+                          setShowCartModal(true);
+                        } catch (e) {
+                          console.error("[AddToCart:Souvenirs] Error:", e);
+                          toast.error(
+                            e?.data?.message || "Failed to add to cart"
+                          );
+                        }
+                      }}
+                      className="w-full h-10 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold text-sm"
+                    >
+                      {isAdding ? "Adding..." : "Add to Cart"}
+                    </button>
+                  </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         ) : (
@@ -269,6 +312,13 @@ const Souvenirs = () => {
           </div>
         )}
       </div>
+      <CartConfirmationModal
+        isOpen={showCartModal}
+        onClose={() => setShowCartModal(false)}
+        product={modalProduct || {}}
+        seller={{ name: "", profileImage: "/src/assets/icons/profile.png" }}
+        quantity={1}
+      />
     </div>
   );
 };

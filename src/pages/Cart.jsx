@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { useGetCartQuery } from "../services/api";
+import {
+  useGetCartQuery,
+  useRemoveFromCartMutation,
+  useUpdateCartItemMutation,
+  useClearCartMutation,
+} from "../services/api";
 import CartSkeleton from "../components/skeleton/CartSkeleton";
 
 const CART_STORAGE_KEY = "cart_items";
@@ -27,31 +32,48 @@ const Cart = () => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(next));
   };
 
-  const updateQty = (id, delta) => {
-    persist(
-      items
-        .map((it) =>
-          it.id === id
-            ? {
-                ...it,
-                quantity: Math.max(1, Math.min(99, (it.quantity || 1) + delta)),
-              }
-            : it
-        )
-        .filter(Boolean)
+  const [removeFromCart] = useRemoveFromCartMutation();
+  const [updateCartItem] = useUpdateCartItemMutation();
+  const [clearCartApi] = useClearCartMutation();
+
+  const updateQty = async (id, delta) => {
+    const current = items.find((i) => i.id === id);
+    if (!current) return;
+    const nextQty = Math.max(1, Math.min(99, (current.quantity || 1) + delta));
+    const previous = items;
+    setItems(
+      items.map((it) => (it.id === id ? { ...it, quantity: nextQty } : it))
     );
+    try {
+      await updateCartItem({ itemId: id, quantity: nextQty }).unwrap();
+      await refetch();
+      toast.success("Quantity updated");
+    } catch (e) {
+      setItems(previous);
+      toast.error(e?.data?.message || "Failed to update quantity");
+    }
   };
 
-  const removeItem = (id) => {
-    const next = items.filter((it) => it.id !== id);
-    persist(next);
-    toast.success("Removed from cart");
+  const removeItem = async (id) => {
+    try {
+      await removeFromCart(id).unwrap();
+      toast.success("Removed from cart");
+      await refetch();
+    } catch (e) {
+      toast.error("Failed to remove item");
+    }
   };
 
-  const clearCart = () => {
-    persist([]);
-    setSelectedItems(new Set());
-    toast.success("Cart cleared");
+  const clearCart = async () => {
+    try {
+      await clearCartApi().unwrap();
+      setItems([]);
+      setSelectedItems(new Set());
+      toast.success("Cart cleared");
+      await refetch();
+    } catch (e) {
+      toast.error(e?.data?.message || "Failed to clear cart");
+    }
   };
 
   const toggleItemSelection = (id) => {
@@ -72,11 +94,27 @@ const Cart = () => {
     setSelectedItems(new Set());
   };
 
-  const deleteSelectedItems = () => {
-    const remainingItems = items.filter((item) => !selectedItems.has(item.id));
-    persist(remainingItems);
-    setSelectedItems(new Set());
-    toast.success(`${selectedItems.size} item(s) removed from cart`);
+  const deleteSelectedItems = async () => {
+    const ids = Array.from(selectedItems);
+    console.log("[Cart] deleteSelectedItems submit:", ids);
+    if (ids.length === 0) return;
+    try {
+      const results = await Promise.all(
+        ids.map(async (id) => {
+          console.log("[Cart] removeItem submit:", id);
+          const res = await removeFromCart(id).unwrap();
+          console.log("[Cart] removeItem success:", { id, res });
+          return res;
+        })
+      );
+      console.log("[Cart] deleteSelectedItems all success:", results.length);
+      setSelectedItems(new Set());
+      await refetch();
+      toast.success(`${ids.length} item(s) removed from cart`);
+    } catch (e) {
+      console.error("[Cart] deleteSelectedItems error:", e);
+      toast.error(e?.data?.message || "Failed to remove selected items");
+    }
   };
 
   const selectedItemsList = useMemo(
