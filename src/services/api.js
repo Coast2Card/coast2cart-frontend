@@ -7,7 +7,8 @@ const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers) => {
     const token = localStorage.getItem("auth_token");
     if (token) {
-      headers.set("authorization", `Bearer ${token}`);
+      headers.set("Authorization", `Bearer ${token}`);
+      headers.set("x-access-token", token);
     }
     return headers;
   },
