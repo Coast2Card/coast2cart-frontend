@@ -22,7 +22,7 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="bg-primary text-primary-content w-80 min-h-screen flex flex-col mt-4 mb-4 ml-4 rounded-2xl shadow-xl">
+    <aside className="bg-primary text-primary-content w-80  flex flex-col mt-3 mb-3 ml-3 rounded-2xl shadow-xl fixed top-0 left-0 bottom-0 z-40">
       <div className="h-24 flex items-center justify-center px-4 border-b border-primary/40">
         <Link to="/" className="inline-flex items-center gap-2">
           <img src={logo} alt="Coast2Cart" className="h-23 w-auto" />
@@ -52,6 +52,13 @@ const Sidebar = () => {
           label="Seller Account Management"
           iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
         />
+        <AdminNavItem
+          to="/admin/admins"
+          iconSrc={person}
+          iconAlt="Admins"
+          label="Admin Account Management"
+          iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
+        />
       </nav>
 
       <div className="mt-auto p-4 border-t border-primary/40 relative">
@@ -78,7 +85,9 @@ const Sidebar = () => {
           </div>
           <div className="leading-tight text-left">
             <p className="font-semibold">Admin1</p>
-            <p className="text-primary-content/80 text-sm">admin123@email.com</p>
+            <p className="text-primary-content/80 text-sm">
+              admin123@email.com
+            </p>
           </div>
         </button>
       </div>
