@@ -1,14 +1,25 @@
+import { useLocation } from "react-router-dom";
 import notification from "../../assets/icons/notification.png";
 import recent from "../../assets/icons/recent.png";
 import searchIcon from "../../assets/icons/search.png";
 
 const Topbar = () => {
+  const location = useLocation();
+  const path = location.pathname;
+  let current = "Dashboard";
+  if (path.startsWith("/admin/")) {
+    const sub = path.split("/")[2] || "";
+    if (sub === "buyers") current = "Buyer Account Management";
+    else if (sub === "sellers") current = "Seller Account Management";
+    else current = "Dashboard";
+  }
+
   return (
     <div className="flex items-center justify-between h-20 px-6 bg-base-300">
       <div className="breadcrumbs text-sm">
         <ul>
           <li>Coast2Cart</li>
-          <li>Dashboard</li>
+          <li>{current}</li>
         </ul>
       </div>
       <div className="flex items-center gap-4">

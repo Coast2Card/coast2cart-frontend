@@ -108,6 +108,27 @@ h6 {
   .border-wave {
     border-color: var(--color-wave);
   }
+  /* Row color utilities for admin tables */
+  .bg-row-alt {
+    background-color: #a6adbf;
+  }
+  .bg-row-alt-5 {
+    background-color: rgba(166, 173, 191, 0.05);
+  }
+  .border-row-outline {
+    border-color: #dfe3ea;
+  }
+  /* Apply row outline color to inner table grid lines */
+  .table-row-outline th,
+  .table-row-outline td {
+    border-color: #dfe3ea;
+  }
+  .table-row-outline thead tr {
+    border-bottom: 1px solid #dfe3ea;
+  }
+  .table-row-outline tbody tr + tr {
+    border-top: 1px solid #dfe3ea;
+  }
   .bg-primary {
     background-color: var(--color-primary);
   }
