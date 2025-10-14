@@ -313,7 +313,6 @@ const SellerAccountManagement = () => {
                           )}
 
                           {(row.status === "pending_admin" ||
-                            row.status === "pending_otp_admin" ||
                             row.status === "pending") && (
                             <button
                               className="btn btn-xs bg-success text-white border border-success"
