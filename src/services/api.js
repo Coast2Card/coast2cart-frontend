@@ -76,6 +76,14 @@ export const api = createApi({
   baseQuery: baseQueryWithFriendlyErrors,
   tagTypes: ["Products", "Users", "Cart"],
   endpoints: (builder) => ({
+    createSellerAccount: builder.mutation({
+      query: (formData) => ({
+        url: "/accounts/seller",
+        method: "POST",
+        body: formData, // FormData with personal info, credentials, and file
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
     deleteAccount: builder.mutation({
       query: (accountId) => ({
         url: `/accounts/${accountId}`,
@@ -360,6 +368,7 @@ export const {
   useGetAccountByIdQuery,
   useGetAccountsQuery,
   useGetAdminAccountsQuery,
+  useCreateSellerAccountMutation,
   useCreateAdminAccountMutation,
   useApproveSellerMutation,
   useRejectSellerMutation,

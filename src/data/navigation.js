@@ -1,3 +1,9 @@
+// Import images as modules for proper Vite processing
+import dalagangBukid from "../assets/images/dalagang_bukid.png";
+import bangus from "../assets/images/bangus.png";
+import bisugo from "../assets/images/bisugo.png";
+import hasaHasa from "../assets/images/hasa_hasa.jpg";
+
 // Navigation links data
 export const navLinks = [
   { path: "/", label: "Home" },
@@ -15,27 +21,27 @@ export const freshCatchItems = [
     price: "₱360/kg",
     name: "Dalagang Bukid Bilog",
     description: "Fresh Chilled Twinstripe Fusilier",
-    image: "/src/assets/images/dalagang_bukid.png",
+    image: dalagangBukid,
   },
   {
     id: 2,
     price: "₱420/kg",
     name: "Bangus",
     description: "Fresh milkfish from local farms",
-    image: "/src/assets/images/bangus.png",
+    image: bangus,
   },
   {
     id: 3,
     price: "₱520/kg",
     name: "Bisugo",
     description: "Premium cuts, freshly caught",
-    image: "/src/assets/images/bisugo.png",
+    image: bisugo,
   },
   {
     id: 4,
     price: "₱300/kg",
     name: "Hasa-hasa",
     description: "Locally sourced mackerel",
-    image: "/src/assets/images/hasa_hasa.jpg",
+    image: hasaHasa,
   },
 ];
