@@ -42,7 +42,11 @@ const ChatPopup = () => {
   // Fetch messages for selected chat
   const { data: chatMessages, isLoading: isLoadingMessages, refetch: refetchMessages } = useGetChatMessagesQuery(
     { chatRoomId: selectedChatId, page: 1, limit: 50 },
-    { skip: !selectedChatId }
+    {
+      skip: !selectedChatId,
+      // Poll for new messages every 3 seconds when a chat is selected
+      pollingInterval: selectedChatId ? 3000 : 0,
+    }
   );
 
   // Mutations
@@ -50,26 +54,66 @@ const ChatPopup = () => {
   const [markAsRead] = useMarkMessagesAsReadMutation();
 
   // Helper functions
-  const getSenderInfo = (senderId) => {
-    if (senderId === currentUser?._id || senderId === currentUser?.id) {
-      return currentUser;
-    }
-    const currentChat = getCurrentChat();
-    if (currentChat?.participants) {
-      const participant = currentChat.participants.find(p => 
-        p._id === senderId || p.id === senderId
-      );
-      return participant || { username: 'Unknown User', profilePicture: null };
-    }
-    return { username: 'Unknown User', profilePicture: null };
-  };
-
   const getCurrentChat = () => {
     return chatRooms.find(chat => (chat._id || chat.id) === selectedChatId);
   };
 
   const getCurrentChatMessages = () => {
     return chatMessages?.messages || [];
+  };
+
+  // Helper function to format date separators
+  const getDateLabel = (date) => {
+    const messageDate = new Date(date);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Reset time parts for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+    yesterday.setHours(0, 0, 0, 0);
+    messageDate.setHours(0, 0, 0, 0);
+
+    if (messageDate.getTime() === today.getTime()) {
+      return 'TODAY';
+    } else if (messageDate.getTime() === yesterday.getTime()) {
+      return 'YESTERDAY';
+    } else {
+      return messageDate.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+  };
+
+  // Group messages by date
+  const groupMessagesByDate = (messages) => {
+    const groups = [];
+    let currentDate = null;
+    let currentGroup = [];
+
+    messages.forEach((msg) => {
+      const msgDate = new Date(msg.createdAt);
+      msgDate.setHours(0, 0, 0, 0);
+      const msgDateString = msgDate.toDateString();
+
+      if (currentDate !== msgDateString) {
+        if (currentGroup.length > 0) {
+          groups.push({ date: currentDate, messages: currentGroup });
+        }
+        currentDate = msgDateString;
+        currentGroup = [msg];
+      } else {
+        currentGroup.push(msg);
+      }
+    });
+
+    if (currentGroup.length > 0) {
+      groups.push({ date: currentDate, messages: currentGroup });
+    }
+
+    return groups;
   };
 
   const getTotalUnreadCount = () => {
@@ -180,12 +224,12 @@ const ChatPopup = () => {
     e.preventDefault();
     if (message.trim() && selectedChatId && !sendingMessage) {
       try {
-        const result = await sendMessage({
+        await sendMessage({
           chatRoomId: selectedChatId,
           messageType: 'text',
           content: { text: message }
         }).unwrap();
-        
+
         setMessage('');
         // Refetch both messages and chat rooms to update the UI
         refetchMessages();
@@ -238,7 +282,7 @@ const ChatPopup = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-orange-500">
-                Chat <span className="text-black text-sm">({getTotalUnreadCount()})</span>
+                Chat {getTotalUnreadCount() > 0 && <span className="text-black text-sm">({getTotalUnreadCount()})</span>}
               </h2>
               <div className="relative sort-menu-container">
                 <button 
@@ -351,12 +395,15 @@ const ChatPopup = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2">
                             <h3 className="font-bold text-black truncate">{otherParticipant.username}</h3>
+                            {otherParticipant.isOnline && (
+                              <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" title="Online"></span>
+                            )}
                           </div>
                           <p className="text-sm text-gray-600 truncate">
-                            {typeof chat.lastMessage === 'string' 
-                              ? chat.lastMessage 
-                              : chat.lastMessage?.content?.text || 
-                                chat.lastMessage?.message || 
+                            {typeof chat.lastMessage === 'string'
+                              ? chat.lastMessage
+                              : chat.lastMessage?.content?.text ||
+                                chat.lastMessage?.message ||
                                 chat.lastMessage?.text ||
                                 'No messages yet'}
                           </p>
@@ -435,9 +482,10 @@ const ChatPopup = () => {
                         <div>
                           <div className="flex items-center space-x-2">
                             <h3 className="font-bold text-black">{otherParticipant.username}</h3>
+                            <span className={`w-2 h-2 rounded-full ${otherParticipant.isOnline ? 'bg-green-500' : 'bg-gray-400'}`} title={otherParticipant.isOnline ? 'Online' : 'Offline'}></span>
                           </div>
-                          <p className="text-sm text-gray-500">
-                            {otherParticipant.isOnline ? '• Active' : '• Offline'}
+                          <p className={`text-sm ${otherParticipant.isOnline ? 'text-green-600' : 'text-gray-500'}`}>
+                            {otherParticipant.isOnline ? 'Active now' : otherParticipant.lastSeen ? `Last seen ${new Date(otherParticipant.lastSeen).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : 'Offline'}
                           </p>
                         </div>
                       </div>
@@ -447,22 +495,25 @@ const ChatPopup = () => {
               </div>
 
               {/* Messages Area - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4">
                 {isLoadingMessages ? (
                   <div className="text-center text-gray-500">Loading messages...</div>
                 ) : getCurrentChatMessages().length === 0 ? (
                   <div className="text-center text-gray-500">No messages yet. Start the conversation!</div>
                 ) : (
                   <>
-                    {/* Date Separator */}
-                    <div className="flex justify-center">
-                      <span className="bg-gray-200 text-black px-3 py-1 rounded-full text-xs font-bold">
-                        TODAY
-                      </span>
-                    </div>
+                    {/* Messages grouped by date */}
+                    {groupMessagesByDate(getCurrentChatMessages()).map((group, groupIndex) => (
+                      <div key={groupIndex} className="space-y-3 mb-6">
+                        {/* Date Separator */}
+                        <div className="flex justify-center mb-6">
+                          <span className="bg-gray-200 text-black px-3 py-1 rounded-full text-xs font-bold">
+                            {getDateLabel(group.messages[0].createdAt)}
+                          </span>
+                        </div>
 
-                    {/* Messages */}
-                    {getCurrentChatMessages().map((msg) => {
+                        {/* Messages for this date */}
+                        {group.messages.map((msg) => {
                       // Extract sender ID (handles object or string)
                       let messageSenderId;
                       if (typeof msg.senderId === 'object' && msg.senderId !== null) {
@@ -501,21 +552,40 @@ const ChatPopup = () => {
                             </div>
                           ) : (
                             <div
-                              className={`rounded-2xl px-4 py-2 max-w-xs shadow-lg ${
+                              className={`rounded-2xl px-4 py-3 max-w-xs shadow-lg transition-opacity ${
                                 isCurrentUser
                                   ? 'bg-blue-500 text-white'
-                                  : 'bg-white border border-gray-300 text-black'
+                                  : msg.isRead
+                                    ? 'bg-white border border-gray-300 text-black'
+                                    : 'bg-gray-50 border border-gray-400 text-black font-semibold'
                               }`}
                             >
-                              <p>{msg.content?.text || msg.message || ''}</p>
-                              <span className={`text-xs ${isCurrentUser ? 'text-blue-100' : 'text-gray-500'}`}>
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                              <p className="leading-relaxed">{msg.content?.text || msg.message || ''}</p>
+                              <div className="flex items-center justify-between mt-2">
+                                <span className={`text-xs ${isCurrentUser ? 'text-blue-100' : 'text-gray-500'}`}>
+                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                {isCurrentUser && (
+                                  <span className="text-xs ml-2">
+                                    {msg.isRead ? (
+                                      <span className="text-blue-100" title="Seen">
+                                        ✓✓
+                                      </span>
+                                    ) : (
+                                      <span className="text-blue-200" title="Delivered">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
                       );
                     })}
+                      </div>
+                    ))}
                     <div ref={messagesEndRef} />
                   </>
                 )}
