@@ -223,6 +223,22 @@ export const api = createApi({
           ? response
           : [];
         const pagination = response?.pagination || null;
+        const categoryTotalItems = response?.data?.categoryTotalItems ?? response?.categoryTotalItems ?? null;
+        return { items, pagination, categoryTotalItems };
+      },
+    }),
+    getSellerItems: builder.query({
+      query: (sellerId) => ({
+        url: `/items/seller/${sellerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        const items = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+          ? response
+          : [];
+        const pagination = response?.pagination || null;
         return { items, pagination };
       },
     }),
@@ -258,6 +274,34 @@ export const api = createApi({
         result?.map?.((p) => ({ type: "Products", id: p.id })) ?? [
           { type: "Products", id: "LIST" },
         ],
+    }),
+    getSellerReviews: builder.query({
+      query: (sellerId) => ({
+        url: `/reviews/seller/${sellerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        const raw = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+          ? response
+          : [];
+        const reviews = raw.map((r) => ({
+          id: r?._id || r?.id,
+          reviewerName: r?.buyer || "Anonymous",
+          created: (r?.createdAt || "").slice(0, 10),
+          text: r?.reviewText || "",
+          rating:
+            r?.stars != null
+              ? Number(r.stars)
+              : r?.score != null
+              ? Number(r.score)
+              : undefined,
+          raw: r,
+        }));
+        const pagination = response?.pagination || null;
+        return { reviews, pagination };
+      },
     }),
     login: builder.mutation({
       query: (credentials) => ({
@@ -306,9 +350,11 @@ export const {
   useClearCartMutation,
   useUpdateCartItemMutation,
   useGetItemsQuery,
+  useGetSellerItemsQuery,
   useGetItemByIdQuery,
   useGetSouvenirsQuery,
   useGetProductsQuery,
+  useGetSellerReviewsQuery,
   useLoginMutation,
   useSignupMutation,
   useVerifyOtpMutation,

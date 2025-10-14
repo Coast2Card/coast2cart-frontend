@@ -1,32 +1,57 @@
 import React from "react";
+import { useGetItemByIdQuery, useGetSellerReviewsQuery } from "../../services/api";
+import { Star } from "@phosphor-icons/react";
 
-const reviews = [
-  {
-    name: "Claudine Co",
-    time: "2 days ago",
-    text: "Fresh bangus! Very good quality and the seller was very accommodating. Will definitely buy again!",
-  },
-  {
-    name: "Jammy Cruz",
-    time: "1 week ago",
-    text: "Best seafood in Baybayon! Always fresh and reasonably priced. Highly recommended!",
-  },
-  {
-    name: "Gela Alonte",
-    time: "2 weeks ago",
-    text: "Good service and fresh catch. The shrimp was excellent for my family dinner.",
-  },
-];
+// Reviews are fetched from API; stars reflect backend rating
 
-const StarRow = () => (
-  <div className="flex gap-1 text-[#FFB400]">
-    {Array.from({ length: 5 }).map((_, i) => (
-      <span key={i}>★</span>
-    ))}
-  </div>
-);
+const StarRow = ({ rating = 0 }) => {
+  const filled = Math.round(Number(rating) || 0);
+  return (
+    <div className="flex items-center gap-1 text-[#FFB400]">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          size={16}
+          weight={i < filled ? "fill" : "regular"}
+          className={i < filled ? "text-[#FFB400]" : "text-gray-300"}
+        />
+      ))}
+    </div>
+  );
+};
 
-const SellerSection = () => {
+const SellerSection = ({ itemId, product }) => {
+  const { data: fetchedItem } = useGetItemByIdQuery(itemId, {
+    skip: !itemId || !!product,
+  });
+  const item = product || fetchedItem || {};
+  const sellerUsername = item?.seller?.username || "Unknown Seller";
+  const sellerId = item?.seller?._id;
+  const { data: reviewsData } = useGetSellerReviewsQuery(sellerId, {
+    skip: !sellerId,
+  });
+  const reviews = reviewsData?.reviews ?? [];
+  const initials = (sellerUsername || "?")
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const formatToPHT = (isoString) => {
+    if (!isoString) return "";
+    try {
+      const dtf = new Intl.DateTimeFormat("en-PH", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Manila",
+      });
+      return dtf.format(new Date(isoString));
+    } catch {
+      return (isoString || "").slice(0, 10);
+    }
+  };
+
   return (
     <section className="w-full">
       {/* Top Seller banner */}
@@ -34,12 +59,12 @@ const SellerSection = () => {
         <div className="bg-primary text-white rounded-t-[15px] rounded-b-[15px] relative z-10 px-4 md:px-6 lg:px-8 py-7 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-yellow-300 flex items-center justify-center text-primary font-bold">
-              JD
+              {initials}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-outfit font-semibold">
-                  Juan Dela Cruz
+                  {sellerUsername}
                 </span>
                 <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded">
                   ✓
@@ -67,22 +92,25 @@ const SellerSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-16">
             {reviews.map((r, idx) => (
               <div
-                key={idx}
+                key={r.id || idx}
                 className="bg-white rounded-xl shadow-sm p-5 border border-gray-100"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="font-outfit font-semibold text-gray-900">
-                    {r.name}
+                    {r.reviewerName}
                   </div>
-                  <div className="text-xs text-gray-500">{r.time}</div>
+                  <div className="text-xs text-gray-500">{formatToPHT(r?.raw?.createdAt)}</div>
                 </div>
-                <StarRow />
+                <StarRow rating={r?.rating} />
                 <hr className="my-3 border-gray-200" />
                 <p className="text-sm text-gray-700 leading-relaxed">
                   {r.text}
                 </p>
               </div>
             ))}
+            {reviews.length === 0 && (
+              <div className="col-span-full text-sm text-gray-600">No reviews yet.</div>
+            )}
           </div>
         </div>
       </div>
