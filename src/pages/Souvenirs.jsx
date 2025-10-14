@@ -254,6 +254,14 @@ const Souvenirs = () => {
                     <button
                       disabled={isAdding}
                       onClick={async () => {
+                        const token = localStorage.getItem("auth_token");
+                        if (!token) {
+                          toast.error(
+                            "Please log in to add items to your cart"
+                          );
+                          window.location.href = "/login";
+                          return;
+                        }
                         const itemId = souvenir.id || souvenir._id;
                         if (!itemId) return;
                         try {

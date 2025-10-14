@@ -122,6 +122,7 @@ const ProductDetail = () => {
     const token = localStorage.getItem("auth_token");
     if (!token) {
       console.log("[AddToCart] No auth token → redirecting to login");
+      toast.error("Please log in to add items to your cart");
       navigate("/login");
       return;
     }
