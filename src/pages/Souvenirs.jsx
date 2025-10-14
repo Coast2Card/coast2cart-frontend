@@ -19,6 +19,7 @@ const Souvenirs = () => {
   const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
   const [showCartModal, setShowCartModal] = useState(false);
   const [modalProduct, setModalProduct] = useState(null);
+  const [modalSeller, setModalSeller] = useState({ name: "", profileImage: "/src/assets/icons/profile.png" });
 
   const allSouvenirs = data?.items || [];
 
@@ -234,7 +235,8 @@ const Souvenirs = () => {
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-outfit font-bold text-lg text-success">
-                      {souvenir.priceDisplay ??
+                      {souvenir.formattedPrice ??
+                        souvenir.priceDisplay ??
                         (souvenir.itemPrice != null
                           ? `₱${Number(souvenir.itemPrice).toLocaleString()}`
                           : souvenir.price != null
@@ -275,12 +277,18 @@ const Souvenirs = () => {
                           }).unwrap();
                           console.log("[AddToCart:Souvenirs] Success:", res);
                           setModalProduct({
+                            id: souvenir.id || souvenir._id,
                             name: souvenir.itemName || souvenir.name,
                             description:
                               souvenir.description || "Local souvenir",
                             price: souvenir.itemPrice ?? souvenir.price ?? 0,
+                            formattedPrice: souvenir.formattedPrice || null,
                             image:
                               souvenir.imageUrl || souvenir.image || bisugo,
+                          });
+                          setModalSeller({
+                            name: souvenir?.seller?.username || "",
+                            profileImage: "/src/assets/icons/profile.png",
                           });
                           setShowCartModal(true);
                         } catch (e) {
@@ -324,7 +332,7 @@ const Souvenirs = () => {
         isOpen={showCartModal}
         onClose={() => setShowCartModal(false)}
         product={modalProduct || {}}
-        seller={{ name: "", profileImage: "/src/assets/icons/profile.png" }}
+        seller={modalSeller}
         quantity={1}
       />
     </div>

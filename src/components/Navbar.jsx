@@ -1,8 +1,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useGetCartSummaryQuery } from "../services/api";
+import { useGetCartSummaryQuery, useGetItemsQuery } from "../services/api";
 import { UserCircle, SignOut } from "@phosphor-icons/react";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { navLinks } from "../data/navigation";
 import c2cLogo from "../assets/logos/c2c_transparent.png";
 import searchIcon from "../assets/icons/search.png";
@@ -15,6 +15,9 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const isLoggedIn = Boolean(localStorage.getItem("auth_token"));
@@ -62,6 +65,33 @@ const Navbar = () => {
     toast.success("Logged out");
   };
 
+  // Live search for fish and souvenirs
+  const enableSearch = searchQuery.trim().length >= 2;
+  const fishSearch = useGetItemsQuery(
+    { itemType: "fish", search: searchQuery, page: 1 },
+    { skip: !enableSearch }
+  );
+  const souvenirsSearch = useGetItemsQuery(
+    { itemType: "souvenirs", search: searchQuery, page: 1 },
+    { skip: !enableSearch }
+  );
+  const fishResults = fishSearch?.data?.items || [];
+  const souvenirResults = souvenirsSearch?.data?.items || [];
+  const hasAnyResults = fishResults.length + souvenirResults.length > 0;
+
+  // Close search on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!isSearchOpen) return;
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setIsSearchOpen(false);
+        setSearchQuery("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isSearchOpen]);
+
   return (
     <nav className="bg-base-300 shadow-lg py-2 sticky top-0 z-50">
       <div className="mx-auto px-6 sm:px-6 lg:px-8">
@@ -90,12 +120,95 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Icons - Hidden on mobile */}
-          <div className="hidden md:flex items-center gap-4 lg:gap-6">
-            <img
-              src={searchIcon}
-              alt="Search"
-              className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
-            />
+          <div className="hidden md:flex items-center gap-4 lg:gap-6 relative">
+            <div ref={searchRef} className="relative flex items-center gap-2">
+              <img
+                src={searchIcon}
+                alt="Search"
+                onClick={() => setIsSearchOpen((v) => !v)}
+                className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
+              />
+              {isSearchOpen && (
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 z-50 w-[360px]">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setIsSearchOpen(false);
+                        setSearchQuery("");
+                      }
+                    }}
+                    onBlur={() => {
+                      // collapse back to icon when not active and empty
+                      if (!searchQuery) setIsSearchOpen(false);
+                    }}
+                    placeholder="Search fish or souvenirs..."
+                    className="w-full h-8 px-3 rounded-full border border-base-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  {enableSearch && hasAnyResults && (
+                    <div className="absolute left-0 top-full mt-2 w-full bg-white rounded-lg border border-base-200 shadow-lg">
+                      <div className="max-h-80 overflow-auto py-2">
+                        {fishResults.length > 0 && (
+                          <div className="py-1">
+                            <div className="px-4 pb-1 text-xs font-semibold text-gray-500">Fish</div>
+                            <ul className="divide-y divide-base-200">
+                              {fishResults.slice(0, 5).map((it) => (
+                                <li key={it._id || it.id}>
+                                  <button
+                                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-base-100 text-left"
+                                    onClick={() => {
+                                      setIsSearchOpen(false);
+                                      setSearchQuery("");
+                                      navigate(`/seafood/${it._id || it.id}`);
+                                    }}
+                                  >
+                                    <img src={it.image || it.imageUrl} alt="thumb" className="w-10 h-10 rounded object-cover bg-gray-100" />
+                                    <div className="flex-1">
+                                      <div className="text-sm font-semibold">{it.itemName || it.name}</div>
+                                      <div className="text-xs text-gray-500">{it.formattedPrice || ""}</div>
+                                    </div>
+                                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Fish</span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {souvenirResults.length > 0 && (
+                          <div className="py-1">
+                            <div className="px-4 pb-1 text-xs font-semibold text-gray-500">Souvenirs</div>
+                            <ul className="divide-y divide-base-200">
+                              {souvenirResults.slice(0, 5).map((it) => (
+                                <li key={it._id || it.id}>
+                                  <button
+                                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-base-100 text-left"
+                                    onClick={() => {
+                                      setIsSearchOpen(false);
+                                      setSearchQuery("");
+                                      navigate(`/seafood/${it._id || it.id}`);
+                                    }}
+                                  >
+                                    <img src={it.image || it.imageUrl} alt="thumb" className="w-10 h-10 rounded object-cover bg-gray-100" />
+                                    <div className="flex-1">
+                                      <div className="text-sm font-semibold">{it.itemName || it.name}</div>
+                                      <div className="text-xs text-gray-500">{it.formattedPrice || ""}</div>
+                                    </div>
+                                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Souvenir</span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <img
               src={commentIcon}
               alt="Comment"

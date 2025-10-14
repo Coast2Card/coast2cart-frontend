@@ -1,12 +1,14 @@
 import seafoodBanner from "../assets/images/fisher_man.png";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { useGetItemsQuery } from "../services/api";
+import { useGetItemsQuery, useAddToCartMutation } from "../services/api";
 import CategoriesFilter from "../components/seafood/CategoriesFilter";
 import PriceRangeFilter from "../components/seafood/PriceRangeFilter";
 import SearchBar from "../components/seafood/SearchBar";
 // local fallback image for items without image
 import bisugo from "../assets/images/bisugo.png";
+import CartConfirmationModal from "../components/productDetail/CartConfirmationModal";
+import toast from "react-hot-toast";
 // Footer comes from Layout; not needed here
 
 const Seafood = () => {
@@ -15,6 +17,10 @@ const Seafood = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [modalProduct, setModalProduct] = useState(null);
+  const [modalSeller, setModalSeller] = useState({ name: "", profileImage: "/src/assets/icons/profile.png" });
+  const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
 
   const { data, isLoading, isFetching, isError } = useGetItemsQuery({
     page,
@@ -231,7 +237,7 @@ const Seafood = () => {
                         </div>
                         <div className="p-4">
                           <div className="flex justify-between items-start mb-2">
-                            <span className="font-outfit font-bold text-lg text-success">
+                    <span className="font-outfit font-bold text-lg text-success">
                               {product.formattedPrice ??
                                 product.priceDisplay ??
                                 (product.itemPrice != null
@@ -251,6 +257,44 @@ const Seafood = () => {
                               {product.description}
                             </p>
                           )}
+                          <div className="mt-3">
+                            <button
+                              disabled={isAdding}
+                              className="w-full h-9 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold text-sm disabled:opacity-60"
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                const token = localStorage.getItem("auth_token");
+                                if (!token) {
+                                  toast.error("Please log in to add items to your cart");
+                                  window.location.href = "/login";
+                                  return;
+                                }
+                                const itemId = product.id || product._id;
+                                if (!itemId) return;
+                                try {
+                                  await addToCart({ itemId, quantity: 1 }).unwrap();
+                                  setModalProduct({
+                                    id: product.id || product._id,
+                                    name: product.itemName || product.name,
+                                    description: product.description || "Fresh seafood",
+                                    price: product.itemPrice ?? product.price ?? 0,
+                                    formattedPrice: product.formattedPrice || null,
+                                    image: product.imageUrl || product.image || bisugo,
+                                  });
+                                  setModalSeller({
+                                    name: product?.seller?.username || "",
+                                    profileImage: "/src/assets/icons/profile.png",
+                                  });
+                                  setShowCartModal(true);
+                                } catch (err) {
+                                  console.error("[AddToCart:Seafood] Error:", err);
+                                  toast.error(err?.data?.message || "Failed to add to cart");
+                                }
+                              }}
+                            >
+                              {isAdding ? "Adding..." : "Add to Cart"}
+                            </button>
+                          </div>
                         </div>
                       </Link>
                     ))}
@@ -278,6 +322,13 @@ const Seafood = () => {
         </section>
       </main>
       {/* Footer is rendered by Layout */}
+      <CartConfirmationModal
+        isOpen={showCartModal}
+        onClose={() => setShowCartModal(false)}
+        product={modalProduct || {}}
+        seller={modalSeller}
+        quantity={1}
+      />
     </>
   );
 };
