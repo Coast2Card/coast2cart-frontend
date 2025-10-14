@@ -76,6 +76,13 @@ export const api = createApi({
   baseQuery: baseQueryWithFriendlyErrors,
   tagTypes: ["Products", "Users", "Cart"],
   endpoints: (builder) => ({
+    deleteAccount: builder.mutation({
+      query: (accountId) => ({
+        url: `/accounts/${accountId}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
     getAccountById: builder.query({
       query: (accountId) => ({
         url: `/accounts/${accountId}`,
@@ -443,6 +450,7 @@ export const api = createApi({
 });
 
 export const {
+  useDeleteAccountMutation,
   useGetSellerInfoQuery,
   useGetAccountByIdQuery,
   useGetAccountsQuery,
