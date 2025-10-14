@@ -457,6 +457,7 @@ export const {
   useCreateAdminAccountMutation,
   useApproveSellerMutation,
   useRejectSellerMutation,
+  useGetSellerInfoQuery,
   useGetCartQuery,
   useGetCartSummaryQuery,
   useAddToCartMutation,
