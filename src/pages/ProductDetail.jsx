@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import SellerSection from "../components/productDetail/SellerSection";
 import RelatedProducts from "../components/productDetail/RelatedProducts";
 import CartConfirmationModal from "../components/productDetail/CartConfirmationModal";
+import ChatPopup from "../components/ChatPopup";
 import bisugo from "../assets/images/bisugo.png";
 import { useState } from "react";
 
@@ -15,6 +16,7 @@ const ProductDetail = () => {
   const [showCartModal, setShowCartModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
 
   // Fetch item by ID from API
@@ -272,7 +274,10 @@ const ProductDetail = () => {
                   {isAdding ? "Adding..." : "Add to Cart"}
                 </button>
               </div>
-              <button className="w-full h-11 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium">
+              <button
+                className="w-full h-11 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium"
+                onClick={() => setShowChat(true)}
+              >
                 Message Seller
               </button>
             </div>
@@ -280,7 +285,7 @@ const ProductDetail = () => {
         </div>
       </div>
       {/* Seller info and reviews */}
-      <SellerSection />
+      <SellerSection itemId={itemId} product={product} />
       {/* Related products */}
       <RelatedProducts currentItemId={itemId} currentItem={product} />
 
@@ -313,6 +318,7 @@ const ProductDetail = () => {
         seller={modalSeller}
         quantity={quantity}
       />
+      <ChatPopup isOpen={showChat} onClose={() => setShowChat(false)} />
     </div>
   );
 };

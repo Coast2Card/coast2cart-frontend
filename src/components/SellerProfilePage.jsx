@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useGetSellerItemsQuery, useGetSellerReviewsQuery } from "../services/api";
 import {
   MapPin,
   Phone,
@@ -35,6 +36,44 @@ const SellerProfilePage = ({ sellerId }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
+  // Determine sellerId from props or localStorage set at login
+  const resolveSellerId = () => {
+    if (sellerId) return sellerId;
+    // Common JSON blobs: auth_user, user, account
+    const jsonKeys = ["auth_user", "user", "account"];
+    for (const key of jsonKeys) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const obj = JSON.parse(raw);
+        const maybeId = obj?.id || obj?._id || obj?.user?.id || obj?.user?._id;
+        if (maybeId) return maybeId;
+      } catch {}
+    }
+    // Plain string IDs sometimes stored
+    const strKeys = ["seller_id", "user_id", "account_id"];
+    for (const key of strKeys) {
+      const val = localStorage.getItem(key);
+      if (val) return val;
+    }
+    // Decode JWT if present (auth_token) → payload.userId
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (token && token.split(".").length === 3) {
+        const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const json = JSON.parse(atob(base64));
+        if (json?.userId) return json.userId;
+      }
+    } catch {}
+    return undefined;
+  };
+  const resolvedSellerId = resolveSellerId();
+
+  // Fetch seller items
+  const { data: sellerItemsData, isFetching: isLoadingSellerItems } = useGetSellerItemsQuery(resolvedSellerId, {
+    skip: !resolvedSellerId,
+  });
+
   // Mock data - Backend team can replace with API calls using sellerId
   const sellerData = {
     id: sellerId || 1,
@@ -51,128 +90,27 @@ const SellerProfilePage = ({ sellerId }) => {
     totalReviews: 23,
   };
 
-  const activeListings = [
-    {
-      id: 1,
-      name: "Bisugo",
-      price: "₱380/kg",
-      image: bisugotImg,
-      availability: "2 kg available",
-      category: "fresh_catch",
-    },
-    {
-      id: 2,
-      name: "Hasa-Hasa",
-      price: "₱170/kg",
-      image: hasaHasaImg,
-      availability: "4 kg available",
-      category: "fresh_catch",
-    },
-    {
-      id: 3,
-      name: "Dalagang Bukid",
-      price: "₱360/kg",
-      image: dalangBukidImg,
-      availability: "7 kg available",
-      category: "fresh_catch",
-    },
-    {
-      id: 4,
-      name: "Bangus",
-      price: "₱289/kg",
-      image: bangusImg,
-      availability: "10 kg available",
-      category: "fresh_catch",
-    },
-    {
-      id: 5,
-      name: "Fish Wallet",
-      price: "₱70",
-      image: fishWalletImg,
-      availability: "20 pcs available",
-      category: "souvenirs",
-    },
-    {
-      id: 6,
-      name: "Boat Keychain",
-      price: "₱55",
-      image: souvenir1,
-      availability: "10 pcs available",
-      category: "souvenirs",
-    },
-    {
-      id: 7,
-      name: "Tuna",
-      price: "₱280/kg",
-      image: tunaImg,
-      availability: "7 kg available",
-      category: "dried_seafood",
-    },
-    {
-      id: 8,
-      name: "Hipon",
-      price: "₱325/kg",
-      image: hiponImg,
-      availability: "10 kg available",
-      category: "fresh_catch",
-    },
-    {
-      id: 9,
-      name: "Alumahan",
-      price: "₱250/kg",
-      image: alumahanImg,
-      availability: "5 kg available",
-      category: "fresh_catch",
-    },
-    {
-      id: 10,
-      name: "Pusit",
-      price: "₱400/kg",
-      image: pusitImg,
-      availability: "3 kg available",
-      category: "fresh_catch",
-    },
-    {
-      id: 11,
-      name: "Talakitok",
-      price: "₱300/kg",
-      image: talakitokImg,
-      availability: "8 kg available",
-      category: "fresh_catch",
-    },
-    {
-      id: 12,
-      name: "Baybayon Fan",
-      price: "₱85",
-      image: baybayanFanImg,
-      availability: "15 pcs available",
-      category: "souvenirs",
-    },
-    {
-      id: 13,
-      name: "Shell Keychain",
-      price: "₱45",
-      image: souvenir2,
-      availability: "25 pcs available",
-      category: "souvenirs",
-    },
-    {
-      id: 14,
-      name: "Coral Necklace",
-      price: "₱120",
-      image: souvenir3,
-      availability: "8 pcs available",
-      category: "souvenirs",
-    },
-    {
-      id: 15,
-      name: "Fish Magnet",
-      price: "₱35",
-      image: souvenir4,
-      availability: "30 pcs available",
-      category: "souvenirs",
-    },
-  ];
+  // Map API items to card data
+  const apiActiveListings = (sellerItemsData?.items || []).map((it) => ({
+    id: it?._id || it?.id,
+    name: it?.itemName || it?.name || "",
+    price:
+      it?.formattedPrice ||
+      (it?.itemPrice != null
+        ? `₱${Number(it.itemPrice).toLocaleString()}/${it.unit || ""}`
+        : it?.price != null
+        ? `₱${Number(it.price).toLocaleString()}`
+        : ""),
+    image: it?.image || it?.imageUrl || bisugotImg,
+    availability:
+      it?.formattedQuantity ||
+      (it?.quantity != null ? `${it.quantity} ${it.unit || "units"} available` : ""),
+    category:
+      it?.category || it?.itemType || "fresh_catch",
+  }));
+
+  // Fallback to mock listings if no sellerId or no items
+  const activeListings = apiActiveListings.length > 0 ? apiActiveListings : [];
 
   const soldItems = [
     {
@@ -241,44 +179,31 @@ const SellerProfilePage = ({ sellerId }) => {
     },
   ];
 
-  const reviews = [
-    {
-      id: 1,
-      customerName: "Claudine Co",
-      rating: 4,
-      comment:
-        "Fresh bangus! Very good quality and the seller was very accommodating. Will definitely buy again!",
-      date: "2 days ago",
-      avatar: customer1,
-    },
-    {
-      id: 2,
-      customerName: "Jammy Cruz",
-      rating: 5,
-      comment:
-        "Best seafood in Baybayon! Always fresh and reasonably priced. Highly recommended!",
-      date: "1 week ago",
-      avatar: customer2,
-    },
-    {
-      id: 3,
-      customerName: "Gela Alonte",
-      rating: 5,
-      comment:
-        "Good service and fresh catch. The shrimp was excellent for my family dinner.",
-      date: "2 weeks ago",
-      avatar: customer3,
-    },
-    {
-      id: 4,
-      customerName: "Jasmine Chan",
-      rating: 4,
-      comment:
-        "Fresh bangus! Very good quality and the seller was very accommodating. Will definitely buy again!",
-      date: "2 days ago",
-      avatar: customer4,
-    },
-  ];
+  // Seller reviews from API
+  const { data: sellerReviewsData, isFetching: isLoadingSellerReviews } = useGetSellerReviewsQuery(resolvedSellerId, {
+    skip: !resolvedSellerId,
+  });
+  const formatToPHT = (isoString) => {
+    if (!isoString) return "";
+    try {
+      const dtf = new Intl.DateTimeFormat("en-PH", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Manila",
+      });
+      return dtf.format(new Date(isoString));
+    } catch {
+      return (isoString || "").slice(0, 10);
+    }
+  };
+  const reviews = (sellerReviewsData?.reviews || []).map((r) => ({
+    id: r?.id,
+    customerName: r?.reviewerName || "Anonymous",
+    rating: r?.rating != null ? Number(r.rating) : 0,
+    comment: r?.text || "",
+    date: formatToPHT(r?.raw?.createdAt),
+    avatar: customer1,
+  }));
 
   // Filter functions for backend integration
   const getFilteredProducts = (products) => {
@@ -594,17 +519,10 @@ const SellerProfilePage = ({ sellerId }) => {
               <Star
                 key={i}
                 size={16}
-                weight="regular"
-                className={`transition-all duration-200 hover:scale-110 ${
-                  i < review.rating
-                    ? "text-secondary hover:text-orange-500"
-                    : "text-gray-300 hover:text-gray-400"
-                }`}
+                weight={i < Math.round(review.rating) ? "fill" : "regular"}
+                className={i < Math.round(review.rating) ? "text-secondary" : "text-gray-300"}
               />
             ))}
-            <span className="ml-2 text-sm text-gray-500 font-primary">
-              ({review.rating}/5)
-            </span>
           </div>
           <p className="text-gray-600 leading-relaxed font-primary group-hover:text-gray-700 transition-colors duration-200">
             {review.comment}
@@ -615,16 +533,42 @@ const SellerProfilePage = ({ sellerId }) => {
   );
 
   // Active Listings Tab Content
-  const ActiveListingsContent = () => (
-    <div>
-      <FilterControls />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {getFilteredProducts(activeListings).map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+  const ActiveListingsContent = () => {
+    const skeletonCards = Array.from({ length: 8 }).map((_, i) => (
+      <div
+        key={`skeleton-${i}`}
+        className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100"
+      >
+        <div className="aspect-square bg-gray-100 animate-pulse" />
+        <div className="p-4 space-y-2">
+          <div className="h-6 w-24 bg-gray-200 rounded animate-pulse" />
+          <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-40 bg-gray-100 rounded animate-pulse" />
+        </div>
       </div>
-    </div>
-  );
+    ));
+
+    const filtered = getFilteredProducts(activeListings);
+
+    return (
+      <div>
+        <FilterControls />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {isLoadingSellerItems
+            ? skeletonCards
+            : filtered.length > 0
+            ? filtered.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            : (
+                <div className="col-span-2 md:col-span-3 lg:col-span-4 text-center py-8 text-gray-600">
+                  No active listings yet.
+                </div>
+              )}
+        </div>
+      </div>
+    );
+  };
 
   // Sold Items Tab Content
   const SoldItemsContent = () => (
