@@ -210,7 +210,10 @@ const SellerAccountManagement = () => {
             <tbody>
               {isFetching && rows.length === 0
                 ? Array.from({ length: 8 }).map((_, idx) => (
-                    <tr key={`skeleton-${idx}`} className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}>
+                    <tr
+                      key={`skeleton-${idx}`}
+                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                    >
                       <td>
                         <div className="w-4 h-4 rounded bg-gray-200 animate-pulse" />
                       </td>
@@ -252,39 +255,48 @@ const SellerAccountManagement = () => {
                           checked={selected.has(row.id)}
                           onChange={() => toggleOne(row.id)}
                         />
-                      </div>
-                      <div className="font-medium">{row.name}</div>
-                    </div>
-                  </td>
-                  <td className="text-base-content/80">{row.email}</td>
-                  <td className="text-base-content/80">{row.address}</td>
-                  <td>
-                    <StatusPill value={row.status} />
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-xs bg-white text-base-content border border-row-outline"
-                      onClick={() => {
-                        setSelected(new Set([row.id]));
-                        setIsViewOpen(true);
-                      }}
-                    >
-                      <Eye size={14} weight="bold" className="mr-1" /> View
-                    </button>
-                    {row.status === "pending" && (
-                      <button
-                        className="btn btn-xs bg-success text-white border border-success ml-2"
-                        onClick={() => {
-                          setSelected(new Set([row.id]));
-                          setIsVerifyOpen(true);
-                        }}
-                      >
-                        Verify
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="avatar">
+                            <User
+                              size={16}
+                              weight="fill"
+                              className="text-base-content/80"
+                            />
+                          </div>
+                          <div className="font-medium">{row.name}</div>
+                        </div>
+                      </td>
+                      <td className="text-base-content/80">{row.email}</td>
+                      <td className="text-base-content/80">{row.address}</td>
+                      <td>
+                        <StatusPill value={row.status} />
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-xs bg-white text-base-content border border-row-outline"
+                          onClick={() => {
+                            setSelected(new Set([row.id]));
+                            setIsViewOpen(true);
+                          }}
+                        >
+                          <Eye size={14} weight="bold" className="mr-1" /> View
+                        </button>
+                        {row.status === "pending" && (
+                          <button
+                            className="btn btn-xs bg-success text-white border border-success ml-2"
+                            onClick={() => {
+                              setSelected(new Set([row.id]));
+                              setIsVerifyOpen(true);
+                            }}
+                          >
+                            Verify
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </div>
