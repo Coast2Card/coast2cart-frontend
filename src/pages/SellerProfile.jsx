@@ -3,7 +3,7 @@ import SellerProfilePage from '../components/SellerProfilePage';
 const SellerProfile = () => {
   return (
     <div className="min-h-screen bg-white">
-      <SellerProfilePage sellerId={1} />
+      <SellerProfilePage />
     </div>
   );
 };

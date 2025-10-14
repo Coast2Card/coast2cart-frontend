@@ -3,18 +3,20 @@ import React, { useState } from "react";
 const PriceRangeFilter = ({ onPriceRangeChange }) => {
   const [selectedRanges, setSelectedRanges] = useState([]);
 
+  // Backend priceRange tokens expected by /api/items?priceRange=...
+  // Allowed tokens: 100-199 | 200-399 | 400-699 | 700+
   const priceRanges = [
-    { range: "P100.00 - P199.00", min: 100, max: 199 },
-    { range: "P200.00 - P399.00", min: 200, max: 399 },
-    { range: "P400.00 - P699.00", min: 400, max: 699 },
-    { range: "P700.00 and above", min: 700, max: null },
+    { label: "₱100 - ₱199", value: "100-199" },
+    { label: "₱200 - ₱399", value: "200-399" },
+    { label: "₱400 - ₱699", value: "400-699" },
+    { label: "₱700+", value: "700+" },
   ];
 
   const handleRangeToggle = (range) => {
     setSelectedRanges((prev) => {
-      const newRanges = prev.includes(range.range)
-        ? prev.filter((r) => r !== range.range)
-        : [...prev, range.range];
+      const newRanges = prev.includes(range.value)
+        ? prev.filter((r) => r !== range.value)
+        : [...prev, range.value];
 
       // Notify parent component of selected ranges
       onPriceRangeChange?.(newRanges);
@@ -35,12 +37,12 @@ const PriceRangeFilter = ({ onPriceRangeChange }) => {
           >
             <input
               type="checkbox"
-              checked={selectedRanges.includes(price.range)}
+              checked={selectedRanges.includes(price.value)}
               onChange={() => handleRangeToggle(price)}
               className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
             />
             <span className="font-inter font-medium text-gray-700">
-              {price.range}
+              {price.label}
             </span>
           </label>
         ))}

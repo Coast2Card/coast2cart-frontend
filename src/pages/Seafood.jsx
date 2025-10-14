@@ -18,9 +18,12 @@ const Seafood = () => {
 
   const { data, isLoading, isFetching, isError } = useGetItemsQuery({
     page,
-    itemType: "fish",
-    // Temporarily disable filters until backend supports them
-    // ...(selectedCategory && { itemType: selectedCategory }),
+    itemType: "seafood",
+    ...(selectedCategory && { category: selectedCategory }),
+    ...(selectedPriceRanges.length > 0 && {
+      // Pass as repeated query params: priceRange=100-199&priceRange=200-399
+      priceRange: selectedPriceRanges,
+    }),
   });
   const items = useMemo(() => {
     return data && Array.isArray(data.items) ? data.items : [];
@@ -89,16 +92,14 @@ const Seafood = () => {
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
-    // Don't reset data since filters aren't applied to API yet
-    // setPage(1);
-    // setAccumulatedItems([]);
+    setPage(1);
+    setAccumulatedItems([]);
   };
 
   const handlePriceRangeChange = (ranges) => {
     setSelectedPriceRanges(ranges);
-    // Don't reset data since filters aren't applied to API yet
-    // setPage(1);
-    // setAccumulatedItems([]);
+    setPage(1);
+    setAccumulatedItems([]);
   };
 
   const handleSearch = (term) => {
@@ -176,7 +177,7 @@ const Seafood = () => {
                     <SearchBar onSearch={handleSearch} />
                     <div className="text-left">
                       <p className="font-inter font-bold text-gray-700 mb-1">
-                        {isLoading && !accumulatedItems.length
+                        {(isLoading || (isFetching && !accumulatedItems.length))
                           ? "Loading items…"
                           : searchTerm.trim()
                           ? `Found ${totalItems} item(s) matching "${searchTerm}"`
@@ -191,20 +192,14 @@ const Seafood = () => {
                 </div>
 
                 {/* Product Grid */}
-                {isLoading && !accumulatedItems.length ? (
+                {(isLoading || (isFetching && !accumulatedItems.length)) ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {Array.from({ length: 9 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="block bg-white rounded-lg shadow-sm overflow-hidden"
-                      >
-                        <div className="h-48 bg-gray-100 relative overflow-hidden">
-                          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
-                        </div>
-                        <div className="p-4 space-y-3">
-                          <div className="h-5 w-28 bg-gray-200 rounded animate-pulse" />
-                          <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
-                          <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div className="h-48 bg-gray-100 animate-pulse" />
+                        <div className="p-4 space-y-2">
+                          <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+                          <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
                         </div>
                       </div>
                     ))}
@@ -237,7 +232,8 @@ const Seafood = () => {
                         <div className="p-4">
                           <div className="flex justify-between items-start mb-2">
                             <span className="font-outfit font-bold text-lg text-success">
-                              {product.priceDisplay ??
+                              {product.formattedPrice ??
+                                product.priceDisplay ??
                                 (product.itemPrice != null
                                   ? `₱${Number(
                                       product.itemPrice
