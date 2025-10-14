@@ -52,9 +52,9 @@ const ViewSellerModal = ({ open, onClose, seller }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative bg-white w-[92vw] sm:w-[720px] rounded-[24px] border-4 border-warning shadow-2xl overflow-hidden">
+      <div className="relative bg-white w-[92vw] sm:w-[720px] rounded-[24px] border-4 border-[#002854] shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="bg-accent text-accent-content py-5 px-6 text-center relative">
+        <div className="bg-gradient-to-r from-[#0058BA] via-[#002854] via-30% to-[#002854] text-white py-5 px-6 text-center relative">
           <button
             type="button"
             onClick={onClose}

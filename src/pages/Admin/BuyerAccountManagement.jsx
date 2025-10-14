@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   User,
   Plus,
@@ -64,6 +65,12 @@ const ToolbarBadge = ({ count }) => (
 const BuyerAccountManagement = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ search: "", status: "" });
+  const [searchParams] = useSearchParams();
+  const qParam = searchParams.get("q") || "";
+  useEffect(() => {
+    setFilters((f) => (f.search === qParam ? f : { ...f, search: qParam }));
+    // useGetAccountsQuery will refetch when params change via filters
+  }, [qParam]);
   const {
     rows: data,
     total,

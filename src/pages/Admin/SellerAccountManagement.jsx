@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import ViewSellerModal from "../../modals/ViewSellerModal";
 import AddSellerModal from "../../modals/AddSellerModal";
 import {
@@ -41,6 +42,11 @@ const ToolbarBadge = ({ count }) => (
 const SellerAccountManagement = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ search: "", status: "" });
+  const [searchParams] = useSearchParams();
+  const qParam = searchParams.get("q") || "";
+  useEffect(() => {
+    setFilters((f) => (f.search === qParam ? f : { ...f, search: qParam }));
+  }, [qParam]);
   const { data, isFetching, refetch } = useGetAccountsQuery({
     role: "seller",
     search: filters.search || undefined,
