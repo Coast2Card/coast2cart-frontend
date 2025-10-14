@@ -15,20 +15,17 @@ import toast from "react-hot-toast";
 
 const StatusPill = ({ value }) => {
   const normalized = (value || "").toLowerCase();
-  const isApproved = normalized === "approved";
+  const styles =
+    normalized === "approved"
+      ? { text: "text-emerald-700", bg: "bg-emerald-50", dot: "bg-emerald-500" }
+      : normalized === "rejected"
+      ? { text: "text-rose-700", bg: "bg-rose-50", dot: "bg-rose-500" }
+      : { text: "text-amber-700", bg: "bg-amber-50", dot: "bg-amber-400" };
   return (
     <div
-      className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-sm font-medium ${
-        isApproved
-          ? "text-emerald-700 bg-emerald-50"
-          : "text-amber-700 bg-amber-50"
-      }`}
+      className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-sm font-medium ${styles.text} ${styles.bg}`}
     >
-      <span
-        className={`w-2 h-2 rounded-full ${
-          isApproved ? "bg-emerald-500" : "bg-amber-400"
-        }`}
-      ></span>
+      <span className={`w-2 h-2 rounded-full ${styles.dot}`}></span>
       {normalized}
     </div>
   );
@@ -59,8 +56,7 @@ const SellerAccountManagement = () => {
     name: a.fullName || a.username || a.email || "",
     email: a.email || "",
     address: a.address || "",
-    status:
-      (a.status || "").toLowerCase() === "approved" ? "approved" : "pending",
+    status: (a.status || "").toLowerCase() || "pending",
     raw: a,
   }));
   const total = data?.pagination?.totalAccounts ?? rows.length;
@@ -226,7 +222,19 @@ const SellerAccountManagement = () => {
                         <button
                           className="btn btn-xs bg-white text-base-content border border-row-outline"
                           onClick={() => {
-                            setFocusedSeller(row.raw);
+                            // Prefill minimal data for view modal
+                            const prefill = {
+                              id: row.raw?._id || row.raw?.id || row.id,
+                              fullName: row.raw?.fullName || row.name,
+                              firstName: row.raw?.firstName,
+                              lastName: row.raw?.lastName,
+                              email: row.raw?.email || row.email,
+                              contactNo: row.raw?.contactNo,
+                              address: row.raw?.address || row.address,
+                              username: row.raw?.username,
+                              storeName: row.raw?.storeName,
+                            };
+                            setFocusedSeller(prefill);
                             setIsViewOpen(true);
                           }}
                         >

@@ -200,7 +200,17 @@ const BuyerAccountManagement = () => {
                     <button
                       className="btn btn-xs bg-white text-base-content border border-row-outline"
                       onClick={() => {
-                        setFocusedBuyer(row.raw);
+                        const prefill = {
+                          id: row.raw?._id || row.raw?.id || row.id,
+                          fullName: row.raw?.fullName || row.name,
+                          firstName: row.raw?.firstName,
+                          lastName: row.raw?.lastName,
+                          email: row.raw?.email || row.email,
+                          contactNo: row.raw?.contactNo,
+                          address: row.raw?.address || row.address,
+                          username: row.raw?.username,
+                        };
+                        setFocusedBuyer(prefill);
                         setIsViewOpen(true);
                       }}
                     >

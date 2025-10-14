@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import toast from "react-hot-toast";
 import {
   useApproveSellerMutation,
@@ -8,7 +8,6 @@ import {
 const VerifySellerModal = ({ open, onClose, seller, onApproved }) => {
   const [approve, { isLoading }] = useApproveSellerMutation();
   const [reject, { isLoading: isRejecting }] = useRejectSellerMutation();
-  const [note, setNote] = useState("");
   if (!open) return null;
 
   const sellerId = seller?._id || seller?.id;
@@ -16,24 +15,36 @@ const VerifySellerModal = ({ open, onClose, seller, onApproved }) => {
   const handleApprove = async () => {
     try {
       if (!sellerId) return toast.error("Missing seller id");
+      console.log("[VerifySellerModal] Approving seller:", sellerId);
       await approve({ sellerId }).unwrap();
       toast.success("Seller approved");
       onClose?.();
       onApproved?.();
     } catch (e) {
-      toast.error(e?.data?.message || "Failed to approve seller");
+      const msg = e?.data?.message || e?.error || "Failed to approve seller";
+      toast.error(msg);
+      console.error("[VerifySellerModal] Approve failed:", {
+        sellerId,
+        error: e,
+      });
     }
   };
 
   const handleReject = async () => {
     try {
       if (!sellerId) return toast.error("Missing seller id");
+      console.log("[VerifySellerModal] Rejecting seller:", sellerId);
       await reject({ sellerId }).unwrap();
       toast.success("Seller rejected");
       onClose?.();
       onApproved?.();
     } catch (e) {
-      toast.error(e?.data?.message || "Failed to reject seller");
+      const msg = e?.data?.message || e?.error || "Failed to reject seller";
+      toast.error(msg);
+      console.error("[VerifySellerModal] Reject failed:", {
+        sellerId,
+        error: e,
+      });
     }
   };
 
@@ -51,18 +62,7 @@ const VerifySellerModal = ({ open, onClose, seller, onApproved }) => {
           </div>
           <div className="text-base-content/70">{seller?.email}</div>
         </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-1">
-            Optional note
-          </label>
-          <textarea
-            className="textarea textarea-bordered w-full"
-            rows={3}
-            placeholder="Add an approval note (optional)"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-        </div>
+
         <div className="flex justify-end gap-3">
           <button
             className="btn bg-white text-base-content border border-row-outline"
@@ -75,14 +75,14 @@ const VerifySellerModal = ({ open, onClose, seller, onApproved }) => {
             onClick={handleReject}
             disabled={isRejecting}
           >
-            Reject
+            {isRejecting ? "Rejecting..." : "Reject"}
           </button>
           <button
             className="btn bg-success text-white border border-success"
             onClick={handleApprove}
             disabled={isLoading}
           >
-            Approve
+            {isLoading ? "Approving..." : "Approve"}
           </button>
         </div>
       </div>
