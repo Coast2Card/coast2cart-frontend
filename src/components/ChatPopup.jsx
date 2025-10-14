@@ -42,7 +42,11 @@ const ChatPopup = () => {
   // Fetch messages for selected chat
   const { data: chatMessages, isLoading: isLoadingMessages, refetch: refetchMessages } = useGetChatMessagesQuery(
     { chatRoomId: selectedChatId, page: 1, limit: 50 },
-    { skip: !selectedChatId }
+    {
+      skip: !selectedChatId,
+      // Poll for new messages every 3 seconds when a chat is selected
+      pollingInterval: selectedChatId ? 3000 : 0,
+    }
   );
 
   // Mutations
@@ -50,26 +54,97 @@ const ChatPopup = () => {
   const [markAsRead] = useMarkMessagesAsReadMutation();
 
   // Helper functions
-  const getSenderInfo = (senderId) => {
-    if (senderId === currentUser?._id || senderId === currentUser?.id) {
-      return currentUser;
-    }
-    const currentChat = getCurrentChat();
-    if (currentChat?.participants) {
-      const participant = currentChat.participants.find(p => 
-        p._id === senderId || p.id === senderId
-      );
-      return participant || { username: 'Unknown User', profilePicture: null };
-    }
-    return { username: 'Unknown User', profilePicture: null };
-  };
-
   const getCurrentChat = () => {
     return chatRooms.find(chat => (chat._id || chat.id) === selectedChatId);
   };
 
   const getCurrentChatMessages = () => {
     return chatMessages?.messages || [];
+  };
+
+  // Helper function to format date separators
+  const getDateLabel = (date) => {
+    const messageDate = new Date(date);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Reset time parts for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+    yesterday.setHours(0, 0, 0, 0);
+    messageDate.setHours(0, 0, 0, 0);
+
+    if (messageDate.getTime() === today.getTime()) {
+      return 'TODAY';
+    } else if (messageDate.getTime() === yesterday.getTime()) {
+      return 'YESTERDAY';
+    } else {
+      return messageDate.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+  };
+
+  // Group messages by date
+  const groupMessagesByDate = (messages) => {
+    const groups = [];
+    let currentDate = null;
+    let currentGroup = [];
+
+    messages.forEach((msg) => {
+      const msgDate = new Date(msg.createdAt);
+      msgDate.setHours(0, 0, 0, 0);
+      const msgDateString = msgDate.toDateString();
+
+      if (currentDate !== msgDateString) {
+        if (currentGroup.length > 0) {
+          groups.push({ date: currentDate, messages: currentGroup });
+        }
+        currentDate = msgDateString;
+        currentGroup = [msg];
+      } else {
+        currentGroup.push(msg);
+      }
+    });
+
+    if (currentGroup.length > 0) {
+      groups.push({ date: currentDate, messages: currentGroup });
+    }
+
+    return groups;
+  };
+
+  // Check if message should be grouped with previous message
+  const shouldGroupWithPrevious = (currentMsg, previousMsg, currentIndex) => {
+    if (!previousMsg || currentIndex === 0) return false;
+
+    // Get sender IDs
+    const getCurrentSenderId = (msg) => {
+      if (typeof msg.senderId === 'object' && msg.senderId !== null) {
+        return msg.senderId._id || msg.senderId.id;
+      } else if (typeof msg.sender === 'object' && msg.sender !== null) {
+        return msg.sender._id || msg.sender.id;
+      }
+      return msg.senderId || msg.sender;
+    };
+
+    const currentSenderId = getCurrentSenderId(currentMsg);
+    const previousSenderId = getCurrentSenderId(previousMsg);
+
+    // Don't group if different senders
+    if (currentSenderId !== previousSenderId) return false;
+
+    // Don't group product messages
+    if (currentMsg.messageType === 'product' || previousMsg.messageType === 'product') return false;
+
+    // Check time difference (group if less than 2 minutes apart)
+    const currentTime = new Date(currentMsg.createdAt).getTime();
+    const previousTime = new Date(previousMsg.createdAt).getTime();
+    const timeDiff = (currentTime - previousTime) / 1000 / 60; // in minutes
+
+    return timeDiff < 2;
   };
 
   const getTotalUnreadCount = () => {
@@ -152,10 +227,46 @@ const ChatPopup = () => {
     }
   }, [shouldOpenChat, chatRooms, selectedChatId, setSelectedChatId]);
 
+  // Calculate unread count for a specific chat (frontend-only tracking)
+  const getUnreadCountForChat = (chat) => {
+    const chatId = chat._id || chat.id;
+    const readTimestamps = JSON.parse(localStorage.getItem('chat_read_timestamps') || '{}');
+    const lastReadTime = readTimestamps[chatId];
+
+    // If never read, and there's a last message from other person, count as 1 unread
+    if (!lastReadTime && chat.lastMessage && chat.lastMessageAt) {
+      return 1;
+    }
+
+    // If last message is newer than last read time, it's unread
+    if (lastReadTime && chat.lastMessageAt) {
+      const lastMessageTime = new Date(chat.lastMessageAt);
+      const lastRead = new Date(lastReadTime);
+
+      if (lastMessageTime > lastRead) {
+        return 1;
+      }
+    }
+
+    return 0;
+  };
+
+  // Get total unread count across all chats
+  const getTotalUnreadCountFrontend = () => {
+    return chatRooms.reduce((total, chat) => {
+      return total + getUnreadCountForChat(chat);
+    }, 0);
+  };
+
   // Mark messages as read when chat room is selected
   useEffect(() => {
     if (selectedChatId) {
       markAsRead(selectedChatId);
+
+      // Save last read timestamp in localStorage (client-side tracking)
+      const readTimestamps = JSON.parse(localStorage.getItem('chat_read_timestamps') || '{}');
+      readTimestamps[selectedChatId] = new Date().toISOString();
+      localStorage.setItem('chat_read_timestamps', JSON.stringify(readTimestamps));
     }
   }, [selectedChatId, markAsRead]);
 
@@ -178,22 +289,31 @@ const ChatPopup = () => {
   // Handle send message
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (message.trim() && selectedChatId && !sendingMessage) {
-      try {
-        const result = await sendMessage({
-          chatRoomId: selectedChatId,
-          messageType: 'text',
-          content: { text: message }
-        }).unwrap();
-        
-        setMessage('');
-        // Refetch both messages and chat rooms to update the UI
-        refetchMessages();
-        refetchRooms();
-      } catch (error) {
-        console.error('Failed to send message:', error);
-        alert(`Failed to send message: ${error?.data?.message || 'Unknown error'}`);
-      }
+    const trimmedMessage = message.trim();
+
+    // Validate message
+    if (!trimmedMessage || !selectedChatId || sendingMessage) return;
+
+    if (trimmedMessage.length > 1000) {
+      alert('Message is too long. Maximum 1000 characters allowed.');
+      return;
+    }
+
+    try {
+      await sendMessage({
+        chatRoomId: selectedChatId,
+        messageType: 'text',
+        content: { text: trimmedMessage }
+      }).unwrap();
+
+      setMessage('');
+      // Refetch both messages and chat rooms to update the UI
+      refetchMessages();
+      refetchRooms();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorMsg = error?.data?.message || error?.message || 'Failed to send message';
+      alert(`${errorMsg}. Please try again.`);
     }
   };
 
@@ -238,7 +358,7 @@ const ChatPopup = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-orange-500">
-                Chat <span className="text-black text-sm">({getTotalUnreadCount()})</span>
+                Chat {getTotalUnreadCountFrontend() > 0 && <span className="text-black text-sm">({getTotalUnreadCountFrontend()})</span>}
               </h2>
               <div className="relative sort-menu-container">
                 <button 
@@ -312,9 +432,32 @@ const ChatPopup = () => {
           {/* Chat List */}
           <div className="flex-1 overflow-y-auto">
             {isLoadingRooms ? (
-              <div className="p-4 text-center text-gray-500">Loading chats...</div>
+              <div className="p-4 space-y-4">
+                {/* Loading skeleton for chat list */}
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center space-x-3 p-3 animate-pulse">
+                    <div className="w-12 h-12 rounded-full bg-gray-200"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-32"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredChatRooms().length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No chats found</div>
+              <div className="flex flex-col items-center justify-center p-8 text-center">
+                <div className="mb-4">
+                  <svg className="w-16 h-16 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 font-medium mb-1">
+                  {searchQuery ? 'No chats found' : 'No conversations yet'}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  {searchQuery ? 'Try a different search term' : 'Start chatting with sellers!'}
+                </p>
+              </div>
             ) : (
               <div className="p-2">
                 {filteredChatRooms().map((chat) => {
@@ -351,12 +494,15 @@ const ChatPopup = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2">
                             <h3 className="font-bold text-black truncate">{otherParticipant.username}</h3>
+                            {otherParticipant.isOnline && (
+                              <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" title="Online"></span>
+                            )}
                           </div>
                           <p className="text-sm text-gray-600 truncate">
-                            {typeof chat.lastMessage === 'string' 
-                              ? chat.lastMessage 
-                              : chat.lastMessage?.content?.text || 
-                                chat.lastMessage?.message || 
+                            {typeof chat.lastMessage === 'string'
+                              ? chat.lastMessage
+                              : chat.lastMessage?.content?.text ||
+                                chat.lastMessage?.message ||
                                 chat.lastMessage?.text ||
                                 'No messages yet'}
                           </p>
@@ -390,9 +536,9 @@ const ChatPopup = () => {
                               }
                             })()}
                           </span>
-                          {chat.unreadCount > 0 && (
-                            <span className="bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center mt-1">
-                              {chat.unreadCount}
+                          {getUnreadCountForChat(chat) > 0 && (
+                            <span className="bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center mt-1">
+                              {getUnreadCountForChat(chat)}
                             </span>
                           )}
                         </div>
@@ -435,9 +581,10 @@ const ChatPopup = () => {
                         <div>
                           <div className="flex items-center space-x-2">
                             <h3 className="font-bold text-black">{otherParticipant.username}</h3>
+                            <span className={`w-2 h-2 rounded-full ${otherParticipant.isOnline ? 'bg-green-500' : 'bg-gray-400'}`} title={otherParticipant.isOnline ? 'Online' : 'Offline'}></span>
                           </div>
-                          <p className="text-sm text-gray-500">
-                            {otherParticipant.isOnline ? '• Active' : '• Offline'}
+                          <p className={`text-sm ${otherParticipant.isOnline ? 'text-green-600' : 'text-gray-500'}`}>
+                            {otherParticipant.isOnline ? 'Active now' : otherParticipant.lastSeen ? `Last seen ${new Date(otherParticipant.lastSeen).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : 'Offline'}
                           </p>
                         </div>
                       </div>
@@ -447,22 +594,44 @@ const ChatPopup = () => {
               </div>
 
               {/* Messages Area - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4"
+              >
                 {isLoadingMessages ? (
-                  <div className="text-center text-gray-500">Loading messages...</div>
+                  <div className="space-y-4">
+                    {/* Loading skeleton */}
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                        <div className="bg-gray-200 rounded-2xl px-4 py-3 max-w-xs animate-pulse">
+                          <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                          <div className="h-3 bg-gray-300 rounded w-16"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : getCurrentChatMessages().length === 0 ? (
-                  <div className="text-center text-gray-500">No messages yet. Start the conversation!</div>
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <div className="mb-4">
+                      <svg className="w-20 h-20 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 font-medium">No messages yet</p>
+                    <p className="text-gray-400 text-sm mt-1">Start the conversation!</p>
+                  </div>
                 ) : (
                   <>
-                    {/* Date Separator */}
-                    <div className="flex justify-center">
-                      <span className="bg-gray-200 text-black px-3 py-1 rounded-full text-xs font-bold">
-                        TODAY
-                      </span>
-                    </div>
+                    {/* Messages grouped by date */}
+                    {groupMessagesByDate(getCurrentChatMessages()).map((group, groupIndex) => (
+                      <div key={groupIndex} className="space-y-3 mb-6">
+                        {/* Date Separator */}
+                        <div className="flex justify-center mb-6">
+                          <span className="bg-gray-200 text-black px-3 py-1 rounded-full text-xs font-bold">
+                            {getDateLabel(group.messages[0].createdAt)}
+                          </span>
+                        </div>
 
-                    {/* Messages */}
-                    {getCurrentChatMessages().map((msg) => {
+                        {/* Messages for this date */}
+                        {group.messages.map((msg, msgIndex) => {
                       // Extract sender ID (handles object or string)
                       let messageSenderId;
                       if (typeof msg.senderId === 'object' && msg.senderId !== null) {
@@ -474,13 +643,16 @@ const ChatPopup = () => {
                       }
 
                       const currentUserId = currentUser?._id || currentUser?.id;
-                      const isCurrentUser = messageSenderId === currentUserId || 
+                      const isCurrentUser = messageSenderId === currentUserId ||
                                           String(messageSenderId) === String(currentUserId);
-                      
+
+                      const previousMsg = msgIndex > 0 ? group.messages[msgIndex - 1] : null;
+                      const isGrouped = shouldGroupWithPrevious(msg, previousMsg, msgIndex);
+
                       return (
-                        <div 
-                          key={msg._id || msg.id} 
-                          className={`flex ${msg.messageType === 'product' ? 'justify-center' : isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                        <div
+                          key={msg._id || msg.id}
+                          className={`flex ${msg.messageType === 'product' ? 'justify-center' : isCurrentUser ? 'justify-end' : 'justify-start'} ${isGrouped ? 'mt-1' : ''}`}
                         >
                           {msg.messageType === 'product' ? (
                             <div className="rounded-2xl p-4 max-w-sm shadow-lg" style={{ backgroundColor: '#007A3F' }}>
@@ -501,21 +673,42 @@ const ChatPopup = () => {
                             </div>
                           ) : (
                             <div
-                              className={`rounded-2xl px-4 py-2 max-w-xs shadow-lg ${
+                              className={`rounded-2xl px-4 py-3 max-w-xs shadow-lg transition-opacity ${
                                 isCurrentUser
                                   ? 'bg-blue-500 text-white'
-                                  : 'bg-white border border-gray-300 text-black'
-                              }`}
+                                  : msg.isRead
+                                    ? 'bg-white border border-gray-300 text-black'
+                                    : 'bg-gray-50 border border-gray-400 text-black font-semibold'
+                              } ${isGrouped ? 'shadow-sm' : ''}`}
                             >
-                              <p>{msg.content?.text || msg.message || ''}</p>
-                              <span className={`text-xs ${isCurrentUser ? 'text-blue-100' : 'text-gray-500'}`}>
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                              <p className="leading-relaxed">{msg.content?.text || msg.message || ''}</p>
+                              {!isGrouped && (
+                                <div className="flex items-center justify-between mt-2">
+                                  <span className={`text-xs ${isCurrentUser ? 'text-blue-100' : 'text-gray-500'}`}>
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  {isCurrentUser && (
+                                    <span className="text-xs ml-2">
+                                      {msg.isRead ? (
+                                        <span className="text-blue-100" title="Seen">
+                                          ✓✓
+                                        </span>
+                                      ) : (
+                                        <span className="text-blue-200" title="Delivered">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
                       );
                     })}
+                      </div>
+                    ))}
                     <div ref={messagesEndRef} />
                   </>
                 )}
@@ -524,25 +717,41 @@ const ChatPopup = () => {
               {/* Message Input - Fixed */}
               <div className="p-4 flex-shrink-0">
                 <div className="rounded-lg p-3 border border-gray-200 bg-white">
+                  {message.length > 900 && (
+                    <div className="mb-2 text-right">
+                      <span className={`text-xs ${message.length > 1000 ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                        {message.length}/1000
+                      </span>
+                    </div>
+                  )}
                   <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
                     <input
                       type="text"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Type a message"
+                      placeholder={sendingMessage ? "Sending..." : "Type a message"}
                       disabled={sendingMessage}
+                      maxLength={1000}
                       className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm ${
                         message ? 'text-left' : 'text-center'
-                      }`}
+                      } ${sendingMessage ? 'opacity-50 cursor-not-allowed' : ''}`}
                     />
                     <button
                       type="submit"
                       disabled={sendingMessage || !message.trim()}
-                      className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+                      className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={sendingMessage ? "Sending..." : "Send message"}
                     >
-                      <svg className="w-8 h-8 rotate-90 text-orange-500" fill="currentColor" stroke="white" strokeWidth="1" viewBox="0 0 24 24">
-                        <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
+                      {sendingMessage ? (
+                        <svg className="w-6 h-6 text-orange-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <svg className="w-8 h-8 rotate-90 text-orange-500" fill="currentColor" stroke="white" strokeWidth="1" viewBox="0 0 24 24">
+                          <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      )}
                     </button>
                   </form>
                 </div>
