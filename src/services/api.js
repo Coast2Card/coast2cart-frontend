@@ -17,15 +17,6 @@ const rawBaseQuery = fetchBaseQuery({
 const baseQueryWithFriendlyErrors = async (args, apiCtx, extraOptions) => {
   let result;
   try {
-    const path = typeof args === "string" ? args : args?.url;
-    const method = typeof args === "string" ? "GET" : args?.method || "GET";
-    const body = typeof args === "string" ? undefined : args?.body;
-    const normalizedBase = (baseUrl || "").replace(/\/$/, "");
-    const normalizedPath = (path || "").startsWith("/")
-      ? path
-      : `/${path || ""}`;
-    const fullUrl = `${normalizedBase}${normalizedPath}`;
-    console.log("[RTKQ] Request:", { method, url: fullUrl, body });
     result = await rawBaseQuery(args, apiCtx, extraOptions);
   } catch (e) {
     return {
@@ -40,14 +31,6 @@ const baseQueryWithFriendlyErrors = async (args, apiCtx, extraOptions) => {
     (result.error.status === "PARSING_ERROR" ||
       String(result.error?.error || "").includes("Unexpected token"))
   ) {
-    console.error("[RTKQ] Response parsing error:", {
-      url: `${(baseUrl || "").replace(/\/$/, "")}${
-        (typeof args === "string" ? args : args?.url) || ""
-      }`,
-      status: result.error.status,
-      error: result.error.error,
-      data: result.error.data,
-    });
     return {
       error: {
         status: result.error.status,
@@ -58,23 +41,13 @@ const baseQueryWithFriendlyErrors = async (args, apiCtx, extraOptions) => {
       },
     };
   }
-  if (result?.error) {
-    console.error("[RTKQ] Response error:", {
-      url: `${(baseUrl || "").replace(/\/$/, "")}${
-        (typeof args === "string" ? args : args?.url) || ""
-      }`,
-      status: result.error.status,
-      error: result.error.error,
-      data: result.error.data,
-    });
-  }
   return result;
 };
 
 export const api = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithFriendlyErrors,
-  tagTypes: ["Products", "Users", "Cart"],
+  tagTypes: ["Products", "Users", "Cart", "Chat"],
   endpoints: (builder) => ({
     approveSeller: builder.mutation({
       query: ({ sellerId }) => ({
@@ -334,6 +307,64 @@ export const api = createApi({
         body: payload, // { contactNo }
       }),
     }),
+    // Chat endpoints
+    getChatRooms: builder.query({
+      query: () => "/chat/rooms",
+      providesTags: ["Chat"],
+      transformResponse: (response) => response?.data || response,
+    }),
+    getChatRoom: builder.query({
+      query: (chatRoomId) => `/chat/rooms/${chatRoomId}`,
+      providesTags: (result, error, chatRoomId) => [{ type: "Chat", id: chatRoomId }],
+      transformResponse: (response) => response?.data || response,
+    }),
+    createOrGetChatRoom: builder.mutation({
+      query: (participantId) => ({
+        url: "/chat/rooms",
+        method: "POST",
+        body: { participantId },
+      }),
+      invalidatesTags: ["Chat"],
+      transformResponse: (response) => response?.data || response,
+    }),
+    sendMessage: builder.mutation({
+      query: ({ chatRoomId, messageType, content }) => ({
+        url: "/chat/messages",
+        method: "POST",
+        body: { chatRoomId, messageType, content },
+      }),
+      invalidatesTags: (result, error, { chatRoomId }) => [
+        { type: "Chat", id: chatRoomId },
+        "Chat",
+      ],
+      transformResponse: (response) => response?.data || response,
+    }),
+    getChatMessages: builder.query({
+      query: ({ chatRoomId, page = 1, limit = 50 }) => ({
+        url: `/chat/rooms/${chatRoomId}/messages`,
+        params: { page, limit },
+      }),
+      providesTags: (result, error, { chatRoomId }) => [
+        { type: "Chat", id: `${chatRoomId}-messages` },
+        "Chat",
+      ],
+      transformResponse: (response) => {
+        const messages = response?.data?.messages || response?.messages || response?.data || [];
+        const pagination = response?.data?.pagination || response?.pagination || null;
+        return { messages, pagination };
+      },
+    }),
+    markMessagesAsRead: builder.mutation({
+      query: (chatRoomId) => ({
+        url: `/chat/rooms/${chatRoomId}/messages/read`,
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, chatRoomId) => [
+        { type: "Chat", id: chatRoomId },
+        "Chat",
+      ],
+      transformResponse: (response) => response?.data || response,
+    }),
   }),
 });
 
@@ -359,4 +390,10 @@ export const {
   useSignupMutation,
   useVerifyOtpMutation,
   useResendOtpMutation,
+  useGetChatRoomsQuery,
+  useGetChatRoomQuery,
+  useCreateOrGetChatRoomMutation,
+  useSendMessageMutation,
+  useGetChatMessagesQuery,
+  useMarkMessagesAsReadMutation,
 } = api;
