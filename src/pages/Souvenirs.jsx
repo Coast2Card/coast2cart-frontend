@@ -16,10 +16,14 @@ const Souvenirs = () => {
   const { data, isLoading, isError } = useGetSouvenirsQuery({
     // Add any additional params here if needed
   });
-  const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+  const [addToCart] = useAddToCartMutation();
   const [showCartModal, setShowCartModal] = useState(false);
   const [modalProduct, setModalProduct] = useState(null);
-  const [modalSeller, setModalSeller] = useState({ name: "", profileImage: "/src/assets/icons/profile.png" });
+  const [modalSeller, setModalSeller] = useState({
+    name: "",
+    profileImage: "/src/assets/icons/profile.png",
+  });
+  const [addingId, setAddingId] = useState(null);
 
   const allSouvenirs = data?.items || [];
 
@@ -217,22 +221,21 @@ const Souvenirs = () => {
             </div>
           </div>
         ) : filteredAndSortedSouvenirs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16 items-stretch">
             {filteredAndSortedSouvenirs.map((souvenir) => (
-              <div
+              <Link
                 key={souvenir.id || souvenir._id || souvenir.name}
-                className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                to={`/seafood/${souvenir.id || souvenir._id}`}
+                className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col"
               >
-                <Link to={`/seafood/${souvenir.id || souvenir._id}`}>
-                  <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
-                    <img
-                      src={souvenir.imageUrl || souvenir.image || bisugo}
-                      alt={souvenir.itemName || souvenir.name || "Souvenir"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </Link>
-                <div className="p-4">
+                <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                  <img
+                    src={souvenir.imageUrl || souvenir.image || bisugo}
+                    alt={souvenir.itemName || souvenir.name || "Souvenir"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-4 flex flex-col h-full">
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-outfit font-bold text-lg text-success">
                       {souvenir.formattedPrice ??
@@ -252,10 +255,11 @@ const Souvenirs = () => {
                       {souvenir.description}
                     </p>
                   )}
-                  <div className="mt-3">
+                  <div className="mt-auto">
                     <button
-                      disabled={isAdding}
-                      onClick={async () => {
+                      disabled={addingId === (souvenir.id || souvenir._id)}
+                      onClick={async (e) => {
+                        e.preventDefault();
                         const token = localStorage.getItem("auth_token");
                         if (!token) {
                           toast.error(
@@ -267,6 +271,7 @@ const Souvenirs = () => {
                         const itemId = souvenir.id || souvenir._id;
                         if (!itemId) return;
                         try {
+                          setAddingId(itemId);
                           console.log("[AddToCart:Souvenirs] Submitting:", {
                             itemId,
                             quantity: 1,
@@ -296,15 +301,19 @@ const Souvenirs = () => {
                           toast.error(
                             e?.data?.message || "Failed to add to cart"
                           );
+                        } finally {
+                          setAddingId(null);
                         }
                       }}
-                      className="w-full h-10 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold text-sm"
+                      className="w-full h-9 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold text-sm disabled:opacity-60"
                     >
-                      {isAdding ? "Adding..." : "Add to Cart"}
+                      {addingId === (souvenir.id || souvenir._id)
+                        ? "Adding..."
+                        : "Add to Cart"}
                     </button>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (

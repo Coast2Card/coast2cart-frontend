@@ -76,6 +76,56 @@ export const api = createApi({
   baseQuery: baseQueryWithFriendlyErrors,
   tagTypes: ["Products", "Users", "Cart"],
   endpoints: (builder) => ({
+    getAccountById: builder.query({
+      query: (accountId) => ({
+        url: `/accounts/${accountId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        const a =
+          response?.data?.account || response?.account || response || {};
+        const firstName = a?.firstName || "";
+        const lastName = a?.lastName || "";
+        const fullName = [firstName, lastName].filter(Boolean).join(" ");
+        return {
+          id: a?.id || a?._id,
+          firstName,
+          lastName,
+          fullName,
+          username: a?.username || "",
+          email: a?.email || "",
+          contactNo: a?.contactNo || a?.phoneNumber || "",
+          address: a?.address || "",
+          dateOfBirth: a?.dateOfBirth || undefined,
+          role: a?.role || "",
+          isVerified: Boolean(a?.isVerified),
+          createdAt: a?.createdAt || undefined,
+          memberSinceYear: a?.createdAt
+            ? new Date(a.createdAt).getFullYear()
+            : undefined,
+          raw: a,
+        };
+      },
+    }),
+    getSellerInfo: builder.query({
+      query: (sellerId) => ({
+        url: `/accounts/sellers/${sellerId}/info`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Expect { success: true, data: { seller: { name, location, phoneNumber, createdAt, email, image } } }
+        const s = response?.data?.seller || response?.seller || {};
+        return {
+          name: s?.name || "",
+          location: s?.location || "",
+          phoneNumber: s?.phoneNumber || s?.phone || "",
+          email: s?.email || "",
+          createdAt: s?.createdAt || undefined,
+          image: s?.image || null,
+          raw: s,
+        };
+      },
+    }),
     approveSeller: builder.mutation({
       query: ({ sellerId }) => ({
         url: `/accounts/sellers/${sellerId}/approval`,
@@ -185,6 +235,23 @@ export const api = createApi({
       invalidatesTags: ["Cart"],
       transformResponse: (response) => response?.data || response,
     }),
+    createItem: builder.mutation({
+      query: (payload) => {
+        // payload may contain File for image; use FormData
+        const form = new FormData();
+        const entries = Object.entries(payload || {});
+        for (const [key, value] of entries) {
+          if (value == null) continue;
+          form.append(key, value);
+        }
+        return {
+          url: "/items",
+          method: "POST",
+          body: form,
+        };
+      },
+      transformResponse: (response) => response?.data || response,
+    }),
     removeFromCart: builder.mutation({
       query: (itemId) => ({
         url: `/cart/remove/${itemId}`,
@@ -223,7 +290,10 @@ export const api = createApi({
           ? response
           : [];
         const pagination = response?.pagination || null;
-        const categoryTotalItems = response?.data?.categoryTotalItems ?? response?.categoryTotalItems ?? null;
+        const categoryTotalItems =
+          response?.data?.categoryTotalItems ??
+          response?.categoryTotalItems ??
+          null;
         return { items, pagination, categoryTotalItems };
       },
     }),
@@ -238,6 +308,41 @@ export const api = createApi({
           : Array.isArray(response)
           ? response
           : [];
+        const pagination = response?.pagination || null;
+        return { items, pagination };
+      },
+    }),
+    getSellerSoldItems: builder.query({
+      query: (sellerId) => ({
+        url: `/items/sold/seller/${sellerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Accept flexible server shapes
+        const raw = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response?.items)
+          ? response.items
+          : Array.isArray(response)
+          ? response
+          : [];
+        const items = raw.map((r) => {
+          const item = r?.item || r?.product || r;
+          const id = r?._id || r?.id || item?._id || item?.id;
+          const name = item?.itemName || item?.name || r?.name || "";
+          const image = item?.image || item?.imageUrl || r?.image || "";
+          const category =
+            item?.category || item?.itemType || r?.category || "";
+          const qty = r?.quantity ?? r?.qty ?? item?.quantity ?? undefined;
+          const unit = item?.unit || r?.unit || "";
+          const quantity =
+            qty != null
+              ? `${qty} ${unit || ""}`.trim()
+              : r?.weight || r?.quantityLabel || "";
+          const soldDate =
+            r?.soldAt || r?.createdAt || r?.updatedAt || item?.soldAt || "";
+          return { id, name, image, category, quantity, soldDate, raw: r };
+        });
         const pagination = response?.pagination || null;
         return { items, pagination };
       },
@@ -338,6 +443,8 @@ export const api = createApi({
 });
 
 export const {
+  useGetSellerInfoQuery,
+  useGetAccountByIdQuery,
   useGetAccountsQuery,
   useGetAdminAccountsQuery,
   useCreateAdminAccountMutation,
@@ -346,11 +453,13 @@ export const {
   useGetCartQuery,
   useGetCartSummaryQuery,
   useAddToCartMutation,
+  useCreateItemMutation,
   useRemoveFromCartMutation,
   useClearCartMutation,
   useUpdateCartItemMutation,
   useGetItemsQuery,
   useGetSellerItemsQuery,
+  useGetSellerSoldItemsQuery,
   useGetItemByIdQuery,
   useGetSouvenirsQuery,
   useGetProductsQuery,
