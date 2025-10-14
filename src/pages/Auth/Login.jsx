@@ -49,7 +49,9 @@ const Login = () => {
       const displayName = user?.username || user?.firstName || "";
       toast.success(displayName ? `Welcome, ${displayName}` : "Welcome");
       const role = (user?.role || "").toLowerCase();
-      if (role === "admin" || role === "super_admin" || role === "superadmin") {
+      if (role === "superadmin" || role === "super_admin") {
+        navigate("/admin/admins");
+      } else if (role === "admin") {
         navigate("/admin");
       } else {
         navigate("/");

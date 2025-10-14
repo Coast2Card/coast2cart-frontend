@@ -24,10 +24,12 @@ import SellerAccountManagement from "./pages/Admin/SellerAccountManagement";
 import AdminAccountManagement from "./pages/Admin/AdminAccountManagement";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
     <>
+      <ScrollToTop />
       <Toaster position="top-center" />
       <Routes>
         {/* Routes with shared layout */}
@@ -88,11 +90,46 @@ function App() {
           <Route path="colors" element={<Colors />} />
         </Route>
         {/* Admin routes with AdminLayout */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashbord />} />
-          <Route path="sellers" element={<SellerAccountManagement />} />
-          <Route path="buyers" element={<BuyerAccountManagement />} />
-          <Route path="admins" element={<AdminAccountManagement />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            index
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Dashbord />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="sellers"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <SellerAccountManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="buyers"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <BuyerAccountManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admins"
+            element={
+              <ProtectedRoute allowedRoles={["superadmin"]}>
+                <AdminAccountManagement />
+              </ProtectedRoute>
+            }
+          />
         </Route>
         {/* Auth routes without shared layout */}
         <Route path="/login" element={<Login />} />

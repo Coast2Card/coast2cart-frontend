@@ -48,35 +48,41 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
-        <AdminNavItem
-          to="/admin"
-          end
-          iconSrc={chartpie}
-          iconAlt="Dashboard"
-          label="Dashboard"
-          iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
-        />
-        <AdminNavItem
-          to="/admin/buyers"
-          iconSrc={person}
-          iconAlt="Buyers"
-          label="Buyer Account Management"
-          iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
-        />
-        <AdminNavItem
-          to="/admin/sellers"
-          iconSrc={person}
-          iconAlt="Sellers"
-          label="Seller Account Management"
-          iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
-        />
-        <AdminNavItem
-          to="/admin/admins"
-          iconSrc={person}
-          iconAlt="Admins"
-          label="Admin Account Management"
-          iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
-        />
+        {authUser?.role !== "superadmin" && (
+          <>
+            <AdminNavItem
+              to="/admin"
+              end
+              iconSrc={chartpie}
+              iconAlt="Dashboard"
+              label="Dashboard"
+              iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
+            />
+            <AdminNavItem
+              to="/admin/buyers"
+              iconSrc={person}
+              iconAlt="Buyers"
+              label="Buyer Account Management"
+              iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
+            />
+            <AdminNavItem
+              to="/admin/sellers"
+              iconSrc={person}
+              iconAlt="Sellers"
+              label="Seller Account Management"
+              iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
+            />
+          </>
+        )}
+        {authUser?.role === "superadmin" && (
+          <AdminNavItem
+            to="/admin/admins"
+            iconSrc={person}
+            iconAlt="Admins"
+            label="Admin Account Management"
+            iconWrapperClass="w-7 h-7 rounded-full bg-white grid place-items-center text-base-content"
+          />
+        )}
       </nav>
 
       <div className="mt-auto p-4 border-t border-primary/40 relative">
