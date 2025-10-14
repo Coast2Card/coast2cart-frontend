@@ -76,6 +76,30 @@ export const api = createApi({
   baseQuery: baseQueryWithFriendlyErrors,
   tagTypes: ["Products", "Users", "Cart"],
   endpoints: (builder) => ({
+    approveSeller: builder.mutation({
+      query: ({ sellerId }) => ({
+        url: `/accounts/sellers/${sellerId}/approval`,
+        method: "PUT",
+        body: { status: "approved" },
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
+    rejectSeller: builder.mutation({
+      query: ({ sellerId }) => ({
+        url: `/accounts/sellers/${sellerId}/approval`,
+        method: "PUT",
+        body: { status: "rejected" },
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
+    createAdminAccount: builder.mutation({
+      query: (payload) => ({
+        url: "/accounts/admin",
+        method: "POST",
+        body: payload,
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
     getAccounts: builder.query({
       query: (params) => ({
         url: "/accounts",
@@ -316,6 +340,9 @@ export const api = createApi({
 export const {
   useGetAccountsQuery,
   useGetAdminAccountsQuery,
+  useCreateAdminAccountMutation,
+  useApproveSellerMutation,
+  useRejectSellerMutation,
   useGetCartQuery,
   useGetCartSummaryQuery,
   useAddToCartMutation,

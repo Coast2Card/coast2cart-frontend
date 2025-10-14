@@ -3,13 +3,12 @@ import {
   User,
   Plus,
   Minus,
-  UploadSimple,
   ArrowsClockwise,
   FunnelSimple,
   Eye,
 } from "@phosphor-icons/react";
 import { useGetAccountsQuery } from "../../services/api";
-import AddBuyerModal from "../../modals/AddBuyerModal";
+import ConfirmDeleteModal from "../../modals/ConfirmDeleteModal";
 import ViewBuyerModal from "../../modals/ViewBuyerModal";
 
 // Fetch buyers from backend and map to UI rows
@@ -26,7 +25,7 @@ const useBuyersData = (queryParams) => {
     contact: a.contactNo || "",
     address: a.address || "",
     status:
-      (a.status || "").toLowerCase() === "verified" ? "Active" : "Inactive",
+      (a.status || "").toLowerCase() === "verified" ? "verified" : "unverified",
     created: (a.createdAt || "").slice(0, 10),
     lastActive: (a.updatedAt || a.createdAt || "").slice(0, 10),
     raw: a,
@@ -36,21 +35,22 @@ const useBuyersData = (queryParams) => {
 };
 
 const StatusPill = ({ value }) => {
-  const isActive = value === "Active";
+  const normalized = (value || "").toLowerCase();
+  const isVerified = normalized === "verified";
   return (
     <div
       className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-sm font-medium ${
-        isActive
+        isVerified
           ? "text-emerald-700 bg-emerald-50"
           : "text-gray-600 bg-gray-100"
       }`}
     >
       <span
         className={`w-2 h-2 rounded-full ${
-          isActive ? "bg-emerald-500" : "bg-gray-400"
+          isVerified ? "bg-emerald-500" : "bg-gray-400"
         }`}
       ></span>
-      {value}
+      {normalized}
     </div>
   );
 };
@@ -75,8 +75,8 @@ const BuyerAccountManagement = () => {
   });
   const [selected, setSelected] = useState(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isAddOpen, setIsAddOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const selectedBuyer =
     selected.size === 1
       ? data.find((d) => d.id === Array.from(selected)[0])?.raw
@@ -138,31 +138,16 @@ const BuyerAccountManagement = () => {
               {isFetching ? "Loading..." : `${total} Results`}
             </div>
             <div className="flex-1"></div>
-            <button
-              className="btn btn-sm md:btn-md bg-primary text-primary-content border border-primary"
-              onClick={() => setIsAddOpen(true)}
-            >
-              <Plus size={16} weight="bold" className="mr-1" /> Add
-            </button>
-            <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
-              <Minus size={16} weight="bold" className="mr-1" /> Delete
-            </button>
-            <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
-              <UploadSimple size={16} weight="bold" className="mr-1" />{" "}
-              Import/Export
-            </button>
-            <button
-              className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"
-              disabled={selected.size !== 1}
-              onClick={() => {
-                if (selected.size === 1) setIsViewOpen(true);
-              }}
-            >
-              <Eye size={16} weight="bold" className="mr-1" /> View
-            </button>
-            <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
-              ⋮
-            </button>
+            {/* Add button removed for buyers */}
+            {selected.size > 0 && (
+              <button
+                className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                <Minus size={16} weight="bold" className="mr-1" /> Delete
+              </button>
+            )}
+            {/* Removed Import/Export, header View, and options buttons */}
           </div>
         </div>
 
@@ -185,8 +170,8 @@ const BuyerAccountManagement = () => {
               }
             >
               <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="verified">verified</option>
+              <option value="unverified">unverified</option>
             </select>
             <div className="flex gap-2">
               <button
@@ -221,11 +206,9 @@ const BuyerAccountManagement = () => {
                 </th>
                 <th>Fullname</th>
                 <th>Email</th>
-                <th>Contact Number</th>
                 <th>Address</th>
                 <th>Status</th>
-                <th>Account Created</th>
-                <th>Last Active</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -258,20 +241,41 @@ const BuyerAccountManagement = () => {
                     </div>
                   </td>
                   <td className="text-base-content/80">{row.email}</td>
-                  <td className="text-base-content/80">{row.contact}</td>
                   <td className="text-base-content/80">{row.address}</td>
                   <td>
                     <StatusPill value={row.status} />
                   </td>
-                  <td className="text-base-content/80">{row.created}</td>
-                  <td className="text-base-content/80">{row.lastActive}</td>
+                  <td>
+                    <button
+                      className="btn btn-xs bg-white text-base-content border border-row-outline"
+                      onClick={() => {
+                        setSelected(new Set([row.id]));
+                        setIsViewOpen(true);
+                      }}
+                    >
+                      <Eye size={14} weight="bold" className="mr-1" /> View
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-      <AddBuyerModal open={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      {/* AddBuyerModal removed for buyers */}
+      <ConfirmDeleteModal
+        open={isDeleteOpen}
+        onCancel={() => setIsDeleteOpen(false)}
+        onConfirm={() => {
+          // TODO integrate delete API
+          setIsDeleteOpen(false);
+        }}
+        count={selected.size}
+        items={Array.from(selected).map((id) => {
+          const row = data.find((d) => d.id === id);
+          return { id, name: row?.name, email: row?.email };
+        })}
+      />
       <ViewBuyerModal
         open={isViewOpen}
         onClose={() => setIsViewOpen(false)}

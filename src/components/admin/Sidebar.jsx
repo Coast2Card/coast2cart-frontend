@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import chartpie from "../../assets/icons/ChartPieSlice.png";
@@ -36,6 +37,7 @@ const Sidebar = () => {
     }
     setAuthUser(null);
     setIsProfileOpen(false);
+    toast.success("Logged out");
     navigate("/", { replace: true });
   };
 
@@ -90,7 +92,7 @@ const Sidebar = () => {
           <div className="absolute bottom-16 left-4 right-4 bg-white text-base-content rounded-xl shadow-2xl p-2 z-50">
             <button
               type="button"
-              className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200"
+              className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 cursor-pointer transition-colors"
               onClick={handleLogout}
             >
               Log out
@@ -100,7 +102,7 @@ const Sidebar = () => {
         <button
           type="button"
           onClick={() => setIsProfileOpen((v) => !v)}
-          className="w-full flex items-center gap-3"
+          className="w-full flex items-center gap-3 cursor-pointer hover:bg-primary/20 rounded-xl p-2 transition-colors"
           aria-haspopup="menu"
           aria-expanded={isProfileOpen}
         >
@@ -115,6 +117,23 @@ const Sidebar = () => {
             <p className="text-primary-content/80 text-sm">
               {authUser?.email || ""}
             </p>
+            {authUser?.role && (
+              <div className="mt-1">
+                <span
+                  className={
+                    authUser.role === "superadmin"
+                      ? "badge badge-sm bg-yellow-300 text-black border-0"
+                      : authUser.role === "admin"
+                      ? "badge badge-sm bg-white text-primary border-0"
+                      : "badge badge-sm bg-white text-primary border-0"
+                  }
+                >
+                  {(authUser.role === "superadmin" && "Super Admin") ||
+                    (authUser.role === "admin" && "Admin") ||
+                    authUser.role}
+                </span>
+              </div>
+            )}
           </div>
         </button>
       </div>
