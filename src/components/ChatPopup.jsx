@@ -14,9 +14,7 @@ const ChatPopup = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent'); // 'recent', 'unread', 'alphabetical'
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef(null);
-  const messagesContainerRef = useRef(null);
 
   // Get current user from localStorage
   const getCurrentUser = () => {
@@ -238,25 +236,8 @@ const ChatPopup = () => {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (!showScrollButton) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatMessages, showScrollButton]);
-
-  // Detect scroll position to show/hide scroll button
-  const handleScroll = () => {
-    if (messagesContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollButton(!isNearBottom);
-    }
-  };
-
-  // Scroll to bottom function
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    setShowScrollButton(false);
-  };
+  }, [chatMessages]);
 
   // Close sort menu when clicking outside
   useEffect(() => {
@@ -577,10 +558,7 @@ const ChatPopup = () => {
               </div>
 
               {/* Messages Area - Scrollable */}
-              <div
-                ref={messagesContainerRef}
-                onScroll={handleScroll}
-                className="flex-1 overflow-y-auto p-4 relative"
+              <div className="flex-1 overflow-y-auto p-4"
               >
                 {isLoadingMessages ? (
                   <div className="space-y-4">
@@ -697,19 +675,6 @@ const ChatPopup = () => {
                     ))}
                     <div ref={messagesEndRef} />
                   </>
-                )}
-
-                {/* Scroll to bottom button */}
-                {showScrollButton && (
-                  <button
-                    onClick={scrollToBottom}
-                    className="absolute bottom-4 right-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-3 shadow-lg transition-all transform hover:scale-110"
-                    title="Scroll to bottom"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                  </button>
                 )}
               </div>
 
