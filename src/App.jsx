@@ -25,13 +25,15 @@ import AdminAccountManagement from "./pages/Admin/AdminAccountManagement";
 import "./App.css";
 import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./components/ScrollToTop";
+import { ChatProvider } from "./contexts/ChatContext";
 
 function App() {
   return (
     <>
       <ScrollToTop />
       <Toaster position="top-center" />
-      <Routes>
+      <ChatProvider>
+        <Routes>
         {/* Routes with shared layout */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
@@ -137,6 +139,7 @@ function App() {
         <Route path="/verify-otp" element={<OtpVerify />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </ChatProvider>
     </>
   );
 }

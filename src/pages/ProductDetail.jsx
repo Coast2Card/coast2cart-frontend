@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import SellerSection from "../components/productDetail/SellerSection";
 import RelatedProducts from "../components/productDetail/RelatedProducts";
 import CartConfirmationModal from "../components/productDetail/CartConfirmationModal";
-import ChatPopup from "../components/ChatPopup";
+import StartChatButton from "../components/StartChatButton";
 import bisugo from "../assets/images/bisugo.png";
 import { useState } from "react";
 
@@ -16,7 +16,6 @@ const ProductDetail = () => {
   const [showCartModal, setShowCartModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showAnimation, setShowAnimation] = useState(false);
-  const [showChat, setShowChat] = useState(false);
   const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
 
   // Fetch item by ID from API
@@ -37,6 +36,7 @@ const ProductDetail = () => {
     isError,
     error,
   });
+
 
   // Loading state with skeletons
   if (isLoading) {
@@ -274,16 +274,44 @@ const ProductDetail = () => {
                   {isAdding ? "Adding..." : "Add to Cart"}
                 </button>
               </div>
-              <button
-                className="w-full h-11 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium"
-                onClick={() => setShowChat(true)}
-              >
-                Message Seller
-              </button>
+              {(() => {
+                const sellerId = product?.seller?._id || product?.seller?.id || product?.postedBy?._id || product?.postedBy?.id || product?.owner?._id || product?.owner?.id;
+                const sellerName = product?.seller?.username || product?.seller?.name || product?.postedBy?.username || product?.postedBy?.name || product?.owner?.username || product?.owner?.name || 'Seller';
+                
+                if (sellerId) {
+                  return (
+                    <StartChatButton 
+                      userId={sellerId}
+                      username={sellerName}
+                      className="w-full h-11 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium"
+                      productInfo={{
+                        id: product._id || product.id,
+                        name: product.itemName || product.name,
+                        description: product.description,
+                        price: product.itemPrice || product.price,
+                        image: product.image || product.imageUrl,
+                        unit: product.unit
+                      }}
+                    >
+                      Message Seller
+                    </StartChatButton>
+                  );
+                } else {
+                  return (
+                    <button
+                      className="w-full h-11 rounded-full border border-gray-300 text-gray-400 cursor-not-allowed font-medium"
+                      disabled
+                    >
+                      Seller Info Unavailable
+                    </button>
+                  );
+                }
+              })()}
             </div>
           </div>
         </div>
       </div>
+      
       {/* Seller info and reviews */}
       <SellerSection itemId={itemId} product={product} />
       {/* Related products */}
@@ -318,7 +346,6 @@ const ProductDetail = () => {
         seller={modalSeller}
         quantity={quantity}
       />
-      <ChatPopup isOpen={showChat} onClose={() => setShowChat(false)} />
     </div>
   );
 };

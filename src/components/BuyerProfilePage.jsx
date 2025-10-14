@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useGetAccountByIdQuery } from "../services/api";
 import {
   MapPin,
   Phone,
@@ -29,17 +30,68 @@ const BuyerProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
 
-  const [userData, setUserData] = useState({
-    id: "buyer_001",
-    name: "Gela Alonte",
-    location: "Barangay Baybayon, Quezon",
-    phone: "0912 345 6789",
-    email: "dpwh@gmail.com",
-    memberSince: "2025",
-    profileImage: null,
-    createdAt: "2025-01-01T00:00:00Z",
-    updatedAt: "2025-01-15T10:30:00Z",
+  // Resolve logged-in account id from localStorage
+  const resolveAccountId = () => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      if (raw) {
+        const obj = JSON.parse(raw);
+        return (
+          obj?.id ||
+          obj?._id ||
+          obj?.user?.id ||
+          obj?.user?._id ||
+          obj?.accountId
+        );
+      }
+    } catch {}
+    const token = localStorage.getItem("auth_token");
+    try {
+      if (token && token.split(".").length === 3) {
+        const base64 = token
+          .split(".")[1]
+          .replace(/-/g, "+")
+          .replace(/_/g, "/");
+        const json = JSON.parse(atob(base64));
+        return json?.userId || json?.accountId;
+      }
+    } catch {}
+    return undefined;
+  };
+  const accountId = resolveAccountId();
+  const { data: account } = useGetAccountByIdQuery(accountId, {
+    skip: !accountId,
   });
+
+  const [userData, setUserData] = useState(() => ({
+    id: account?.id || "",
+    name: account?.fullName || "",
+    location: account?.address || "",
+    phone: account?.contactNo || "",
+    email: account?.email || "",
+    memberSince: account?.memberSinceYear
+      ? String(account.memberSinceYear)
+      : "",
+    profileImage: null,
+    createdAt: account?.createdAt || "",
+    updatedAt: "",
+  }));
+
+  // Keep local state in sync when account data loads
+  if (account && !userData?.id) {
+    setUserData((prev) => ({
+      ...prev,
+      id: account.id || prev.id,
+      name: account.fullName || prev.name,
+      location: account.address || prev.location,
+      phone: account.contactNo || prev.phone,
+      email: account.email || prev.email,
+      memberSince: account.memberSinceYear
+        ? String(account.memberSinceYear)
+        : prev.memberSince,
+      createdAt: account.createdAt || prev.createdAt,
+    }));
+  }
 
   const [recentOrders, _setRecentOrders] = useState([
     {
@@ -471,7 +523,7 @@ const BuyerProfilePage = () => {
   return (
     <div className="min-h-screen bg-base-300">
       {/* Profile Header */}
-      <div className="w-full px-8 pt-8">
+      <div className="max-w-8xl mx-auto px-4 md:px-8 pt-8">
         <div className="bg-gradient-to-r from-[#FF773C] via-[#E14400] via-30% to-[#E14400] text-white rounded-2xl p-8 md:p-12 mb-6 relative overflow-hidden shadow-lg">
           {/* Coast2Cart Logo - Top Right */}
           <div className="absolute top-6 right-6 md:top-8 md:right-8">
@@ -486,11 +538,7 @@ const BuyerProfilePage = () => {
             {/* Left Side - Avatar */}
             <div className="flex-shrink-0">
               <div className="w-40 h-40 md:w-48 md:h-48 bg-white rounded-full flex items-center justify-center shadow-lg">
-                <Users
-                  size={80}
-                  weight="light"
-                  className="text-gray-400"
-                />
+                <Users size={80} weight="light" className="text-gray-400" />
               </div>
             </div>
 
@@ -512,108 +560,102 @@ const BuyerProfilePage = () => {
 
               {isEditing ? (
                 <div className="space-y-4 max-w-md">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Name
-                      </label>
-                      <input
-                        type="text"
-                        value={editForm.name || ""}
-                        onChange={(e) =>
-                          handleInputChange("name", e.target.value)
-                        }
-                        className="w-full px-3 py-2 bg-white/20 rounded-lg text-white placeholder-white/70 border border-white/30 focus:border-white focus:outline-none transition-colors duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Location
-                      </label>
-                      <input
-                        type="text"
-                        value={editForm.location || ""}
-                        onChange={(e) =>
-                          handleInputChange("location", e.target.value)
-                        }
-                        className="w-full px-3 py-2 bg-white/20 rounded-lg text-white placeholder-white/70 border border-white/30 focus:border-white focus:outline-none transition-colors duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Phone
-                      </label>
-                      <input
-                        type="text"
-                        value={editForm.phone || ""}
-                        onChange={(e) =>
-                          handleInputChange("phone", e.target.value)
-                        }
-                        className="w-full px-3 py-2 bg-white/20 rounded-lg text-white placeholder-white/70 border border-white/30 focus:border-white focus:outline-none transition-colors duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={editForm.email || ""}
-                        onChange={(e) =>
-                          handleInputChange("email", e.target.value)
-                        }
-                        className="w-full px-3 py-2 bg-white/20 rounded-lg text-white placeholder-white/70 border border-white/30 focus:border-white focus:outline-none transition-colors duration-200"
-                      />
-                    </div>
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        onClick={handleSaveProfile}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105 active:scale-95"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105 active:scale-95"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.name || ""}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white/20 rounded-lg text-white placeholder-white/70 border border-white/30 focus:border-white focus:outline-none transition-colors duration-200"
+                    />
                   </div>
-                ) : (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.location || ""}
+                      onChange={(e) =>
+                        handleInputChange("location", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white/20 rounded-lg text-white placeholder-white/70 border border-white/30 focus:border-white focus:outline-none transition-colors duration-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Phone
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.phone || ""}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white/20 rounded-lg text-white placeholder-white/70 border border-white/30 focus:border-white focus:outline-none transition-colors duration-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={editForm.email || ""}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white/20 rounded-lg text-white placeholder-white/70 border border-white/30 focus:border-white focus:outline-none transition-colors duration-200"
+                    />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleSaveProfile}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
                 <div className="space-y-4">
-                    <div className="flex items-center justify-center md:justify-start gap-3">
-                      <MapPin
-                        size={22}
-                        weight="fill"
-                        className="text-white"
-                      />
-                      <span className="text-lg md:text-xl font-normal">{userData.location}</span>
-                    </div>
-                    <div className="flex items-center justify-center md:justify-start gap-3">
-                      <Phone
-                        size={22}
-                        weight="fill"
-                        className="text-white"
-                      />
-                      <span className="text-lg md:text-xl font-normal">{userData.phone}</span>
-                    </div>
-                    <div className="flex items-center justify-center md:justify-start gap-3">
-                      <EnvelopeSimple
-                        size={22}
-                        weight="fill"
-                        className="text-white"
-                      />
-                      <span className="text-lg md:text-xl font-normal">{userData.email}</span>
-                    </div>
-                    <div className="flex items-center justify-center md:justify-start gap-3">
-                      <Users
-                        size={22}
-                        weight="fill"
-                        className="text-white"
-                      />
-                      <span className="text-lg md:text-xl font-normal">
-                        Buyer Since {userData.memberSince}
-                      </span>
+                  <div className="flex items-center justify-center md:justify-start gap-3">
+                    <MapPin size={22} weight="fill" className="text-white" />
+                    <span className="text-lg md:text-xl font-normal">
+                      {userData.location}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center md:justify-start gap-3">
+                    <Phone size={22} weight="fill" className="text-white" />
+                    <span className="text-lg md:text-xl font-normal">
+                      {userData.phone}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center md:justify-start gap-3">
+                    <EnvelopeSimple
+                      size={22}
+                      weight="fill"
+                      className="text-white"
+                    />
+                    <span className="text-lg md:text-xl font-normal">
+                      {userData.email}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center md:justify-start gap-3">
+                    <Users size={22} weight="fill" className="text-white" />
+                    <span className="text-lg md:text-xl font-normal">
+                      Buyer Since {userData.memberSince}
+                    </span>
                   </div>
                 </div>
               )}
@@ -623,7 +665,7 @@ const BuyerProfilePage = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-8xl mx-auto px-4 md:px-8 py-8">
         <div className="flex flex-wrap justify-center gap-4 mb-10">
           <button
             onClick={() => setActiveTab("recent")}

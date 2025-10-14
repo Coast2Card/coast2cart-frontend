@@ -19,8 +19,12 @@ const Seafood = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCartModal, setShowCartModal] = useState(false);
   const [modalProduct, setModalProduct] = useState(null);
-  const [modalSeller, setModalSeller] = useState({ name: "", profileImage: "/src/assets/icons/profile.png" });
-  const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+  const [modalSeller, setModalSeller] = useState({
+    name: "",
+    profileImage: "/src/assets/icons/profile.png",
+  });
+  const [addToCart] = useAddToCartMutation();
+  const [addingId, setAddingId] = useState(null);
 
   const { data, isLoading, isFetching, isError } = useGetItemsQuery({
     page,
@@ -183,7 +187,7 @@ const Seafood = () => {
                     <SearchBar onSearch={handleSearch} />
                     <div className="text-left">
                       <p className="font-inter font-bold text-gray-700 mb-1">
-                        {(isLoading || (isFetching && !accumulatedItems.length))
+                        {isLoading || (isFetching && !accumulatedItems.length)
                           ? "Loading items…"
                           : searchTerm.trim()
                           ? `Found ${totalItems} item(s) matching "${searchTerm}"`
@@ -198,10 +202,13 @@ const Seafood = () => {
                 </div>
 
                 {/* Product Grid */}
-                {(isLoading || (isFetching && !accumulatedItems.length)) ? (
+                {isLoading || (isFetching && !accumulatedItems.length) ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                      <div
+                        key={i}
+                        className="bg-white rounded-lg shadow-sm overflow-hidden"
+                      >
                         <div className="h-48 bg-gray-100 animate-pulse" />
                         <div className="p-4 space-y-2">
                           <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
@@ -221,12 +228,12 @@ const Seafood = () => {
                       : "No items available."}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 items-stretch">
                     {filteredItems.map((product) => (
                       <Link
                         key={product.id || product._id || product.name}
                         to={`/seafood/${product.id || product._id}`}
-                        className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                        className="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col"
                       >
                         <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
                           <img
@@ -235,9 +242,9 @@ const Seafood = () => {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <div className="p-4">
+                        <div className="p-4 flex flex-col h-full">
                           <div className="flex justify-between items-start mb-2">
-                    <span className="font-outfit font-bold text-lg text-success">
+                            <span className="font-outfit font-bold text-lg text-success">
                               {product.formattedPrice ??
                                 product.priceDisplay ??
                                 (product.itemPrice != null
@@ -257,42 +264,68 @@ const Seafood = () => {
                               {product.description}
                             </p>
                           )}
-                          <div className="mt-3">
+                          <div className="mt-auto">
                             <button
-                              disabled={isAdding}
+                              disabled={
+                                addingId === (product.id || product._id)
+                              }
                               className="w-full h-9 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold text-sm disabled:opacity-60"
                               onClick={async (e) => {
                                 e.preventDefault();
-                                const token = localStorage.getItem("auth_token");
+                                const token =
+                                  localStorage.getItem("auth_token");
                                 if (!token) {
-                                  toast.error("Please log in to add items to your cart");
+                                  toast.error(
+                                    "Please log in to add items to your cart"
+                                  );
                                   window.location.href = "/login";
                                   return;
                                 }
                                 const itemId = product.id || product._id;
                                 if (!itemId) return;
                                 try {
-                                  await addToCart({ itemId, quantity: 1 }).unwrap();
+                                  setAddingId(itemId);
+                                  await addToCart({
+                                    itemId,
+                                    quantity: 1,
+                                  }).unwrap();
                                   setModalProduct({
                                     id: product.id || product._id,
                                     name: product.itemName || product.name,
-                                    description: product.description || "Fresh seafood",
-                                    price: product.itemPrice ?? product.price ?? 0,
-                                    formattedPrice: product.formattedPrice || null,
-                                    image: product.imageUrl || product.image || bisugo,
+                                    description:
+                                      product.description || "Fresh seafood",
+                                    price:
+                                      product.itemPrice ?? product.price ?? 0,
+                                    formattedPrice:
+                                      product.formattedPrice || null,
+                                    image:
+                                      product.imageUrl ||
+                                      product.image ||
+                                      bisugo,
                                   });
                                   setModalSeller({
                                     name: product?.seller?.username || "",
-                                    profileImage: "/src/assets/icons/profile.png",
+                                    profileImage:
+                                      "/src/assets/icons/profile.png",
                                   });
                                   setShowCartModal(true);
                                 } catch (err) {
-                                  console.error("[AddToCart:Seafood] Error:", err);
-                                  toast.error(err?.data?.message || "Failed to add to cart");
+                                  console.error(
+                                    "[AddToCart:Seafood] Error:",
+                                    err
+                                  );
+                                  toast.error(
+                                    err?.data?.message ||
+                                      "Failed to add to cart"
+                                  );
+                                } finally {
+                                  setAddingId(null);
                                 }
                               }}
                             >
-                              {isAdding ? "Adding..." : "Add to Cart"}
+                              {addingId === (product.id || product._id)
+                                ? "Adding..."
+                                : "Add to Cart"}
                             </button>
                           </div>
                         </div>

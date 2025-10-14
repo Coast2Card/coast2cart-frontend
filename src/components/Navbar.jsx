@@ -10,15 +10,17 @@ import cartIcon from "../assets/icons/cart.png";
 import profileIcon from "../assets/icons/profile.png";
 import commentIcon from "../assets/icons/comment.png";
 import ChatPopup from "./ChatPopup";
+import { useChatContext } from "../contexts/ChatContext";
+
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const { isChatOpen, openChat, closeChat } = useChatContext();
 
   const isLoggedIn = Boolean(localStorage.getItem("auth_token"));
   const currentUser = (() => {
@@ -43,7 +45,11 @@ const Navbar = () => {
   };
 
   const toggleChat = () => {
-    setIsChatOpen(!isChatOpen);
+    if (isChatOpen) {
+      closeChat();
+    } else {
+      openChat();
+    }
   };
 
   const roleToProfilePath = (role) => {
@@ -153,7 +159,9 @@ const Navbar = () => {
                       <div className="max-h-80 overflow-auto py-2">
                         {fishResults.length > 0 && (
                           <div className="py-1">
-                            <div className="px-4 pb-1 text-xs font-semibold text-gray-500">Fish</div>
+                            <div className="px-4 pb-1 text-xs font-semibold text-gray-500">
+                              Fish
+                            </div>
                             <ul className="divide-y divide-base-200">
                               {fishResults.slice(0, 5).map((it) => (
                                 <li key={it._id || it.id}>
@@ -165,12 +173,22 @@ const Navbar = () => {
                                       navigate(`/seafood/${it._id || it.id}`);
                                     }}
                                   >
-                                    <img src={it.image || it.imageUrl} alt="thumb" className="w-10 h-10 rounded object-cover bg-gray-100" />
+                                    <img
+                                      src={it.image || it.imageUrl}
+                                      alt="thumb"
+                                      className="w-10 h-10 rounded object-cover bg-gray-100"
+                                    />
                                     <div className="flex-1">
-                                      <div className="text-sm font-semibold">{it.itemName || it.name}</div>
-                                      <div className="text-xs text-gray-500">{it.formattedPrice || ""}</div>
+                                      <div className="text-sm font-semibold">
+                                        {it.itemName || it.name}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {it.formattedPrice || ""}
+                                      </div>
                                     </div>
-                                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Fish</span>
+                                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                      Fish
+                                    </span>
                                   </button>
                                 </li>
                               ))}
@@ -179,7 +197,9 @@ const Navbar = () => {
                         )}
                         {souvenirResults.length > 0 && (
                           <div className="py-1">
-                            <div className="px-4 pb-1 text-xs font-semibold text-gray-500">Souvenirs</div>
+                            <div className="px-4 pb-1 text-xs font-semibold text-gray-500">
+                              Souvenirs
+                            </div>
                             <ul className="divide-y divide-base-200">
                               {souvenirResults.slice(0, 5).map((it) => (
                                 <li key={it._id || it.id}>
@@ -191,12 +211,22 @@ const Navbar = () => {
                                       navigate(`/seafood/${it._id || it.id}`);
                                     }}
                                   >
-                                    <img src={it.image || it.imageUrl} alt="thumb" className="w-10 h-10 rounded object-cover bg-gray-100" />
+                                    <img
+                                      src={it.image || it.imageUrl}
+                                      alt="thumb"
+                                      className="w-10 h-10 rounded object-cover bg-gray-100"
+                                    />
                                     <div className="flex-1">
-                                      <div className="text-sm font-semibold">{it.itemName || it.name}</div>
-                                      <div className="text-xs text-gray-500">{it.formattedPrice || ""}</div>
+                                      <div className="text-sm font-semibold">
+                                        {it.itemName || it.name}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {it.formattedPrice || ""}
+                                      </div>
                                     </div>
-                                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Souvenir</span>
+                                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                      Souvenir
+                                    </span>
                                   </button>
                                 </li>
                               ))}
@@ -238,9 +268,29 @@ const Navbar = () => {
                     alt="Profile"
                     className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
                   />
-                  {currentUser?.username && (
+                  {(() => {
+                    const fn = (currentUser?.firstName || "").trim();
+                    const ln = (currentUser?.lastName || "").trim();
+                    const composed = [fn, ln].filter(Boolean).join(" ");
+                    return (
+                      composed ||
+                      currentUser?.fullName ||
+                      currentUser?.name ||
+                      currentUser?.username
+                    );
+                  })() && (
                     <span className="text-sm font-semibold text-black hidden lg:inline">
-                      {currentUser.username}
+                      {(() => {
+                        const fn = (currentUser?.firstName || "").trim();
+                        const ln = (currentUser?.lastName || "").trim();
+                        const composed = [fn, ln].filter(Boolean).join(" ");
+                        return (
+                          composed ||
+                          currentUser?.fullName ||
+                          currentUser?.name ||
+                          currentUser?.username
+                        );
+                      })()}
                     </span>
                   )}
                 </button>
@@ -383,7 +433,7 @@ const Navbar = () => {
       </div>
 
       {/* Chat Popup */}
-      <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      <ChatPopup />
     </nav>
   );
 };

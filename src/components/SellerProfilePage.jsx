@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { useGetSellerItemsQuery, useGetSellerReviewsQuery } from "../services/api";
+import {
+  useGetSellerItemsQuery,
+  useGetSellerReviewsQuery,
+  useGetSellerInfoQuery,
+  useGetSellerSoldItemsQuery,
+} from "../services/api";
 import {
   MapPin,
   Phone,
@@ -11,30 +16,26 @@ import {
 } from "@phosphor-icons/react";
 import c2cLogo from "../assets/logos/c2c_white_transparent.png";
 import bisugotImg from "../assets/images/bisugo.png";
-import bangusImg from "../assets/images/bangus.png";
-import hiponImg from "../assets/images/hipon.png";
-import tunaImg from "../assets/images/tuna.png";
-import hasaHasaImg from "../assets/images/hasa_hasa.png";
-import dalangBukidImg from "../assets/images/dalagang_bukid.png";
-import fishWalletImg from "../assets/images/fish_wallet.jpg";
-import souvenir1 from "../assets/souvenir-items/souvenir1.png";
-import souvenir2 from "../assets/souvenir-items/souvenir2.png";
-import souvenir3 from "../assets/souvenir-items/souvenir3.png";
-import souvenir4 from "../assets/souvenir-items/souvenir4.png";
+// images kept for possible fallbacks above
 import fisherManImg from "../assets/images/fisher_man.png";
-import alumahanImg from "../assets/images/alumahan.png";
-import pusitImg from "../assets/images/pusit.png";
-import talakitokImg from "../assets/images/talakitok.png";
-import baybayanFanImg from "../assets/images/baybayon_fan.jpg";
+// import baybayanFanImg from "../assets/images/baybayon_fan.jpg";
 import customer1 from "../assets/images/home_test1.png";
-import customer2 from "../assets/images/home_test2.png";
-import customer3 from "../assets/images/home_test3.png";
-import customer4 from "../assets/images/home_test4.png";
+import AddItemModal from "../modals/AddItemModal";
 
 const SellerProfilePage = ({ sellerId }) => {
   const [activeTab, setActiveTab] = useState("active");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const currentUser = (() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const currentUsername = currentUser?.username || "";
 
   // Determine sellerId from props or localStorage set at login
   const resolveSellerId = () => {
@@ -48,7 +49,9 @@ const SellerProfilePage = ({ sellerId }) => {
         const obj = JSON.parse(raw);
         const maybeId = obj?.id || obj?._id || obj?.user?.id || obj?.user?._id;
         if (maybeId) return maybeId;
-      } catch {}
+      } catch {
+        void 0; // intentionally ignore parse errors
+      }
     }
     // Plain string IDs sometimes stored
     const strKeys = ["seller_id", "user_id", "account_id"];
@@ -60,30 +63,43 @@ const SellerProfilePage = ({ sellerId }) => {
     try {
       const token = localStorage.getItem("auth_token");
       if (token && token.split(".").length === 3) {
-        const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const base64 = token
+          .split(".")[1]
+          .replace(/-/g, "+")
+          .replace(/_/g, "/");
         const json = JSON.parse(atob(base64));
         if (json?.userId) return json.userId;
       }
-    } catch {}
+    } catch {
+      void 0; // ignore malformed JWT
+    }
     return undefined;
   };
   const resolvedSellerId = resolveSellerId();
 
   // Fetch seller items
-  const { data: sellerItemsData, isFetching: isLoadingSellerItems } = useGetSellerItemsQuery(resolvedSellerId, {
+  const { data: sellerItemsData, isFetching: isLoadingSellerItems } =
+    useGetSellerItemsQuery(resolvedSellerId, {
+      skip: !resolvedSellerId,
+    });
+
+  // Fetch seller profile info
+  const { data: sellerInfo } = useGetSellerInfoQuery(resolvedSellerId, {
     skip: !resolvedSellerId,
   });
 
   // Mock data - Backend team can replace with API calls using sellerId
   const sellerData = {
     id: sellerId || 1,
-    name: "Sarah Discaya",
-    profileImage: fisherManImg,
+    name: sellerInfo?.name || "",
+    profileImage: sellerInfo?.image || fisherManImg,
     isVerified: true,
-    location: "Barangay Baybayon, Quezon",
-    phone: "0912 345 6789",
-    email: "dpwh@gmail.com",
-    memberSince: "2025",
+    location: sellerInfo?.location || "",
+    phone: sellerInfo?.phoneNumber || "",
+    email: sellerInfo?.email || "",
+    memberSince: sellerInfo?.createdAt
+      ? new Date(sellerInfo.createdAt).getFullYear().toString()
+      : "",
     totalProducts: 15,
     totalSold: 8,
     averageRating: 4.8,
@@ -104,85 +120,36 @@ const SellerProfilePage = ({ sellerId }) => {
     image: it?.image || it?.imageUrl || bisugotImg,
     availability:
       it?.formattedQuantity ||
-      (it?.quantity != null ? `${it.quantity} ${it.unit || "units"} available` : ""),
-    category:
-      it?.category || it?.itemType || "fresh_catch",
+      (it?.quantity != null
+        ? `${it.quantity} ${it.unit || "units"} available`
+        : ""),
+    category: it?.category || it?.itemType || "fresh_catch",
   }));
 
   // Fallback to mock listings if no sellerId or no items
   const activeListings = apiActiveListings.length > 0 ? apiActiveListings : [];
 
-  const soldItems = [
-    {
-      id: 1,
-      name: "Dalagang Bukid",
-      quantity: "3 kg",
-      image: dalangBukidImg,
-      soldDate: "Sold 2 days ago",
-      category: "fresh_catch",
-    },
-    {
-      id: 2,
-      name: "Bisugo",
-      quantity: "4 kg",
-      image: bisugotImg,
-      soldDate: "Sold 2 days ago",
-      category: "fresh_catch",
-    },
-    {
-      id: 3,
-      name: "Boat Keychain",
-      quantity: "10 pcs",
-      image: souvenir1,
-      soldDate: "Sold 2 hrs ago",
-      category: "souvenirs",
-    },
-    {
-      id: 4,
-      name: "Tuna",
-      quantity: "7 kg",
-      image: tunaImg,
-      soldDate: "Sold 1 week ago",
-      category: "dried_seafood",
-    },
-    {
-      id: 5,
-      name: "Bangus",
-      quantity: "5 kg",
-      image: bangusImg,
-      soldDate: "Sold 3 days ago",
-      category: "fresh_catch",
-    },
-    {
-      id: 6,
-      name: "Fish Wallet",
-      quantity: "8 pcs",
-      image: fishWalletImg,
-      soldDate: "Sold 1 day ago",
-      category: "souvenirs",
-    },
-    {
-      id: 7,
-      name: "Hipon",
-      quantity: "2 kg",
-      image: hiponImg,
-      soldDate: "Sold 4 days ago",
-      category: "fresh_catch",
-    },
-    {
-      id: 8,
-      name: "Baybayon Fan",
-      quantity: "3 pcs",
-      image: baybayanFanImg,
-      soldDate: "Sold 5 days ago",
-      category: "souvenirs",
-    },
-  ];
+  // Seller sold items from API
+  const { data: sellerSoldData } = useGetSellerSoldItemsQuery(
+    resolvedSellerId,
+    { skip: !resolvedSellerId }
+  );
+  const apiSoldItems = (sellerSoldData?.items || []).map((it) => ({
+    id: it?.id,
+    name: it?.name || "",
+    quantity: it?.quantity || "",
+    image: it?.image || bisugotImg,
+    soldDate: it?.soldDate ? formatToPHT(it.soldDate) : "",
+    category: it?.category || "",
+  }));
 
   // Seller reviews from API
-  const { data: sellerReviewsData, isFetching: isLoadingSellerReviews } = useGetSellerReviewsQuery(resolvedSellerId, {
-    skip: !resolvedSellerId,
-  });
+  const { data: sellerReviewsData } = useGetSellerReviewsQuery(
+    resolvedSellerId,
+    {
+      skip: !resolvedSellerId,
+    }
+  );
   const formatToPHT = (isoString) => {
     if (!isoString) return "";
     try {
@@ -251,21 +218,29 @@ const SellerProfilePage = ({ sellerId }) => {
           </div>
 
           <div className="mb-6 text-center md:text-left">
-            <span className="text-sm md:text-base font-normal text-white/90">Verified Seller</span>
+            <span className="text-sm md:text-base font-normal text-white/90">
+              {currentUsername}
+            </span>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-center md:justify-start gap-3">
               <MapPin size={22} weight="fill" className="text-white" />
-              <span className="text-lg md:text-xl font-normal">{sellerData.location}</span>
+              <span className="text-lg md:text-xl font-normal">
+                {sellerData.location}
+              </span>
             </div>
             <div className="flex items-center justify-center md:justify-start gap-3">
               <Phone size={22} weight="fill" className="text-white" />
-              <span className="text-lg md:text-xl font-normal">{sellerData.phone}</span>
+              <span className="text-lg md:text-xl font-normal">
+                {sellerData.phone}
+              </span>
             </div>
             <div className="flex items-center justify-center md:justify-start gap-3">
               <Envelope size={22} weight="fill" className="text-white" />
-              <span className="text-lg md:text-xl font-normal">{sellerData.email}</span>
+              <span className="text-lg md:text-xl font-normal">
+                {sellerData.email}
+              </span>
             </div>
             <div className="flex items-center justify-center md:justify-start gap-3">
               <Calendar size={22} weight="fill" className="text-white" />
@@ -281,7 +256,8 @@ const SellerProfilePage = ({ sellerId }) => {
 
   // Tab Navigation Component
   const TabNavigation = () => (
-    <div className="flex flex-wrap justify-center gap-3 mb-6">
+    <div className="flex flex-wrap justify-center md:justify-between items-center gap-3 mb-6">
+      <div className="hidden md:block"></div>
       <button
         onClick={() => setActiveTab("active")}
         className={`px-6 py-3 rounded-full font-medium font-primary transition-all duration-200 hover:scale-105 active:scale-95 ${
@@ -311,6 +287,12 @@ const SellerProfilePage = ({ sellerId }) => {
         }`}
       >
         Reviews
+      </button>
+      <button
+        className="px-6 py-3 rounded-full font-medium font-primary bg-primary text-white shadow-md hover:bg-primary/90 transition-all duration-200 hover:scale-105 active:scale-95 md:ml-auto"
+        onClick={() => setIsAddOpen(true)}
+      >
+        Add Item
       </button>
     </div>
   );
@@ -520,7 +502,11 @@ const SellerProfilePage = ({ sellerId }) => {
                 key={i}
                 size={16}
                 weight={i < Math.round(review.rating) ? "fill" : "regular"}
-                className={i < Math.round(review.rating) ? "text-secondary" : "text-gray-300"}
+                className={
+                  i < Math.round(review.rating)
+                    ? "text-secondary"
+                    : "text-gray-300"
+                }
               />
             ))}
           </div>
@@ -554,17 +540,17 @@ const SellerProfilePage = ({ sellerId }) => {
       <div>
         <FilterControls />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {isLoadingSellerItems
-            ? skeletonCards
-            : filtered.length > 0
-            ? filtered.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            : (
-                <div className="col-span-2 md:col-span-3 lg:col-span-4 text-center py-8 text-gray-600">
-                  No active listings yet.
-                </div>
-              )}
+          {isLoadingSellerItems ? (
+            skeletonCards
+          ) : filtered.length > 0 ? (
+            filtered.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            <div className="col-span-2 md:col-span-3 lg:col-span-4 text-center py-8 text-gray-600">
+              No active listings yet.
+            </div>
+          )}
         </div>
       </div>
     );
@@ -577,7 +563,7 @@ const SellerProfilePage = ({ sellerId }) => {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="text-lg font-semibold text-gray-700 mb-2">
-              {getFilteredProducts(soldItems).length} Products
+              {getFilteredProducts(apiSoldItems).length} Products
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -692,7 +678,7 @@ const SellerProfilePage = ({ sellerId }) => {
         </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {getFilteredProducts(soldItems).map((product) => (
+        {getFilteredProducts(apiSoldItems).map((product) => (
           <ProductCard key={product.id} product={product} isSold={true} />
         ))}
       </div>
@@ -711,10 +697,10 @@ const SellerProfilePage = ({ sellerId }) => {
   // Main Render
   return (
     <div className="min-h-screen bg-base-300">
-      <div className="w-full px-8 pt-8">
+      <div className="max-w-8xl mx-auto px-4 md:px-8 pt-8">
         <SellerProfileHeader />
       </div>
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-8xl mx-auto px-4 md:px-8">
         <div className="mb-6">
           <TabNavigation />
         </div>
@@ -723,6 +709,10 @@ const SellerProfilePage = ({ sellerId }) => {
         {activeTab === "sold" && <SoldItemsContent />}
         {activeTab === "reviews" && <ReviewsContent />}
       </div>
+
+      {isAddOpen && (
+        <AddItemModal open={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      )}
     </div>
   );
 };

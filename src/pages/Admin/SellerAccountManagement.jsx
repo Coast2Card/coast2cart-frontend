@@ -66,7 +66,7 @@ const SellerAccountManagement = () => {
   const [isVerifyOpen, setIsVerifyOpen] = useState(false);
   const [focusedSeller, setFocusedSeller] = useState(null);
 
-  const handleDelete = async (seller) => {
+  const handleDelete = async () => {
     toast("Delete not yet implemented");
     setIsViewOpen(false);
   };
