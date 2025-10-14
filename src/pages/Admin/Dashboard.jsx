@@ -5,6 +5,7 @@ import personIcon from "../../assets/icons/person.png";
 import lazadaSellerIcon from "../../assets/icons/lazadaseller.png";
 import groupIcon from "../../assets/icons/group.png";
 import ApexCharts from "apexcharts";
+import { useGetAccountsQuery } from "../../services/api";
 
 const Dashboard = () => {
   const sellerChartRef = useRef(null);
@@ -17,19 +18,104 @@ const Dashboard = () => {
   const [isChartOpen, setIsChartOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
-  const datasets = {
-    Week: {
-      categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      sellers: [2, 3, 4, 5, 6, 6, 7],
-      buyers: [6, 8, 10, 12, 14, 16, 18],
-    },
-    Month: {
-      categories: ["W1", "W2", "W3", "W4"],
-      sellers: [6, 10, 18, 24],
-      buyers: [20, 35, 55, 78],
-    },
-    Year: {
-      categories: [
+  // Fetch buyers and sellers
+  const { data: buyersData } = useGetAccountsQuery({
+    role: "buyer",
+    page: 1,
+    limit: 1000,
+  });
+  const { data: sellersData } = useGetAccountsQuery({
+    role: "seller",
+    page: 1,
+    limit: 1000,
+  });
+
+  const buyerAccounts = useMemo(() => buyersData?.accounts ?? [], [buyersData]);
+  const sellerAccounts = useMemo(
+    () => sellersData?.accounts ?? [],
+    [sellersData]
+  );
+
+  const buyerTotal = useMemo(
+    () =>
+      Number(
+        buyersData?.pagination?.totalAccounts ?? buyerAccounts.length ?? 0
+      ),
+    [buyersData, buyerAccounts]
+  );
+  const sellerTotal = useMemo(
+    () =>
+      Number(
+        sellersData?.pagination?.totalAccounts ?? sellerAccounts.length ?? 0
+      ),
+    [sellersData, sellerAccounts]
+  );
+
+  const datasets = useMemo(() => {
+    // Build datasets from createdAt timestamps
+    const now = new Date();
+
+    const toDateKey = (d) => {
+      const dt = new Date(d);
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(dt.getDate()).padStart(2, "0")}`;
+    };
+
+    const groupByDayLastNDays = (accounts, nDays) => {
+      const counts = new Map();
+      accounts.forEach((acc) => {
+        if (!acc?.createdAt) return;
+        const key = toDateKey(acc.createdAt);
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+      const categories = [];
+      const series = [];
+      for (let i = nDays - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const key = toDateKey(d);
+        categories.push(`${d.getMonth() + 1}/${d.getDate()}`);
+        series.push(counts.get(key) || 0);
+      }
+      return { categories, series };
+    };
+
+    const groupByWeekLast4 = (accounts) => {
+      // Approximate 7 day buckets, going back 4 weeks
+      const formatLabel = (start, end) => {
+        const sMonth = start.toLocaleString(undefined, { month: "short" });
+        const eMonth = end.toLocaleString(undefined, { month: "short" });
+        const sDay = start.getDate();
+        const eDay = end.getDate();
+        if (sMonth === eMonth) return `${sMonth} ${sDay}–${eDay}`;
+        return `${sMonth} ${sDay}–${eMonth} ${eDay}`;
+      };
+      const buckets = [];
+      for (let w = 3; w >= 0; w--) {
+        const start = new Date(now);
+        start.setDate(now.getDate() - w * 7 - 6);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(now);
+        end.setDate(now.getDate() - w * 7);
+        end.setHours(23, 59, 59, 999);
+        buckets.push({ start, end, label: formatLabel(start, end) });
+      }
+      const series = buckets.map(
+        (b) =>
+          accounts.filter((a) => {
+            const t = new Date(a?.createdAt || 0).getTime();
+            return t >= b.start.getTime() && t <= b.end.getTime();
+          }).length
+      );
+      return { categories: buckets.map((b) => b.label), series };
+    };
+
+    const groupByMonthYTD = (accounts) => {
+      const year = now.getFullYear();
+      const months = Array.from({ length: 12 }, (_, i) => i);
+      const categories = [
         "Jan",
         "Feb",
         "Mar",
@@ -42,58 +128,175 @@ const Dashboard = () => {
         "Oct",
         "Nov",
         "Dec",
-      ],
-      sellers: [4, 8, 12, 18, 22, 26, 28, 30, 32, 34, 36, 38],
-      buyers: [12, 26, 38, 42, 60, 70, 85, 90, 95, 100, 112, 125],
-    },
-  };
+      ];
+      const series = months.map(
+        (m) =>
+          accounts.filter((a) => {
+            if (!a?.createdAt) return false;
+            const d = new Date(a.createdAt);
+            return d.getFullYear() === year && d.getMonth() === m;
+          }).length
+      );
+      return { categories, series };
+    };
+
+    const weekBuyers = groupByDayLastNDays(buyerAccounts, 7);
+    const weekSellers = groupByDayLastNDays(sellerAccounts, 7);
+    const monthBuyers = groupByWeekLast4(buyerAccounts);
+    const monthSellers = groupByWeekLast4(sellerAccounts);
+    const yearBuyers = groupByMonthYTD(buyerAccounts);
+    const yearSellers = groupByMonthYTD(sellerAccounts);
+
+    return {
+      Week: {
+        categories: weekBuyers.categories,
+        sellers: weekSellers.series,
+        buyers: weekBuyers.series,
+      },
+      Month: {
+        categories: monthBuyers.categories,
+        sellers: monthSellers.series,
+        buyers: monthBuyers.series,
+      },
+      Year: {
+        categories: yearBuyers.categories,
+        sellers: yearSellers.series,
+        buyers: yearBuyers.series,
+      },
+    };
+  }, [buyerAccounts, sellerAccounts]);
 
   const stats = useMemo(() => {
-    const current = datasets[range];
-    const firstSellers = current.sellers[0] || 0;
-    const lastSellers = current.sellers[current.sellers.length - 1] || 0;
-    const firstBuyers = current.buyers[0] || 0;
-    const lastBuyers = current.buyers[current.buyers.length - 1] || 0;
-    const totalUsers = lastSellers + lastBuyers;
+    // Card values
+    const totalUsers = sellerTotal + buyerTotal;
 
-    const pct = (from, to) => {
-      if (from === 0) return to > 0 ? 100 : 0;
-      return Math.round(((to - from) / from) * 100);
+    // Current series for notes
+    const current = datasets[range] || { sellers: [], buyers: [] };
+
+    const signedPct = (previousVal, currentVal) => {
+      if (previousVal === 0) {
+        if (currentVal === 0) return "0%";
+        return "+100%";
+      }
+      const change = Math.round(
+        ((currentVal - previousVal) / previousVal) * 100
+      );
+      return `${change > 0 ? "+" : ""}${change}%`;
     };
+
+    const sum = (arr) =>
+      Array.isArray(arr) ? arr.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+    const sellersAdded = sum(current.sellers);
+    const buyersAdded = sum(current.buyers);
+    const usersAdded = sellersAdded + buyersAdded;
+
+    const rangeNotes = {
+      Week: {
+        users: `+${usersAdded} added in last 7 days`,
+        sellers: `+${sellersAdded} sellers added in last 7 days`,
+        buyers: `+${buyersAdded} buyers added in last 7 days`,
+      },
+      Month: {
+        users: `+${usersAdded} added in last 4 weeks`,
+        sellers: `+${sellersAdded} sellers added in last 4 weeks`,
+        buyers: `+${buyersAdded} buyers added in last 4 weeks`,
+      },
+      Year: {
+        users: `+${usersAdded} change since Jan`,
+        sellers: `+${sellersAdded} sellers added this year`,
+        buyers: `+${buyersAdded} buyers added this year`,
+      },
+    };
+
+    // Compute current vs previous equal-length window using createdAt
+    const now = new Date();
+    const startEndForRange = (which) => {
+      // which: 'current' | 'previous'
+      if (range === "Week") {
+        const end = new Date(now);
+        end.setHours(23, 59, 59, 999);
+        const start = new Date(end);
+        start.setDate(end.getDate() - 6);
+        const prevEnd = new Date(start);
+        prevEnd.setDate(start.getDate() - 1);
+        prevEnd.setHours(23, 59, 59, 999);
+        const prevStart = new Date(prevEnd);
+        prevStart.setDate(prevEnd.getDate() - 6);
+        return which === "current"
+          ? { start, end }
+          : { start: prevStart, end: prevEnd };
+      }
+      if (range === "Month") {
+        // Treat Month as last 28 days (4 weeks)
+        const end = new Date(now);
+        end.setHours(23, 59, 59, 999);
+        const start = new Date(end);
+        start.setDate(end.getDate() - 27);
+        const prevEnd = new Date(start);
+        prevEnd.setDate(start.getDate() - 1);
+        prevEnd.setHours(23, 59, 59, 999);
+        const prevStart = new Date(prevEnd);
+        prevStart.setDate(prevEnd.getDate() - 27);
+        return which === "current"
+          ? { start, end }
+          : { start: prevStart, end: prevEnd };
+      }
+      // Year: YTD vs previous year YTD through same day
+      const end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+      const start = new Date(end.getFullYear(), 0, 1, 0, 0, 0, 0);
+      const prevEnd = new Date(end);
+      prevEnd.setFullYear(end.getFullYear() - 1);
+      const prevStart = new Date(start);
+      prevStart.setFullYear(start.getFullYear() - 1);
+      return which === "current"
+        ? { start, end }
+        : { start: prevStart, end: prevEnd };
+    };
+
+    const countInRange = (accounts, start, end) => {
+      const s = start.getTime();
+      const e = end.getTime();
+      return accounts.filter((a) => {
+        const t = new Date(a?.createdAt || 0).getTime();
+        return t >= s && t <= e;
+      }).length;
+    };
+
+    const cur = startEndForRange("current");
+    const prev = startEndForRange("previous");
+    const sellersCurrent = countInRange(sellerAccounts, cur.start, cur.end);
+    const sellersPrev = countInRange(sellerAccounts, prev.start, prev.end);
+    const buyersCurrent = countInRange(buyerAccounts, cur.start, cur.end);
+    const buyersPrev = countInRange(buyerAccounts, prev.start, prev.end);
+    const usersCurrent = sellersCurrent + buyersCurrent;
+    const usersPrev = sellersPrev + buyersPrev;
+
+    const compareLabel =
+      range === "Week"
+        ? "vs last week"
+        : range === "Month"
+        ? "vs last month"
+        : "vs last year";
 
     return {
       totalUsers: {
         value: totalUsers,
-        delta: `${pct(firstSellers + firstBuyers, totalUsers)}%`,
-        note:
-          range === "Month"
-            ? "+ change compared to first week"
-            : range === "Year"
-            ? "+ change since Jan"
-            : "+ change since Monday",
+        delta: `${signedPct(usersPrev, usersCurrent)} ${compareLabel}`,
+        note: (rangeNotes[range] && rangeNotes[range].users) || "",
       },
       sellers: {
-        value: lastSellers,
-        delta: `${pct(firstSellers, lastSellers)}%`,
-        note:
-          range === "Month"
-            ? "+ sellers added this month"
-            : range === "Year"
-            ? "+ sellers added this year"
-            : "+ sellers added this week",
+        value: sellerTotal,
+        delta: `${signedPct(sellersPrev, sellersCurrent)} ${compareLabel}`,
+        note: (rangeNotes[range] && rangeNotes[range].sellers) || "",
       },
       buyers: {
-        value: lastBuyers,
-        delta: `${pct(firstBuyers, lastBuyers)}%`,
-        note:
-          range === "Month"
-            ? "+ buyers added this month"
-            : range === "Year"
-            ? "+ buyers added this year"
-            : "+ buyers added this week",
+        value: buyerTotal,
+        delta: `${signedPct(buyersPrev, buyersCurrent)} ${compareLabel}`,
+        note: (rangeNotes[range] && rangeNotes[range].buyers) || "",
       },
     };
-  }, [datasets, range]);
+  }, [datasets, range, buyerTotal, sellerTotal]);
 
   useEffect(() => {
     const baseOptions = {
@@ -106,7 +309,7 @@ const Dashboard = () => {
       dataLabels: { enabled: false },
       markers: { size: 0 },
       xaxis: {
-        categories: datasets[range].categories,
+        categories: (datasets[range] && datasets[range].categories) || [],
         labels: { style: { colors: "#64748b" } },
         axisBorder: { show: false },
         axisTicks: { show: false },
@@ -122,14 +325,24 @@ const Dashboard = () => {
       {
         ...baseOptions,
         colors: ["#fdb815"],
-        series: [{ name: "Sellers", data: datasets[range].sellers }],
+        series: [
+          {
+            name: "Sellers",
+            data: (datasets[range] && datasets[range].sellers) || [],
+          },
+        ],
       }
     );
 
     const buyer = new ApexCharts(document.querySelector("#buyer-line-chart"), {
       ...baseOptions,
       colors: ["#ef4444"],
-      series: [{ name: "Buyers", data: datasets[range].buyers }],
+      series: [
+        {
+          name: "Buyers",
+          data: (datasets[range] && datasets[range].buyers) || [],
+        },
+      ],
     });
 
     seller.render();
@@ -281,8 +494,10 @@ const Dashboard = () => {
                   onClick={() => {
                     setIsMoreOpen(false);
                     try {
-                      sellerChartRef.current && sellerChartRef.current.resetSeries();
-                      buyerChartRef.current && buyerChartRef.current.resetSeries();
+                      sellerChartRef.current &&
+                        sellerChartRef.current.resetSeries();
+                      buyerChartRef.current &&
+                        buyerChartRef.current.resetSeries();
                     } catch (_) {}
                   }}
                 >
@@ -298,7 +513,7 @@ const Dashboard = () => {
         <StatCard
           title="Total Users"
           value={stats.totalUsers.value}
-          delta={`+${stats.totalUsers.delta}`}
+          delta={stats.totalUsers.delta}
           accent="primary"
           iconSrc={personIcon}
           note={stats.totalUsers.note}
@@ -306,7 +521,7 @@ const Dashboard = () => {
         <StatCard
           title="Total Sellers"
           value={stats.sellers.value}
-          delta={`+${stats.sellers.delta}`}
+          delta={stats.sellers.delta}
           note={stats.sellers.note}
           accent="success"
           iconSrc={lazadaSellerIcon}
@@ -314,7 +529,7 @@ const Dashboard = () => {
         <StatCard
           title="Total Buyers"
           value={stats.buyers.value}
-          delta={`+${stats.buyers.delta}`}
+          delta={stats.buyers.delta}
           note={stats.buyers.note}
           accent="warning"
           iconSrc={groupIcon}
