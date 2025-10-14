@@ -9,6 +9,7 @@ import {
   Eye,
 } from "@phosphor-icons/react";
 import { useGetAdminAccountsQuery } from "../../services/api";
+import AddAdminModal from "../../modals/AddAdminModal";
 
 const StatusPill = ({ value }) => {
   const isActive = value === "Active";
@@ -52,6 +53,7 @@ const AdminAccountManagement = () => {
   const total = data?.pagination?.totalAccounts ?? rows.length;
   const [selected, setSelected] = useState(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const allSelected = selected.size > 0 && selected.size === rows.length;
 
   const toggleAll = () =>
@@ -98,7 +100,10 @@ const AdminAccountManagement = () => {
               {isFetching ? "Loading..." : `${total} Results`}
             </div>
             <div className="flex-1"></div>
-            <button className="btn btn-sm md:btn-md bg-primary text-primary-content border border-primary">
+            <button
+              className="btn btn-sm md:btn-md bg-primary text-primary-content border border-primary"
+              onClick={() => setIsAddOpen(true)}
+            >
               <Plus size={16} weight="bold" className="mr-1" /> Add Admin
             </button>
             <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
@@ -174,6 +179,14 @@ const AdminAccountManagement = () => {
           </table>
         </div>
       </div>
+      <AddAdminModal
+        open={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        onSuccess={() => {
+          setIsAddOpen(false);
+          refetch();
+        }}
+      />
     </div>
   );
 };

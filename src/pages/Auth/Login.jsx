@@ -46,7 +46,12 @@ const Login = () => {
       if (user) {
         localStorage.setItem("auth_user", JSON.stringify(user));
       }
-      const displayName = user?.username || user?.firstName || "";
+      const displayName =
+        (user?.firstName
+          ? `${user.firstName}${user?.lastName ? ` ${user.lastName}` : ""}`
+          : "") ||
+        user?.username ||
+        "";
       toast.success(displayName ? `Welcome, ${displayName}` : "Welcome");
       const role = (user?.role || "").toLowerCase();
       if (role === "superadmin" || role === "super_admin") {
