@@ -171,54 +171,80 @@ const BuyerAccountManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {data.map((row, idx) => (
-                <tr
-                  key={row.id}
-                  className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
-                  style={{
-                    backgroundColor: idx % 2 === 0 ? undefined : undefined,
-                  }}
-                >
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="avatar">
-                        <User
-                          size={16}
-                          weight="fill"
-                          className="text-base-content/80"
-                        />
-                      </div>
-                      <div className="font-medium">{row.name}</div>
-                    </div>
-                  </td>
-                  <td className="text-base-content/80">{row.email}</td>
-                  <td className="text-base-content/80">{row.address}</td>
-                  <td>
-                    <StatusPill value={row.status} />
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-xs bg-white text-base-content border border-row-outline"
-                      onClick={() => {
-                        const prefill = {
-                          id: row.raw?._id || row.raw?.id || row.id,
-                          fullName: row.raw?.fullName || row.name,
-                          firstName: row.raw?.firstName,
-                          lastName: row.raw?.lastName,
-                          email: row.raw?.email || row.email,
-                          contactNo: row.raw?.contactNo,
-                          address: row.raw?.address || row.address,
-                          username: row.raw?.username,
-                        };
-                        setFocusedBuyer(prefill);
-                        setIsViewOpen(true);
+              {isFetching && data.length === 0
+                ? Array.from({ length: 8 }).map((_, idx) => (
+                    <tr
+                      key={`buyer-skel-${idx}`}
+                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                    >
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
+                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                        </div>
+                      </td>
+                      <td>
+                        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                      </td>
+                      <td>
+                        <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+                      </td>
+                      <td>
+                        <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
+                      </td>
+                      <td>
+                        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                      </td>
+                    </tr>
+                  ))
+                : data.map((row, idx) => (
+                    <tr
+                      key={row.id}
+                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                      style={{
+                        backgroundColor: idx % 2 === 0 ? undefined : undefined,
                       }}
                     >
-                      <Eye size={14} weight="bold" className="mr-1" /> View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="avatar">
+                            <User
+                              size={16}
+                              weight="fill"
+                              className="text-base-content/80"
+                            />
+                          </div>
+                          <div className="font-medium">{row.name}</div>
+                        </div>
+                      </td>
+                      <td className="text-base-content/80">{row.email}</td>
+                      <td className="text-base-content/80">{row.address}</td>
+                      <td>
+                        <StatusPill value={row.status} />
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-xs bg-white text-base-content border border-row-outline"
+                          onClick={() => {
+                            const prefill = {
+                              id: row.raw?._id || row.raw?.id || row.id,
+                              fullName: row.raw?.fullName || row.name,
+                              firstName: row.raw?.firstName,
+                              lastName: row.raw?.lastName,
+                              email: row.raw?.email || row.email,
+                              contactNo: row.raw?.contactNo,
+                              address: row.raw?.address || row.address,
+                              username: row.raw?.username,
+                            };
+                            setFocusedBuyer(prefill);
+                            setIsViewOpen(true);
+                          }}
+                        >
+                          <Eye size={14} weight="bold" className="mr-1" /> View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </div>
