@@ -1,14 +1,11 @@
 import { useState } from "react";
 import {
   User,
-  Plus,
-  Minus,
   ArrowsClockwise,
   FunnelSimple,
   Eye,
 } from "@phosphor-icons/react";
 import { useGetAccountsQuery } from "../../services/api";
-import ConfirmDeleteModal from "../../modals/ConfirmDeleteModal";
 import ViewBuyerModal from "../../modals/ViewBuyerModal";
 
 // Fetch buyers from backend and map to UI rows
@@ -22,12 +19,9 @@ const useBuyersData = (queryParams) => {
     id: a._id || idx + 1,
     name: a.fullName || a.username || a.email || "",
     email: a.email || "",
-    contact: a.contactNo || "",
     address: a.address || "",
     status:
       (a.status || "").toLowerCase() === "verified" ? "verified" : "unverified",
-    created: (a.createdAt || "").slice(0, 10),
-    lastActive: (a.updatedAt || a.createdAt || "").slice(0, 10),
     raw: a,
   }));
   const total = data?.pagination?.totalAccounts ?? rows.length;
@@ -73,30 +67,9 @@ const BuyerAccountManagement = () => {
     search: filters.search || undefined,
     status: filters.status || undefined,
   });
-  const [selected, setSelected] = useState(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const selectedBuyer =
-    selected.size === 1
-      ? data.find((d) => d.id === Array.from(selected)[0])?.raw
-      : null;
-  const allSelected = selected.size > 0 && selected.size === data.length;
-
-  const toggleAll = () => {
-    if (allSelected) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(data.map((d) => d.id)));
-    }
-  };
-
-  const toggleOne = (id) => {
-    const copy = new Set(selected);
-    if (copy.has(id)) copy.delete(id);
-    else copy.add(id);
-    setSelected(copy);
-  };
+  const [focusedBuyer, setFocusedBuyer] = useState(null);
 
   return (
     <div className="space-y-6">
@@ -122,9 +95,6 @@ const BuyerAccountManagement = () => {
               )}
               Update
             </button>
-            <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
-              {selected.size || 0} Selected
-            </button>
             <button
               className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"
               onClick={() => setIsFilterOpen((v) => !v)}
@@ -138,16 +108,6 @@ const BuyerAccountManagement = () => {
               {isFetching ? "Loading..." : `${total} Results`}
             </div>
             <div className="flex-1"></div>
-            {/* Add button removed for buyers */}
-            {selected.size > 0 && (
-              <button
-                className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"
-                onClick={() => setIsDeleteOpen(true)}
-              >
-                <Minus size={16} weight="bold" className="mr-1" /> Delete
-              </button>
-            )}
-            {/* Removed Import/Export, header View, and options buttons */}
           </div>
         </div>
 
@@ -196,14 +156,6 @@ const BuyerAccountManagement = () => {
           <table className="table table-row-outline">
             <thead>
               <tr>
-                <th className="w-10">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-sm"
-                    checked={allSelected}
-                    onChange={toggleAll}
-                  />
-                </th>
                 <th>Fullname</th>
                 <th>Email</th>
                 <th>Address</th>
@@ -220,14 +172,6 @@ const BuyerAccountManagement = () => {
                     backgroundColor: idx % 2 === 0 ? undefined : undefined,
                   }}
                 >
-                  <td>
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={selected.has(row.id)}
-                      onChange={() => toggleOne(row.id)}
-                    />
-                  </td>
                   <td>
                     <div className="flex items-center gap-3">
                       <div className="avatar">
@@ -249,7 +193,7 @@ const BuyerAccountManagement = () => {
                     <button
                       className="btn btn-xs bg-white text-base-content border border-row-outline"
                       onClick={() => {
-                        setSelected(new Set([row.id]));
+                        setFocusedBuyer(row.raw);
                         setIsViewOpen(true);
                       }}
                     >
@@ -262,24 +206,10 @@ const BuyerAccountManagement = () => {
           </table>
         </div>
       </div>
-      {/* AddBuyerModal removed for buyers */}
-      <ConfirmDeleteModal
-        open={isDeleteOpen}
-        onCancel={() => setIsDeleteOpen(false)}
-        onConfirm={() => {
-          // TODO integrate delete API
-          setIsDeleteOpen(false);
-        }}
-        count={selected.size}
-        items={Array.from(selected).map((id) => {
-          const row = data.find((d) => d.id === id);
-          return { id, name: row?.name, email: row?.email };
-        })}
-      />
       <ViewBuyerModal
         open={isViewOpen}
         onClose={() => setIsViewOpen(false)}
-        buyer={selectedBuyer}
+        buyer={focusedBuyer}
       />
     </div>
   );

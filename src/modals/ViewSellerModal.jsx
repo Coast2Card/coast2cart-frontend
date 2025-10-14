@@ -1,7 +1,20 @@
 import React, { useState } from "react";
-import { UserCircle, EnvelopeSimple, Phone, MapPin, Lock } from "@phosphor-icons/react";
+import {
+  UserCircle,
+  EnvelopeSimple,
+  Phone,
+  MapPin,
+  Lock,
+} from "@phosphor-icons/react";
 
-const LabeledInput = ({ label, icon, value, onChange, readOnly, type = "text" }) => (
+const LabeledInput = ({
+  label,
+  icon,
+  value,
+  onChange,
+  readOnly,
+  type = "text",
+}) => (
   <div className="space-y-2">
     <label className="block text-base font-semibold">{label}</label>
     <div className="relative">
@@ -19,7 +32,7 @@ const LabeledInput = ({ label, icon, value, onChange, readOnly, type = "text" })
   </div>
 );
 
-const ViewSellerModal = ({ open, onClose, seller }) => {
+const ViewSellerModal = ({ open, onClose, seller, onDelete }) => {
   if (!open) return null;
   const sample = seller || {
     id: "SELLER-0001",
@@ -63,7 +76,9 @@ const ViewSellerModal = ({ open, onClose, seller }) => {
           >
             ×
           </button>
-          <h2 className="text-3xl font-extrabold tracking-wide">SELLER ACCOUNT</h2>
+          <h2 className="text-3xl font-extrabold tracking-wide">
+            SELLER ACCOUNT
+          </h2>
         </div>
 
         {/* Content */}
@@ -93,21 +108,27 @@ const ViewSellerModal = ({ open, onClose, seller }) => {
                 icon={<UserCircle size={18} />}
                 value={form.storeName}
                 readOnly={!isEditing}
-                onChange={(e) => setForm({ ...form, storeName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, storeName: e.target.value })
+                }
               />
               <LabeledInput
                 label="First Name"
                 icon={<UserCircle size={18} />}
                 value={form.firstName}
                 readOnly={!isEditing}
-                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, firstName: e.target.value })
+                }
               />
               <LabeledInput
                 label="Middle Name (optional)"
                 icon={<UserCircle size={18} />}
                 value={form.middleName}
                 readOnly={!isEditing}
-                onChange={(e) => setForm({ ...form, middleName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, middleName: e.target.value })
+                }
               />
               <LabeledInput
                 label="Last Name"
@@ -126,7 +147,10 @@ const ViewSellerModal = ({ open, onClose, seller }) => {
             </div>
 
             {/* Divider on md+ */}
-            <div className="hidden md:block w-px bg-black md:self-stretch" aria-hidden></div>
+            <div
+              className="hidden md:block w-px bg-black md:self-stretch"
+              aria-hidden
+            ></div>
 
             {/* Right column */}
             <div className="flex-1 space-y-5 mt-8 md:mt-0">
@@ -203,6 +227,16 @@ const ViewSellerModal = ({ open, onClose, seller }) => {
               </button>
             </div>
           )}
+          {!isEditing && (
+            <div className="max-w-[660px] mx-auto mt-4 flex justify-end">
+              <button
+                className="btn btn-sm btn-ghost text-error border border-error/30"
+                onClick={() => onDelete?.(seller)}
+              >
+                Delete account
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -210,6 +244,3 @@ const ViewSellerModal = ({ open, onClose, seller }) => {
 };
 
 export default ViewSellerModal;
-
-
-
