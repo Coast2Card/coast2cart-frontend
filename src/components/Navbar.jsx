@@ -10,15 +10,17 @@ import cartIcon from "../assets/icons/cart.png";
 import profileIcon from "../assets/icons/profile.png";
 import commentIcon from "../assets/icons/comment.png";
 import ChatPopup from "./ChatPopup";
+import { useChatContext } from "../contexts/ChatContext";
+
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const { isChatOpen, openChat, closeChat } = useChatContext();
 
   const isLoggedIn = Boolean(localStorage.getItem("auth_token"));
   const currentUser = (() => {
@@ -43,7 +45,11 @@ const Navbar = () => {
   };
 
   const toggleChat = () => {
-    setIsChatOpen(!isChatOpen);
+    if (isChatOpen) {
+      closeChat();
+    } else {
+      openChat();
+    }
   };
 
   const roleToProfilePath = (role) => {
@@ -427,7 +433,7 @@ const Navbar = () => {
       </div>
 
       {/* Chat Popup */}
-      <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      <ChatPopup />
     </nav>
   );
 };
