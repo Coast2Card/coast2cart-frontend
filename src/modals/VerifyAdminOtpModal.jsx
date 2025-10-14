@@ -41,7 +41,7 @@ const VerifyAdminOtpModal = ({ open, onClose, admin, onSuccess }) => {
     (async () => {
       try {
         await resendOtp({ contactNo }).unwrap();
-        toast.success("OTP sent");
+        toast.success("OTP sent successfully");
         setCooldownSeconds(60);
       } catch (e) {
         const wait = parseWaitSeconds(e);
@@ -87,7 +87,7 @@ const VerifyAdminOtpModal = ({ open, onClose, admin, onSuccess }) => {
     if (!contactNo) return toast.error("Missing contact number");
     try {
       await resendOtp({ contactNo }).unwrap();
-      toast.success("OTP resent");
+      toast.success("OTP resent successfully");
       setCooldownSeconds(60);
     } catch (e) {
       const wait = parseWaitSeconds(e);

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLoginMutation, useResendOtpMutation } from "../../services/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import login_banner from "../../assets/images/login_banner.png";
 import c2c_transparent from "../../assets/logos/c2c_transparent.png";
@@ -91,13 +91,13 @@ const Login = () => {
       <section className="w-full md:max-w-[60vw] flex-1 flex justify-center items-center px-4 md:px-6 py-8">
         <div className=" w-full px-6 max-w-lg flex flex-col justify-center md:justify-around items-center gap-6">
           <div className="flex flex-col text-center">
-            <a href="/">
+            <Link to="/">
               <img
                 src={c2c_transparent}
                 alt="Coast2Cart Logo"
                 className="w-48 md:w-80 mb-1 mx-auto cursor-pointer"
               />
-            </a>
+            </Link>
             <h3 className="uppercase font-bold text-3xl">Welcome Back</h3>
             <p>Fill out the form</p>
           </div>
@@ -176,9 +176,9 @@ const Login = () => {
           <div className="flex flex-col items-center gap-4">
             <p className="text-center font-normal text-md">
               Don't have an account?{" "}
-              <a href="/signup" className="text-black underline">
+              <Link to="/signup" className="text-black underline">
                 Sign up here
-              </a>
+              </Link>
             </p>
           </div>
         </div>

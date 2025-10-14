@@ -6,7 +6,7 @@ import { LockIcon, Calendar, Phone, MapPin, At } from "@phosphor-icons/react";
 import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
 import { useResendOtpMutation, useSignupMutation } from "../../services/api";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Signup = () => {
   const COUNTRY_CODE = "+63";
@@ -144,13 +144,13 @@ const Signup = () => {
       <section className="w-full md:max-w-[60vw] flex justify-center items-center px-4 md:px-6 py-8">
         <div className=" w-full max-w-lg h-full flex flex-col justify-around items-center">
           <div className="flex flex-col text-center">
-            <a href="/">
+            <Link to="/">
               <img
                 src={c2c_transparent}
                 alt="Coast2Cart Logo"
                 className="w-48 md:w-80 mb-1 mx-auto cursor-pointer"
               />
-            </a>
+            </Link>
             <h3 className="uppercase font-bold text-3xl">Create Account</h3>
             <p>Fill out the form</p>
           </div>
@@ -472,9 +472,9 @@ const Signup = () => {
           <div className="flex flex-col items-center gap-4">
             <p className="text-center font-normal text-md">
               Already have an account?{" "}
-              <a href="/login" className="text-black underline">
+              <Link to="/login" className="text-black underline">
                 Log in here
-              </a>
+              </Link>
             </p>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import ViewSellerModal from "../../modals/ViewSellerModal";
 import VerifySellerModal from "../../modals/VerifySellerModal";
 import AddSellerModal from "../../modals/AddSellerModal";
+import SellerOtpVerificationModal from "../../modals/SellerOtpVerificationModal";
 import {
   User,
   Plus,
@@ -15,18 +16,61 @@ import toast from "react-hot-toast";
 
 const StatusPill = ({ value }) => {
   const normalized = (value || "").toLowerCase();
-  const styles =
-    normalized === "approved"
-      ? { text: "text-emerald-700", bg: "bg-emerald-50", dot: "bg-emerald-500" }
-      : normalized === "rejected"
-      ? { text: "text-rose-700", bg: "bg-rose-50", dot: "bg-rose-500" }
-      : { text: "text-amber-700", bg: "bg-amber-50", dot: "bg-amber-400" };
+  const getStatusInfo = (status) => {
+    switch (status) {
+      case "approved":
+        return {
+          text: "text-emerald-700",
+          bg: "bg-emerald-50",
+          dot: "bg-emerald-500",
+          display: "Approved",
+        };
+      case "rejected":
+        return {
+          text: "text-rose-700",
+          bg: "bg-rose-50",
+          dot: "bg-rose-500",
+          display: "Rejected",
+        };
+      case "pending_otp_admin":
+        return {
+          text: "text-orange-700",
+          bg: "bg-orange-50",
+          dot: "bg-orange-500",
+          display: "Pending OTP & Admin",
+        };
+      case "pending_admin":
+        return {
+          text: "text-blue-700",
+          bg: "bg-blue-50",
+          dot: "bg-blue-500",
+          display: "Pending Admin",
+        };
+      case "pending_otp":
+        return {
+          text: "text-purple-700",
+          bg: "bg-purple-50",
+          dot: "bg-purple-500",
+          display: "Pending OTP",
+        };
+      default:
+        return {
+          text: "text-amber-700",
+          bg: "bg-amber-50",
+          dot: "bg-amber-400",
+          display: normalized || "Pending",
+        };
+    }
+  };
+
+  const styles = getStatusInfo(normalized);
+
   return (
     <div
       className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-sm font-medium ${styles.text} ${styles.bg}`}
     >
       <span className={`w-2 h-2 rounded-full ${styles.dot}`}></span>
-      {normalized}
+      {styles.display}
     </div>
   );
 };
@@ -64,11 +108,22 @@ const SellerAccountManagement = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isVerifyOpen, setIsVerifyOpen] = useState(false);
+  const [isOtpVerifyOpen, setIsOtpVerifyOpen] = useState(false);
   const [focusedSeller, setFocusedSeller] = useState(null);
 
   const handleDelete = async () => {
     toast("Delete not yet implemented");
     setIsViewOpen(false);
+  };
+
+  const handleResendOtp = (seller) => {
+    if (!seller?.contactNo) {
+      toast.error("Contact number not available");
+      return;
+    }
+
+    setFocusedSeller(seller);
+    setIsOtpVerifyOpen(true);
   };
 
   return (
@@ -136,8 +191,12 @@ const SellerAccountManagement = () => {
               }
             >
               <option value="">All statuses</option>
-              <option value="approved">approved</option>
-              <option value="pending">pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="pending_otp_admin">Pending OTP & Admin</option>
+              <option value="pending_admin">Pending Admin</option>
+              <option value="pending_otp">Pending OTP</option>
+              <option value="pending">Pending (Legacy)</option>
             </select>
             <div className="flex gap-2">
               <button
@@ -219,38 +278,54 @@ const SellerAccountManagement = () => {
                         <StatusPill value={row.status} />
                       </td>
                       <td>
-                        <button
-                          className="btn btn-xs bg-white text-base-content border border-row-outline"
-                          onClick={() => {
-                            // Prefill minimal data for view modal
-                            const prefill = {
-                              id: row.raw?._id || row.raw?.id || row.id,
-                              fullName: row.raw?.fullName || row.name,
-                              firstName: row.raw?.firstName,
-                              lastName: row.raw?.lastName,
-                              email: row.raw?.email || row.email,
-                              contactNo: row.raw?.contactNo,
-                              address: row.raw?.address || row.address,
-                              username: row.raw?.username,
-                              storeName: row.raw?.storeName,
-                            };
-                            setFocusedSeller(prefill);
-                            setIsViewOpen(true);
-                          }}
-                        >
-                          <Eye size={14} weight="bold" className="mr-1" /> View
-                        </button>
-                        {row.status === "pending" && (
+                        <div className="flex gap-2">
                           <button
-                            className="btn btn-xs bg-success text-white border border-success ml-2"
+                            className="btn btn-xs bg-white text-base-content border border-row-outline"
                             onClick={() => {
-                              setFocusedSeller(row.raw);
-                              setIsVerifyOpen(true);
+                              // Prefill minimal data for view modal
+                              const prefill = {
+                                id: row.raw?._id || row.raw?.id || row.id,
+                                fullName: row.raw?.fullName || row.name,
+                                firstName: row.raw?.firstName,
+                                lastName: row.raw?.lastName,
+                                email: row.raw?.email || row.email,
+                                contactNo: row.raw?.contactNo,
+                                address: row.raw?.address || row.address,
+                                username: row.raw?.username,
+                                storeName: row.raw?.storeName,
+                              };
+                              setFocusedSeller(prefill);
+                              setIsViewOpen(true);
                             }}
                           >
-                            Verify
+                            <Eye size={14} weight="bold" className="mr-1" />{" "}
+                            View
                           </button>
-                        )}
+
+                          {/* Action buttons based on status */}
+                          {row.status === "pending_otp" && (
+                            <button
+                              className="btn btn-xs bg-purple-500 text-white border border-purple-500"
+                              onClick={() => handleResendOtp(row.raw)}
+                            >
+                              Resend OTP
+                            </button>
+                          )}
+
+                          {(row.status === "pending_admin" ||
+                            row.status === "pending_otp_admin" ||
+                            row.status === "pending") && (
+                            <button
+                              className="btn btn-xs bg-success text-white border border-success"
+                              onClick={() => {
+                                setFocusedSeller(row.raw);
+                                setIsVerifyOpen(true);
+                              }}
+                            >
+                              Verify
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -271,6 +346,15 @@ const SellerAccountManagement = () => {
         seller={focusedSeller}
         onApproved={() => {
           setIsVerifyOpen(false);
+          refetch();
+        }}
+      />
+      <SellerOtpVerificationModal
+        open={isOtpVerifyOpen}
+        onClose={() => setIsOtpVerifyOpen(false)}
+        seller={focusedSeller}
+        onSuccess={() => {
+          setIsOtpVerifyOpen(false);
           refetch();
         }}
       />

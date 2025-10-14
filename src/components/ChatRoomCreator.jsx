@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { useCreateOrGetChatRoomMutation, useSendMessageMutation } from '../services/api';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import {
+  useCreateOrGetChatRoomMutation,
+  useSendMessageMutation,
+} from "../services/api";
+import toast from "react-hot-toast";
 
 export const useChatRoomCreator = () => {
   const [createOrGetChatRoom, { isLoading }] = useCreateOrGetChatRoomMutation();
@@ -9,44 +12,47 @@ export const useChatRoomCreator = () => {
   const startChat = async (participantId, productInfo = null) => {
     try {
       const result = await createOrGetChatRoom(participantId).unwrap();
-      
+
       // If product info is provided, send it as the first message
       if (productInfo && result) {
         try {
           await sendMessage({
             chatRoomId: result._id || result.id,
-            messageType: 'product',
+            messageType: "product",
             content: {
               product: {
                 productId: productInfo.id || productInfo._id,
                 name: productInfo.name || productInfo.itemName,
                 description: productInfo.description,
                 price: productInfo.price || productInfo.itemPrice,
-                image: productInfo.image || productInfo.imageUrl
-              }
-            }
+                image: productInfo.image || productInfo.imageUrl,
+              },
+            },
           }).unwrap();
         } catch (messageError) {
-          console.error('Failed to send product message:', messageError);
+          console.error("Failed to send product message:", messageError);
           // Don't show error to user, just log it
         }
       }
-      
-      toast.success('Chat started successfully!');
+
+      toast.success("Chat started successfully!");
       return result;
     } catch (error) {
-      let errorMessage = 'Failed to start chat. Please try again.';
-      
+      let errorMessage = "Failed to start chat. Please try again.";
+
       if (error?.status === 500) {
-        errorMessage = `Server error: ${error?.data?.message || 'Please try again later.'}`;
+        errorMessage = `Server error: ${
+          error?.data?.message || "Please try again later."
+        }`;
       } else if (error?.status === 401) {
-        errorMessage = 'Please log in to start a chat.';
+        // Don't show toast for auth errors - let the StartChatButton handle it with modal
+        throw error;
       } else if (error?.status === 404) {
-        errorMessage = 'User not found. Please check the user ID.';
+        errorMessage = "User not found. Please check the user ID.";
       } else if (error?.data?.message) {
         errorMessage = error.data.message;
       }
-      
+
       toast.error(errorMessage);
       throw error;
     }
@@ -54,11 +60,16 @@ export const useChatRoomCreator = () => {
 
   return {
     startChat,
-    isCreatingChat: isLoading
+    isCreatingChat: isLoading,
   };
 };
 
-const ChatRoomCreator = ({ participantId, participantName, onChatStarted, children }) => {
+const ChatRoomCreator = ({
+  participantId,
+  participantName,
+  onChatStarted,
+  children,
+}) => {
   const { startChat, isCreatingChat } = useChatRoomCreator();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -88,17 +99,15 @@ const ChatRoomCreator = ({ participantId, participantName, onChatStarted, childr
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)}>
-        Start Chat
-      </button>
-      
+      <button onClick={() => setIsOpen(true)}>Start Chat</button>
+
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3>Start Chat with {participantName}</h3>
             <p>Are you sure you want to start a conversation?</p>
             <button onClick={handleStartChat} disabled={isCreatingChat}>
-              {isCreatingChat ? 'Starting...' : 'Start Chat'}
+              {isCreatingChat ? "Starting..." : "Start Chat"}
             </button>
             <button onClick={() => setIsOpen(false)}>Cancel</button>
           </div>
@@ -109,4 +118,3 @@ const ChatRoomCreator = ({ participantId, participantName, onChatStarted, childr
 };
 
 export default ChatRoomCreator;
-

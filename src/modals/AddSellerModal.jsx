@@ -72,7 +72,7 @@ const AddSellerModal = ({ open, onClose }) => {
     resendOtp({ contactNo: form.contactNo })
       .unwrap()
       .then(() => {
-        toast.success("OTP sent");
+        toast.success("OTP sent successfully");
         startCooldown(60);
       })
       .catch((e) => {
@@ -146,7 +146,7 @@ const AddSellerModal = ({ open, onClose }) => {
   const handleResend = async () => {
     try {
       await resendOtp({ contactNo: form.contactNo }).unwrap();
-      toast.success("OTP resent");
+      toast.success("OTP resent successfully");
       startCooldown(60);
     } catch (e) {
       const msg = e?.data?.message || "Failed to resend OTP";

@@ -98,7 +98,7 @@ const AddAdminModal = ({ open, onClose, onSuccess }) => {
         ? digits.slice(1)
         : digits;
       await resendOtp({ contactNo: contact }).unwrap();
-      toast.success("OTP resent");
+      toast.success("OTP resent successfully");
     } catch (e) {
       toast.error(e?.data?.message || "Failed to resend OTP");
     }
