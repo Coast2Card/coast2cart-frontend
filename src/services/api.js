@@ -133,21 +133,6 @@ export const api = createApi({
         };
       },
     }),
-    deleteAccount: builder.mutation({
-      query: (accountId) => ({
-        url: `/accounts/${accountId}`,
-        method: "DELETE",
-      }),
-      transformResponse: (response) => response?.data || response,
-    }),
-    getAccountById: builder.query({
-      query: (accountId) => ({
-        url: `/accounts/${accountId}`,
-        method: "GET",
-      }),
-      transformResponse: (response) =>
-        response?.data?.account || response?.account || response,
-    }),
     approveSeller: builder.mutation({
       query: ({ sellerId }) => ({
         url: `/accounts/sellers/${sellerId}/approval`,
@@ -465,6 +450,8 @@ export const api = createApi({
 });
 
 export const {
+  useDeleteAccountMutation,
+  useGetAccountByIdQuery,
   useGetAccountsQuery,
   useGetAdminAccountsQuery,
   useCreateAdminAccountMutation,
