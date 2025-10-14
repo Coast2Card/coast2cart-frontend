@@ -14,7 +14,9 @@ const ChatPopup = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent'); // 'recent', 'unread', 'alphabetical'
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   // Get current user from localStorage
   const getCurrentUser = () => {
@@ -116,6 +118,37 @@ const ChatPopup = () => {
     return groups;
   };
 
+  // Check if message should be grouped with previous message
+  const shouldGroupWithPrevious = (currentMsg, previousMsg, currentIndex) => {
+    if (!previousMsg || currentIndex === 0) return false;
+
+    // Get sender IDs
+    const getCurrentSenderId = (msg) => {
+      if (typeof msg.senderId === 'object' && msg.senderId !== null) {
+        return msg.senderId._id || msg.senderId.id;
+      } else if (typeof msg.sender === 'object' && msg.sender !== null) {
+        return msg.sender._id || msg.sender.id;
+      }
+      return msg.senderId || msg.sender;
+    };
+
+    const currentSenderId = getCurrentSenderId(currentMsg);
+    const previousSenderId = getCurrentSenderId(previousMsg);
+
+    // Don't group if different senders
+    if (currentSenderId !== previousSenderId) return false;
+
+    // Don't group product messages
+    if (currentMsg.messageType === 'product' || previousMsg.messageType === 'product') return false;
+
+    // Check time difference (group if less than 2 minutes apart)
+    const currentTime = new Date(currentMsg.createdAt).getTime();
+    const previousTime = new Date(previousMsg.createdAt).getTime();
+    const timeDiff = (currentTime - previousTime) / 1000 / 60; // in minutes
+
+    return timeDiff < 2;
+  };
+
   const getTotalUnreadCount = () => {
     return chatRooms.reduce((total, chat) => {
       return total + (chat.unreadCount || 0);
@@ -205,8 +238,25 @@ const ChatPopup = () => {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
+    if (!showScrollButton) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, showScrollButton]);
+
+  // Detect scroll position to show/hide scroll button
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+    }
+  };
+
+  // Scroll to bottom function
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
+    setShowScrollButton(false);
+  };
 
   // Close sort menu when clicking outside
   useEffect(() => {
@@ -222,22 +272,31 @@ const ChatPopup = () => {
   // Handle send message
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (message.trim() && selectedChatId && !sendingMessage) {
-      try {
-        await sendMessage({
-          chatRoomId: selectedChatId,
-          messageType: 'text',
-          content: { text: message }
-        }).unwrap();
+    const trimmedMessage = message.trim();
 
-        setMessage('');
-        // Refetch both messages and chat rooms to update the UI
-        refetchMessages();
-        refetchRooms();
-      } catch (error) {
-        console.error('Failed to send message:', error);
-        alert(`Failed to send message: ${error?.data?.message || 'Unknown error'}`);
-      }
+    // Validate message
+    if (!trimmedMessage || !selectedChatId || sendingMessage) return;
+
+    if (trimmedMessage.length > 1000) {
+      alert('Message is too long. Maximum 1000 characters allowed.');
+      return;
+    }
+
+    try {
+      await sendMessage({
+        chatRoomId: selectedChatId,
+        messageType: 'text',
+        content: { text: trimmedMessage }
+      }).unwrap();
+
+      setMessage('');
+      // Refetch both messages and chat rooms to update the UI
+      refetchMessages();
+      refetchRooms();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorMsg = error?.data?.message || error?.message || 'Failed to send message';
+      alert(`${errorMsg}. Please try again.`);
     }
   };
 
@@ -356,9 +415,32 @@ const ChatPopup = () => {
           {/* Chat List */}
           <div className="flex-1 overflow-y-auto">
             {isLoadingRooms ? (
-              <div className="p-4 text-center text-gray-500">Loading chats...</div>
+              <div className="p-4 space-y-4">
+                {/* Loading skeleton for chat list */}
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center space-x-3 p-3 animate-pulse">
+                    <div className="w-12 h-12 rounded-full bg-gray-200"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-32"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredChatRooms().length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No chats found</div>
+              <div className="flex flex-col items-center justify-center p-8 text-center">
+                <div className="mb-4">
+                  <svg className="w-16 h-16 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 font-medium mb-1">
+                  {searchQuery ? 'No chats found' : 'No conversations yet'}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  {searchQuery ? 'Try a different search term' : 'Start chatting with sellers!'}
+                </p>
+              </div>
             ) : (
               <div className="p-2">
                 {filteredChatRooms().map((chat) => {
@@ -495,11 +577,33 @@ const ChatPopup = () => {
               </div>
 
               {/* Messages Area - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div
+                ref={messagesContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto p-4 relative"
+              >
                 {isLoadingMessages ? (
-                  <div className="text-center text-gray-500">Loading messages...</div>
+                  <div className="space-y-4">
+                    {/* Loading skeleton */}
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                        <div className="bg-gray-200 rounded-2xl px-4 py-3 max-w-xs animate-pulse">
+                          <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                          <div className="h-3 bg-gray-300 rounded w-16"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : getCurrentChatMessages().length === 0 ? (
-                  <div className="text-center text-gray-500">No messages yet. Start the conversation!</div>
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <div className="mb-4">
+                      <svg className="w-20 h-20 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 font-medium">No messages yet</p>
+                    <p className="text-gray-400 text-sm mt-1">Start the conversation!</p>
+                  </div>
                 ) : (
                   <>
                     {/* Messages grouped by date */}
@@ -513,7 +617,7 @@ const ChatPopup = () => {
                         </div>
 
                         {/* Messages for this date */}
-                        {group.messages.map((msg) => {
+                        {group.messages.map((msg, msgIndex) => {
                       // Extract sender ID (handles object or string)
                       let messageSenderId;
                       if (typeof msg.senderId === 'object' && msg.senderId !== null) {
@@ -525,13 +629,16 @@ const ChatPopup = () => {
                       }
 
                       const currentUserId = currentUser?._id || currentUser?.id;
-                      const isCurrentUser = messageSenderId === currentUserId || 
+                      const isCurrentUser = messageSenderId === currentUserId ||
                                           String(messageSenderId) === String(currentUserId);
-                      
+
+                      const previousMsg = msgIndex > 0 ? group.messages[msgIndex - 1] : null;
+                      const isGrouped = shouldGroupWithPrevious(msg, previousMsg, msgIndex);
+
                       return (
-                        <div 
-                          key={msg._id || msg.id} 
-                          className={`flex ${msg.messageType === 'product' ? 'justify-center' : isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                        <div
+                          key={msg._id || msg.id}
+                          className={`flex ${msg.messageType === 'product' ? 'justify-center' : isCurrentUser ? 'justify-end' : 'justify-start'} ${isGrouped ? 'mt-1' : ''}`}
                         >
                           {msg.messageType === 'product' ? (
                             <div className="rounded-2xl p-4 max-w-sm shadow-lg" style={{ backgroundColor: '#007A3F' }}>
@@ -558,27 +665,29 @@ const ChatPopup = () => {
                                   : msg.isRead
                                     ? 'bg-white border border-gray-300 text-black'
                                     : 'bg-gray-50 border border-gray-400 text-black font-semibold'
-                              }`}
+                              } ${isGrouped ? 'shadow-sm' : ''}`}
                             >
                               <p className="leading-relaxed">{msg.content?.text || msg.message || ''}</p>
-                              <div className="flex items-center justify-between mt-2">
-                                <span className={`text-xs ${isCurrentUser ? 'text-blue-100' : 'text-gray-500'}`}>
-                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                                {isCurrentUser && (
-                                  <span className="text-xs ml-2">
-                                    {msg.isRead ? (
-                                      <span className="text-blue-100" title="Seen">
-                                        ✓✓
-                                      </span>
-                                    ) : (
-                                      <span className="text-blue-200" title="Delivered">
-                                        ✓
-                                      </span>
-                                    )}
+                              {!isGrouped && (
+                                <div className="flex items-center justify-between mt-2">
+                                  <span className={`text-xs ${isCurrentUser ? 'text-blue-100' : 'text-gray-500'}`}>
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
-                                )}
-                              </div>
+                                  {isCurrentUser && (
+                                    <span className="text-xs ml-2">
+                                      {msg.isRead ? (
+                                        <span className="text-blue-100" title="Seen">
+                                          ✓✓
+                                        </span>
+                                      ) : (
+                                        <span className="text-blue-200" title="Delivered">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -589,30 +698,59 @@ const ChatPopup = () => {
                     <div ref={messagesEndRef} />
                   </>
                 )}
+
+                {/* Scroll to bottom button */}
+                {showScrollButton && (
+                  <button
+                    onClick={scrollToBottom}
+                    className="absolute bottom-4 right-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-3 shadow-lg transition-all transform hover:scale-110"
+                    title="Scroll to bottom"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </button>
+                )}
               </div>
 
               {/* Message Input - Fixed */}
               <div className="p-4 flex-shrink-0">
                 <div className="rounded-lg p-3 border border-gray-200 bg-white">
+                  {message.length > 900 && (
+                    <div className="mb-2 text-right">
+                      <span className={`text-xs ${message.length > 1000 ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                        {message.length}/1000
+                      </span>
+                    </div>
+                  )}
                   <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
                     <input
                       type="text"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Type a message"
+                      placeholder={sendingMessage ? "Sending..." : "Type a message"}
                       disabled={sendingMessage}
+                      maxLength={1000}
                       className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm ${
                         message ? 'text-left' : 'text-center'
-                      }`}
+                      } ${sendingMessage ? 'opacity-50 cursor-not-allowed' : ''}`}
                     />
                     <button
                       type="submit"
                       disabled={sendingMessage || !message.trim()}
-                      className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+                      className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={sendingMessage ? "Sending..." : "Send message"}
                     >
-                      <svg className="w-8 h-8 rotate-90 text-orange-500" fill="currentColor" stroke="white" strokeWidth="1" viewBox="0 0 24 24">
-                        <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
+                      {sendingMessage ? (
+                        <svg className="w-6 h-6 text-orange-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <svg className="w-8 h-8 rotate-90 text-orange-500" fill="currentColor" stroke="white" strokeWidth="1" viewBox="0 0 24 24">
+                          <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      )}
                     </button>
                   </form>
                 </div>
