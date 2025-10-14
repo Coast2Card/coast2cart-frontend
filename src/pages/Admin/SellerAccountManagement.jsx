@@ -49,11 +49,12 @@ const SellerAccountManagement = () => {
   const accounts = data?.accounts ?? [];
   const rows = accounts.map((a, idx) => ({
     id: a._id || idx + 1,
-    name: `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim() || a.username || "",
+    name: a.fullName || a.username || a.email || "",
     email: a.email || "",
     contact: a.contactNo || "",
     address: a.address || "",
-    status: a.isVerified ? "Active" : "Inactive",
+    status:
+      (a.status || "").toLowerCase() === "verified" ? "Active" : "Inactive",
     created: (a.createdAt || "").slice(0, 10),
     lastActive: (a.updatedAt || a.createdAt || "").slice(0, 10),
     raw: a,

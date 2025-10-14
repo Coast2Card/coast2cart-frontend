@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   User,
   Plus,
@@ -8,40 +8,7 @@ import {
   FunnelSimple,
   Eye,
 } from "@phosphor-icons/react";
-
-const seed = [
-  {
-    id: 1,
-    name: "Admin One",
-    email: "admin1@example.com",
-    status: "Active",
-    created: "2025-01-10",
-    lastActive: "2025-02-20",
-  },
-  {
-    id: 2,
-    name: "Admin Two",
-    email: "admin2@example.com",
-    status: "Inactive",
-    created: "2025-01-15",
-    lastActive: "2025-02-05",
-  },
-  {
-    id: 3,
-    name: "Admin Three",
-    email: "admin3@example.com",
-    status: "Active",
-    created: "2025-02-01",
-    lastActive: "2025-02-18",
-  },
-];
-
-const generateRows = () => {
-  const rows = [];
-  for (let i = 0; i < 20; i++)
-    seed.forEach((s) => rows.push({ ...s, id: rows.length + 1 }));
-  return rows.slice(0, 60);
-};
+import { useGetAdminAccountsQuery } from "../../services/api";
 
 const StatusPill = ({ value }) => {
   const isActive = value === "Active";
@@ -70,13 +37,25 @@ const ToolbarBadge = ({ count }) => (
 );
 
 const AdminAccountManagement = () => {
-  const data = useMemo(generateRows, []);
+  const { data, isFetching, refetch } = useGetAdminAccountsQuery();
+  const accounts = data?.accounts ?? [];
+  const rows = accounts.map((a, idx) => ({
+    id: a._id || idx + 1,
+    name: a.fullName || a.username || a.email || "",
+    email: a.email || "",
+    status:
+      (a.status || "").toLowerCase() === "verified" ? "Active" : "Inactive",
+    created: (a.createdAt || "").slice(0, 10),
+    lastActive: (a.updatedAt || a.createdAt || "").slice(0, 10),
+    raw: a,
+  }));
+  const total = data?.pagination?.totalAccounts ?? rows.length;
   const [selected, setSelected] = useState(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
-  const allSelected = selected.size > 0 && selected.size === data.length;
+  const allSelected = selected.size > 0 && selected.size === rows.length;
 
   const toggleAll = () =>
-    setSelected(allSelected ? new Set() : new Set(data.map((d) => d.id)));
+    setSelected(allSelected ? new Set() : new Set(rows.map((d) => d.id)));
   const toggleOne = (id) => {
     const copy = new Set(selected);
     if (copy.has(id)) copy.delete(id);
@@ -91,10 +70,14 @@ const AdminAccountManagement = () => {
           <div className="flex flex-wrap items-center gap-2 md:gap-3">
             <button
               className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"
-              onClick={() => {
+              onClick={async () => {
                 if (isUpdating) return;
                 setIsUpdating(true);
-                setTimeout(() => setIsUpdating(false), 1200);
+                try {
+                  await refetch();
+                } finally {
+                  setIsUpdating(false);
+                }
               }}
             >
               {isUpdating ? (
@@ -112,7 +95,7 @@ const AdminAccountManagement = () => {
               <ToolbarBadge count={2} />
             </button>
             <div className="text-sm md:text-base text-base-content/70">
-              {data.length} Results
+              {isFetching ? "Loading..." : `${total} Results`}
             </div>
             <div className="flex-1"></div>
             <button className="btn btn-sm md:btn-md bg-primary text-primary-content border border-primary">
@@ -154,7 +137,7 @@ const AdminAccountManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {data.map((row, idx) => (
+              {rows.map((row, idx) => (
                 <tr
                   key={row.id}
                   className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
