@@ -74,10 +74,33 @@ const Navbar = () => {
   // Safely handle chat rooms data - could be array or nested in data
   const chatRooms = Array.isArray(chatRoomsData) ? chatRoomsData : [];
 
-  // Calculate total unread messages count
+  // Calculate unread count for a specific chat (frontend-only tracking)
+  const getUnreadCountForChat = (chat) => {
+    const chatId = chat._id || chat.id;
+    const readTimestamps = JSON.parse(localStorage.getItem('chat_read_timestamps') || '{}');
+    const lastReadTime = readTimestamps[chatId];
+
+    // If never read, and there's a last message, count as 1 unread
+    if (!lastReadTime && chat.lastMessage && chat.lastMessageAt) {
+      return 1;
+    }
+
+    // If last message is newer than last read time, it's unread
+    if (lastReadTime && chat.lastMessageAt) {
+      const lastMessageTime = new Date(chat.lastMessageAt);
+      const lastRead = new Date(lastReadTime);
+
+      if (lastMessageTime > lastRead) {
+        return 1;
+      }
+    }
+
+    return 0;
+  };
+
+  // Calculate total unread messages count (frontend-only)
   const totalUnreadCount = chatRooms.reduce((total, chat) => {
-    const unread = chat.unreadCount || chat.unread || chat.unreadMessages || 0;
-    return total + unread;
+    return total + getUnreadCountForChat(chat);
   }, 0);
 
   const handleLogout = () => {
@@ -263,7 +286,7 @@ const Navbar = () => {
                 className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
               />
               {!isLoadingChatRooms && totalUnreadCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold leading-none px-1.5 py-1 rounded-full min-w-[18px] text-center shadow-md animate-pulse">
+                <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] leading-none px-1.5 py-1 rounded-full">
                   {totalUnreadCount}
                 </span>
               )}
@@ -428,7 +451,7 @@ const Navbar = () => {
                 className="h-6 w-6 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
               />
               {!isLoadingChatRooms && totalUnreadCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold leading-none px-1.5 py-1 rounded-full min-w-[18px] text-center shadow-md animate-pulse">
+                <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] leading-none px-1.5 py-1 rounded-full">
                   {totalUnreadCount}
                 </span>
               )}

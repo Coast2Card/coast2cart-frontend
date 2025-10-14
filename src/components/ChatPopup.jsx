@@ -227,10 +227,46 @@ const ChatPopup = () => {
     }
   }, [shouldOpenChat, chatRooms, selectedChatId, setSelectedChatId]);
 
+  // Calculate unread count for a specific chat (frontend-only tracking)
+  const getUnreadCountForChat = (chat) => {
+    const chatId = chat._id || chat.id;
+    const readTimestamps = JSON.parse(localStorage.getItem('chat_read_timestamps') || '{}');
+    const lastReadTime = readTimestamps[chatId];
+
+    // If never read, and there's a last message from other person, count as 1 unread
+    if (!lastReadTime && chat.lastMessage && chat.lastMessageAt) {
+      return 1;
+    }
+
+    // If last message is newer than last read time, it's unread
+    if (lastReadTime && chat.lastMessageAt) {
+      const lastMessageTime = new Date(chat.lastMessageAt);
+      const lastRead = new Date(lastReadTime);
+
+      if (lastMessageTime > lastRead) {
+        return 1;
+      }
+    }
+
+    return 0;
+  };
+
+  // Get total unread count across all chats
+  const getTotalUnreadCountFrontend = () => {
+    return chatRooms.reduce((total, chat) => {
+      return total + getUnreadCountForChat(chat);
+    }, 0);
+  };
+
   // Mark messages as read when chat room is selected
   useEffect(() => {
     if (selectedChatId) {
       markAsRead(selectedChatId);
+
+      // Save last read timestamp in localStorage (client-side tracking)
+      const readTimestamps = JSON.parse(localStorage.getItem('chat_read_timestamps') || '{}');
+      readTimestamps[selectedChatId] = new Date().toISOString();
+      localStorage.setItem('chat_read_timestamps', JSON.stringify(readTimestamps));
     }
   }, [selectedChatId, markAsRead]);
 
@@ -322,7 +358,7 @@ const ChatPopup = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-orange-500">
-                Chat {getTotalUnreadCount() > 0 && <span className="text-black text-sm">({getTotalUnreadCount()})</span>}
+                Chat {getTotalUnreadCountFrontend() > 0 && <span className="text-black text-sm">({getTotalUnreadCountFrontend()})</span>}
               </h2>
               <div className="relative sort-menu-container">
                 <button 
@@ -500,9 +536,9 @@ const ChatPopup = () => {
                               }
                             })()}
                           </span>
-                          {chat.unreadCount > 0 && (
-                            <span className="bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center mt-1">
-                              {chat.unreadCount}
+                          {getUnreadCountForChat(chat) > 0 && (
+                            <span className="bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center mt-1">
+                              {getUnreadCountForChat(chat)}
                             </span>
                           )}
                         </div>
