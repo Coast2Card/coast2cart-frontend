@@ -20,6 +20,29 @@ const Cart = () => {
   const [isBulkRemoving, setIsBulkRemoving] = useState(false);
   const { data: cartData, isLoading, isError, refetch } = useGetCartQuery();
 
+  // Get current user info and check if seller
+  const currentUser = (() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  // Redirect sellers away from cart page
+  useEffect(() => {
+    if (currentUser?.role === "seller") {
+      toast.error("Sellers cannot access the cart page");
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
+
+  // Early return for sellers
+  if (currentUser?.role === "seller") {
+    return null;
+  }
+
   // Load cart items from API
   useEffect(() => {
     if (cartData && Array.isArray(cartData.items)) {
@@ -143,24 +166,6 @@ const Cart = () => {
   const serverItemCount = cartData?.itemCount ?? items.length;
   const serverSellerCount = cartData?.sellerCount ?? 0;
   const serverCartTotal = cartData?.cartTotal ?? 0;
-
-  const handleCheckout = () => {
-    const isLoggedIn = Boolean(localStorage.getItem("auth_token"));
-    if (!isLoggedIn) {
-      toast.error("Please log in to checkout");
-      navigate("/login");
-      return;
-    }
-    if (selectedItemsList.length === 0) {
-      toast.error("Please select items to checkout");
-      return;
-    }
-    navigate("/checkout", {
-      state: {
-        selectedItems: selectedItems,
-      },
-    });
-  };
 
   return (
     <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full min-h-screen">
@@ -322,11 +327,12 @@ const Cart = () => {
                       <input
                         type="number"
                         value={it.quantity || 1}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const newQty = Math.max(
                             1,
                             Math.min(99, parseInt(e.target.value) || 1)
                           );
+                          const previous = items;
                           persist(
                             items.map((item) =>
                               item.id === it.id
@@ -334,6 +340,13 @@ const Cart = () => {
                                 : item
                             )
                           );
+                          try {
+                            await updateCartItem({ itemId: it.id, quantity: newQty }).unwrap();
+                            await refetch();
+                          } catch (error) {
+                            persist(previous);
+                            toast.error(error?.data?.message || "Failed to update quantity");
+                          }
                         }}
                         className="w-12 h-8 text-center border-2 border-base-300 rounded text-sm text-base-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         min="1"
@@ -438,21 +451,6 @@ const Cart = () => {
                   </>
                 )}
               </div>
-              <button
-                onClick={handleCheckout}
-                disabled={selectedItemsList.length === 0}
-                className={`mt-1.5 w-full rounded-b-xl px-6 py-4 text-sm font-semibold transition-colors duration-200 ${
-                  selectedItemsList.length === 0
-                    ? "bg-base-200 text-base-content/50 cursor-not-allowed"
-                    : "bg-primary text-primary-content hover:bg-primary/90"
-                }`}
-              >
-                {selectedItemsList.length === 0
-                  ? "Select items to checkout"
-                  : `Checkout ${selectedItemsList.length} item${
-                      selectedItemsList.length > 1 ? "s" : ""
-                    }`}
-              </button>
             </div>
           </aside>
         </div>

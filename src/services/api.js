@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl,
@@ -19,6 +19,21 @@ const baseQueryWithFriendlyErrors = async (args, apiCtx, extraOptions) => {
   try {
     result = await rawBaseQuery(args, apiCtx, extraOptions);
   } catch (e) {
+    // Handle CORS errors specifically
+    if (
+      e?.message?.includes("CORS") ||
+      e?.message?.includes("Access-Control-Allow-Origin")
+    ) {
+      return {
+        error: {
+          status: "CORS_ERROR",
+          data: {
+            message:
+              "CORS Error: Backend server needs to allow requests from localhost:5173. Contact backend developer to fix CORS configuration.",
+          },
+        },
+      };
+    }
     return {
       error: {
         status: "REQUEST_ERROR",
@@ -441,6 +456,22 @@ export const api = createApi({
         body: payload, // { contactNo }
       }),
     }),
+    forgotPassword: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/forgot-password",
+        method: "POST",
+        body: payload, // { contactNo }
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
+    resetPassword: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/reset-password",
+        method: "POST",
+        body: payload, // { contactNo, otp, newPassword, confirmPassword }
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
     // Chat endpoints
     getChatRooms: builder.query({
       query: () => "/chat/rooms",
@@ -449,7 +480,9 @@ export const api = createApi({
     }),
     getChatRoom: builder.query({
       query: (chatRoomId) => `/chat/rooms/${chatRoomId}`,
-      providesTags: (result, error, chatRoomId) => [{ type: "Chat", id: chatRoomId }],
+      providesTags: (result, error, chatRoomId) => [
+        { type: "Chat", id: chatRoomId },
+      ],
       transformResponse: (response) => response?.data || response,
     }),
     // Create chat room or add first transaction
@@ -525,8 +558,13 @@ export const api = createApi({
         "Chat",
       ],
       transformResponse: (response) => {
-        const messages = response?.data?.messages || response?.messages || response?.data || [];
-        const pagination = response?.data?.pagination || response?.pagination || null;
+        const messages =
+          response?.data?.messages ||
+          response?.messages ||
+          response?.data ||
+          [];
+        const pagination =
+          response?.data?.pagination || response?.pagination || null;
         return { messages, pagination };
       },
     }),
@@ -540,6 +578,65 @@ export const api = createApi({
         "Chat",
       ],
       transformResponse: (response) => response?.data || response,
+    }),
+    // Buyer profile endpoints
+    getBuyerRecentOrders: builder.query({
+      query: (buyerId) => ({
+        url: `/items/sold/buyer/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Expect { success: true, data: [], pagination: {...} }
+        const orders = Array.isArray(response?.data) ? response.data : [];
+        const pagination = response?.pagination || null;
+        return { orders, pagination, raw: response };
+      },
+    }),
+    getBuyerFavoriteSellers: builder.query({
+      query: (buyerId) => ({
+        url: `/items/favorite-sellers/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Expect { success: true, data: [], pagination: {...}, search: null, sortBy: "purchaseCount", sortOrder: "desc" }
+        const sellers = Array.isArray(response?.data) ? response.data : [];
+        const pagination = response?.pagination || null;
+        const search = response?.search || null;
+        const sortBy = response?.sortBy || "purchaseCount";
+        const sortOrder = response?.sortOrder || "desc";
+        return {
+          sellers,
+          pagination,
+          search,
+          sortBy,
+          sortOrder,
+          raw: response,
+        };
+      },
+    }),
+    getBuyerReviews: builder.query({
+      query: (buyerId) => ({
+        url: `/reviews/buyer/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Expect { success: true, data: [], pagination: {...} }
+        const reviews = Array.isArray(response?.data) ? response.data : [];
+        const pagination = response?.pagination || null;
+        return { reviews, pagination, raw: response };
+      },
+    }),
+    createSellerReview: builder.mutation({
+      query: ({ sellerId, score, reviewText }) => ({
+        url: `/reviews/seller/${sellerId}`,
+        method: "POST",
+        body: { score, reviewText },
+      }),
+      transformResponse: (response) => response?.data || response,
+      invalidatesTags: (result, error, { sellerId }) => [
+        { type: "Reviews", id: sellerId },
+        "Reviews",
+      ],
     }),
   }),
 });
@@ -572,6 +669,8 @@ export const {
   useSignupMutation,
   useVerifyOtpMutation,
   useResendOtpMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useGetChatRoomsQuery,
   useGetChatRoomQuery,
   useCreateOrGetChatRoomMutation,
@@ -581,4 +680,8 @@ export const {
   useSendMessageMutation,
   useGetChatMessagesQuery,
   useMarkMessagesAsReadMutation,
+  useGetBuyerRecentOrdersQuery,
+  useGetBuyerFavoriteSellersQuery,
+  useGetBuyerReviewsQuery,
+  useCreateSellerReviewMutation,
 } = api;

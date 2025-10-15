@@ -66,24 +66,9 @@ const AddSellerModal = ({ open, onClose }) => {
   };
   useEffect(() => {
     if (step !== 3) return;
-    if (autoSentRef.current) return;
+    // Don't auto-send OTP here - the backend already sent it when creating the account
+    // Just reset the auto-send guard
     autoSentRef.current = true;
-    // auto-send OTP when entering step 3
-    resendOtp({ contactNo: form.contactNo })
-      .unwrap()
-      .then(() => {
-        toast.success("OTP sent successfully");
-        startCooldown(60);
-      })
-      .catch((e) => {
-        const msg = e?.data?.message || "Failed to send OTP";
-        const m = String(msg).match(/(\d+)\s*seconds?/i);
-        const retryAfter =
-          Number(e?.error?.headers?.get?.("Retry-After")) ||
-          (m ? Number(m[1]) : 60);
-        startCooldown(retryAfter);
-        toast.error(msg);
-      });
   }, [step]);
 
   useEffect(() => {
@@ -109,6 +94,12 @@ const AddSellerModal = ({ open, onClose }) => {
   };
 
   const handleNextFromCredentials = async () => {
+    // Validate passwords match before submitting
+    if (form.password !== form.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
     // Submit create seller, then proceed to OTP step
     try {
       const fd = new FormData();
@@ -129,7 +120,12 @@ const AddSellerModal = ({ open, onClose }) => {
       toast.success("Seller created. Verify OTP to finish.");
       setStep(3);
     } catch (e) {
-      toast.error(e?.data?.message || "Failed to create seller");
+      console.error("Seller creation error:", e);
+      const errorMessage =
+        e?.data?.message ||
+        e?.error?.data?.message ||
+        "Failed to create seller";
+      toast.error(errorMessage);
     }
   };
 
@@ -161,13 +157,10 @@ const AddSellerModal = ({ open, onClose }) => {
 
   const isStep1Valid = () => {
     return (
+      form.storeName.trim() &&
       form.firstName.trim() &&
       form.lastName.trim() &&
-      form.contactNo.trim() &&
-      form.username.trim() &&
-      form.password.trim() &&
-      form.confirmPassword.trim() &&
-      form.password === form.confirmPassword
+      form.contactNo.trim()
     );
   };
 

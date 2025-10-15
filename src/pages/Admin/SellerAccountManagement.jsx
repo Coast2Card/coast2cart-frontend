@@ -18,12 +18,12 @@ const StatusPill = ({ value }) => {
   const normalized = (value || "").toLowerCase();
   const getStatusInfo = (status) => {
     switch (status) {
-      case "approved":
+      case "validated":
         return {
           text: "text-emerald-700",
           bg: "bg-emerald-50",
           dot: "bg-emerald-500",
-          display: "Approved",
+          display: "Validated",
         };
       case "rejected":
         return {
@@ -55,10 +55,10 @@ const StatusPill = ({ value }) => {
         };
       default:
         return {
-          text: "text-amber-700",
-          bg: "bg-amber-50",
-          dot: "bg-amber-400",
-          display: normalized || "Pending",
+          text: "text-emerald-700",
+          bg: "bg-emerald-50",
+          dot: "bg-emerald-500",
+          display: normalized || "Validated",
         };
     }
   };
@@ -84,18 +84,40 @@ const ToolbarBadge = ({ count }) => (
 const SellerAccountManagement = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ search: "", status: "" });
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchParams] = useSearchParams();
   const qParam = searchParams.get("q") || "";
+
   useEffect(() => {
     setFilters((f) => (f.search === qParam ? f : { ...f, search: qParam }));
   }, [qParam]);
-  const { data, isFetching, refetch } = useGetAccountsQuery({
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.search, filters.status]);
+
+  const {
+    data: serverData,
+    isFetching,
+    refetch,
+  } = useGetAccountsQuery({
     role: "seller",
+    page: currentPage,
     search: filters.search || undefined,
     status: filters.status || undefined,
   });
-  const accounts = data?.accounts ?? [];
-  const rows = accounts.map((a, idx) => ({
+  const accounts = serverData?.accounts ?? [];
+
+  // Client-side filtering as workaround for backend status filtering issue
+  const filteredAccounts = accounts.filter((account) => {
+    if (filters.status && account.status !== filters.status) {
+      return false;
+    }
+    return true;
+  });
+
+  const rows = filteredAccounts.map((a, idx) => ({
     id: a._id || idx + 1,
     name: a.fullName || a.username || a.email || "",
     email: a.email || "",
@@ -103,13 +125,31 @@ const SellerAccountManagement = () => {
     status: (a.status || "").toLowerCase() || "pending",
     raw: a,
   }));
-  const total = data?.pagination?.totalAccounts ?? rows.length;
+  const pagination = serverData?.pagination ?? null;
+  const total = filteredAccounts.length; // Use client-side filtered count
   const [isUpdating, setIsUpdating] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isVerifyOpen, setIsVerifyOpen] = useState(false);
   const [isOtpVerifyOpen, setIsOtpVerifyOpen] = useState(false);
   const [focusedSeller, setFocusedSeller] = useState(null);
+
+  // Pagination handlers
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handlePrevPage = () => {
+    if (pagination?.hasPrev) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pagination?.hasNext) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const handleDelete = async () => {
     toast("Delete not yet implemented");
@@ -191,12 +231,11 @@ const SellerAccountManagement = () => {
               }
             >
               <option value="">All statuses</option>
-              <option value="approved">Approved</option>
+              <option value="validated">Validated</option>
               <option value="rejected">Rejected</option>
               <option value="pending_otp_admin">Pending OTP & Admin</option>
               <option value="pending_admin">Pending Admin</option>
               <option value="pending_otp">Pending OTP</option>
-              <option value="pending">Pending (Legacy)</option>
             </select>
             <div className="flex gap-2">
               <button
@@ -229,108 +268,204 @@ const SellerAccountManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {isFetching && rows.length === 0
-                ? Array.from({ length: 8 }).map((_, idx) => (
-                    <tr
-                      key={`skeleton-${idx}`}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
-                    >
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
-                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+              {isFetching && rows.length === 0 ? (
+                Array.from({ length: 8 }).map((_, idx) => (
+                  <tr
+                    key={`skeleton-${idx}`}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                  >
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                      </div>
+                    </td>
+                    <td>
+                      <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                  </tr>
+                ))
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                        <User
+                          size={24}
+                          weight="light"
+                          className="text-gray-400"
+                        />
+                      </div>
+                      <div className="text-gray-500">
+                        <p className="text-lg font-medium">
+                          No seller accounts found
+                        </p>
+                        <p className="text-sm">
+                          {filters.search || filters.status
+                            ? "Try adjusting your search criteria or filters"
+                            : "No seller accounts have been created yet"}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row, idx) => (
+                  <tr
+                    key={row.id}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                  >
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="avatar">
+                          <User
+                            size={16}
+                            weight="fill"
+                            className="text-base-content/80"
+                          />
                         </div>
-                      </td>
-                      <td>
-                        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                    </tr>
-                  ))
-                : rows.map((row, idx) => (
-                    <tr
-                      key={row.id}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
-                    >
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className="avatar">
-                            <User
-                              size={16}
-                              weight="fill"
-                              className="text-base-content/80"
-                            />
-                          </div>
-                          <div className="font-medium">{row.name}</div>
-                        </div>
-                      </td>
-                      <td className="text-base-content/80">{row.email}</td>
-                      <td className="text-base-content/80">{row.address}</td>
-                      <td>
-                        <StatusPill value={row.status} />
-                      </td>
-                      <td>
-                        <div className="flex gap-2">
+                        <div className="font-medium">{row.name}</div>
+                      </div>
+                    </td>
+                    <td className="text-base-content/80">{row.email}</td>
+                    <td className="text-base-content/80">{row.address}</td>
+                    <td>
+                      <StatusPill value={row.status} />
+                    </td>
+                    <td>
+                      <div className="flex gap-2">
+                        <button
+                          className="btn btn-xs bg-white text-base-content border border-row-outline"
+                          onClick={() => {
+                            // Prefill minimal data for view modal
+                            const prefill = {
+                              id: row.raw?._id || row.raw?.id || row.id,
+                              fullName: row.raw?.fullName || row.name,
+                              firstName: row.raw?.firstName,
+                              lastName: row.raw?.lastName,
+                              email: row.raw?.email || row.email,
+                              contactNo: row.raw?.contactNo,
+                              address: row.raw?.address || row.address,
+                              username: row.raw?.username,
+                              storeName: row.raw?.storeName,
+                            };
+                            setFocusedSeller(prefill);
+                            setIsViewOpen(true);
+                          }}
+                        >
+                          <Eye size={14} weight="bold" className="mr-1" /> View
+                        </button>
+
+                        {/* Action buttons based on status */}
+                        {row.status === "pending_otp" && (
                           <button
-                            className="btn btn-xs bg-white text-base-content border border-row-outline"
+                            className="btn btn-xs bg-purple-500 text-white border border-purple-500"
+                            onClick={() => handleResendOtp(row.raw)}
+                          >
+                            Resend OTP
+                          </button>
+                        )}
+
+                        {(row.status === "pending_admin" ||
+                          row.status === "pending") && (
+                          <button
+                            className="btn btn-xs bg-success text-white border border-success"
                             onClick={() => {
-                              // Prefill minimal data for view modal
-                              const prefill = {
-                                id: row.raw?._id || row.raw?.id || row.id,
-                                fullName: row.raw?.fullName || row.name,
-                                firstName: row.raw?.firstName,
-                                lastName: row.raw?.lastName,
-                                email: row.raw?.email || row.email,
-                                contactNo: row.raw?.contactNo,
-                                address: row.raw?.address || row.address,
-                                username: row.raw?.username,
-                                storeName: row.raw?.storeName,
-                              };
-                              setFocusedSeller(prefill);
-                              setIsViewOpen(true);
+                              setFocusedSeller(row.raw);
+                              setIsVerifyOpen(true);
                             }}
                           >
-                            <Eye size={14} weight="bold" className="mr-1" />{" "}
-                            View
+                            Verify
                           </button>
-
-                          {/* Action buttons based on status */}
-                          {row.status === "pending_otp" && (
-                            <button
-                              className="btn btn-xs bg-purple-500 text-white border border-purple-500"
-                              onClick={() => handleResendOtp(row.raw)}
-                            >
-                              Resend OTP
-                            </button>
-                          )}
-
-                          {(row.status === "pending_admin" ||
-                            row.status === "pending") && (
-                            <button
-                              className="btn btn-xs bg-success text-white border border-success"
-                              onClick={() => {
-                                setFocusedSeller(row.raw);
-                                setIsVerifyOpen(true);
-                              }}
-                            >
-                              Verify
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-row-outline bg-gray-50">
+            <div className="text-sm text-gray-600">
+              Showing page {pagination.currentPage} of {pagination.totalPages}(
+              {pagination.totalAccounts} total accounts)
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePrevPage}
+                disabled={!pagination.hasPrev}
+                className={`px-3 py-1 text-sm rounded-md border ${
+                  pagination.hasPrev
+                    ? "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                }`}
+              >
+                Previous
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from(
+                  { length: Math.min(5, pagination.totalPages) },
+                  (_, i) => {
+                    let pageNum;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (pagination.currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (
+                      pagination.currentPage >=
+                      pagination.totalPages - 2
+                    ) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = pagination.currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 text-sm rounded-md border ${
+                          pageNum === pagination.currentPage
+                            ? "bg-primary text-white border-primary"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+
+              <button
+                onClick={handleNextPage}
+                disabled={!pagination.hasNext}
+                className={`px-3 py-1 text-sm rounded-md border ${
+                  pagination.hasNext
+                    ? "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <ViewSellerModal
         open={isViewOpen}

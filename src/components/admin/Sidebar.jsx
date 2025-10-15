@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { SignOut } from "@phosphor-icons/react";
 import chartpie from "../../assets/icons/ChartPieSlice.png";
 import person from "../../assets/icons/person.png";
 import logo from "../../assets/logos/c2c_white_transparent.png";
@@ -88,25 +89,30 @@ const Sidebar = () => {
       </nav>
 
       <div className="mt-auto p-4 border-t border-primary/40 relative">
-        {isProfileOpen && (
-          <div className="absolute bottom-16 left-4 right-4 bg-white text-base-content rounded-xl shadow-2xl p-2 z-50">
-            <button
-              type="button"
-              className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 cursor-pointer transition-colors"
-              onClick={handleLogout}
-            >
-              Log out
-            </button>
-          </div>
-        )}
+        <div
+          className={`absolute bottom-23 left-4 right-4 mb-2 bg-white text-base-content rounded-xl shadow-2xl p-2 z-50 transition-all duration-200 ease-out ${
+            isProfileOpen
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 translate-y-2 pointer-events-none"
+          }`}
+        >
+          <button
+            type="button"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-base-200 cursor-pointer transition-colors duration-150"
+            onClick={handleLogout}
+          >
+            <SignOut className="h-4 w-4" weight="regular" />
+            Log out
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => setIsProfileOpen((v) => !v)}
-          className="w-full flex items-center gap-3 cursor-pointer hover:bg-primary/20 rounded-xl p-2 transition-colors"
+          className="w-full flex items-center gap-3 cursor-pointer hover:bg-primary/20 rounded-xl p-2 transition-all duration-200 ease-in-out"
           aria-haspopup="menu"
           aria-expanded={isProfileOpen}
         >
-          <div className="w-10 h-10 rounded-full bg-primary-content/20 grid place-items-center text-lg">
+          <div className="w-10 h-10 rounded-full bg-primary-content/20 grid place-items-center text-lg transition-transform duration-200 hover:scale-105">
             👤
           </div>
           <div className="leading-tight text-left">

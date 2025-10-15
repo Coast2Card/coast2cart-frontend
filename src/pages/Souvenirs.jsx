@@ -12,6 +12,16 @@ const Souvenirs = () => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Get current user info
+  const currentUser = (() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
   // Fetch souvenirs from API
   const { data, isLoading, isError } = useGetSouvenirsQuery({
     // Add any additional params here if needed
@@ -26,6 +36,33 @@ const Souvenirs = () => {
   const [addingId, setAddingId] = useState(null);
 
   const allSouvenirs = data?.items || [];
+
+  // Check if current user is the seller of an item
+  const isCurrentUserSeller = (item) => {
+    if (!currentUser || !item) return false;
+
+    const currentUserId = currentUser._id || currentUser.id;
+    const sellerId =
+      item?.seller?._id ||
+      item?.seller?.id ||
+      item?.postedBy?._id ||
+      item?.postedBy?.id ||
+      item?.owner?._id ||
+      item?.owner?.id;
+
+    // Debug logging
+    console.log("Seller Check Debug:", {
+      currentUserId,
+      sellerId,
+      currentUserRole: currentUser?.role,
+      itemId: item?.id || item?._id,
+      itemName: item?.itemName || item?.name,
+      isSeller: currentUserId === sellerId,
+    });
+
+    // Only block if the current user is the specific seller of this item
+    return currentUserId === sellerId;
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -257,7 +294,10 @@ const Souvenirs = () => {
                   )}
                   <div className="mt-auto">
                     <button
-                      disabled={addingId === (souvenir.id || souvenir._id)}
+                      disabled={
+                        addingId === (souvenir.id || souvenir._id) ||
+                        isCurrentUserSeller(souvenir)
+                      }
                       onClick={async (e) => {
                         e.preventDefault();
                         const token = localStorage.getItem("auth_token");
@@ -305,10 +345,16 @@ const Souvenirs = () => {
                           setAddingId(null);
                         }
                       }}
-                      className="w-full h-9 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold text-sm disabled:opacity-60"
+                      className={`w-full h-9 rounded-full font-semibold text-sm disabled:opacity-60 ${
+                        isCurrentUserSeller(souvenir)
+                          ? "bg-gray-400 cursor-not-allowed text-white"
+                          : "bg-[#E4490F] hover:bg-[#d0410d] text-white"
+                      }`}
                     >
                       {addingId === (souvenir.id || souvenir._id)
                         ? "Adding..."
+                        : isCurrentUserSeller(souvenir)
+                        ? "Your Item"
                         : "Add to Cart"}
                     </button>
                   </div>

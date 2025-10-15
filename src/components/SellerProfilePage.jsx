@@ -126,6 +126,21 @@ const SellerProfilePage = ({ sellerId }) => {
     category: it?.category || it?.itemType || "fresh_catch",
   }));
 
+  // Helper function to format dates to PHT
+  const formatToPHT = (isoString) => {
+    if (!isoString) return "";
+    try {
+      const dtf = new Intl.DateTimeFormat("en-PH", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Manila",
+      });
+      return dtf.format(new Date(isoString));
+    } catch {
+      return (isoString || "").slice(0, 10);
+    }
+  };
+
   // Fallback to mock listings if no sellerId or no items
   const activeListings = apiActiveListings.length > 0 ? apiActiveListings : [];
 
@@ -150,19 +165,6 @@ const SellerProfilePage = ({ sellerId }) => {
       skip: !resolvedSellerId,
     }
   );
-  const formatToPHT = (isoString) => {
-    if (!isoString) return "";
-    try {
-      const dtf = new Intl.DateTimeFormat("en-PH", {
-        dateStyle: "medium",
-        timeStyle: "short",
-        timeZone: "Asia/Manila",
-      });
-      return dtf.format(new Date(isoString));
-    } catch {
-      return (isoString || "").slice(0, 10);
-    }
-  };
   const reviews = (sellerReviewsData?.reviews || []).map((r) => ({
     id: r?.id,
     customerName: r?.reviewerName || "Anonymous",
