@@ -150,14 +150,29 @@ const SellerProfilePage = ({ sellerId }) => {
     resolvedSellerId,
     { skip: !resolvedSellerId }
   );
-  const apiSoldItems = (sellerSoldData?.items || []).map((it) => ({
-    id: it?._id || it?.id,
-    name: it?.itemId?.itemName || it?.itemId?.name || it?.name || "",
-    quantity: it?.quantity || "",
-    image: it?.itemId?.image || it?.itemId?.imageUrl || it?.image || bisugotImg,
-    soldDate: it?.markedSoldAt ? formatToPHT(it.markedSoldAt) : "",
-    category: it?.itemId?.itemType || it?.category || "",
-  }));
+  const apiSoldItems = (sellerSoldData?.items || []).map((it) => {
+    const item = it?.itemId && typeof it.itemId === "object" ? it.itemId : {};
+    const name = item?.itemName || "";
+    const image = item?.image || bisugotImg;
+    const category = item?.itemType || it?.category || "";
+    const quantity =
+      it?.quantity != null && it?.unit
+        ? `${it.quantity} ${it.unit}`
+        : item?.formattedQuantity || it?.quantity || "";
+    const soldDateIso = it?.markedSoldAt || it?.updatedAt || it?.soldDate;
+    const priceLabel = item?.formattedPrice || (it?.totalPrice != null ? `₱${Number(it.totalPrice).toLocaleString()}` : "");
+    const summary = it?.summary || (quantity && priceLabel ? `${quantity} - ${priceLabel}` : "");
+    return {
+      id: it?.id || it?._id,
+      name,
+      image,
+      category,
+      quantity,
+      soldDate: soldDateIso ? formatToPHT(soldDateIso) : "",
+      priceLabel,
+      summary,
+    };
+  });
 
   // Seller reviews from API
   const { data: sellerReviewsData } = useGetSellerReviewsQuery(
@@ -492,12 +507,18 @@ const SellerProfilePage = ({ sellerId }) => {
           </>
         ) : (
           <>
-            <div className="text-success text-2xl font-bold mb-1 font-primary group-hover:scale-105 transition-transform duration-200">
-              {product.quantity}
-            </div>
             <div className="text-gray-800 font-semibold text-lg mb-1 font-primary">
               {product.name}
             </div>
+            {product.summary ? (
+              <div className="text-success text-base font-semibold mb-1 font-primary">
+                {product.summary}
+              </div>
+            ) : (
+              <div className="text-success text-base font-semibold mb-1 font-primary">
+                {product.quantity}
+              </div>
+            )}
             <div className="text-amber-600 text-sm font-primary font-medium">
               {product.soldDate}
             </div>

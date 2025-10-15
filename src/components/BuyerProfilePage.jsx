@@ -79,8 +79,13 @@ const BuyerProfilePage = () => {
     data: recentOrdersData,
     isLoading: isLoadingOrders,
     error: ordersError,
+    refetch: refetchBuyerOrders,
   } = useGetBuyerRecentOrdersQuery(accountId, {
     skip: !accountId,
+    // Auto refresh policies
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
   });
 
   const {
@@ -319,6 +324,19 @@ const BuyerProfilePage = () => {
     }
 
     return filtered;
+  };
+
+  // Refetch when switching to Recent tab
+  const handleSetActiveTab = (tab) => {
+    setActiveTab(tab);
+    if (tab === "recent") {
+      // Give React time to commit the state before refetch
+      setTimeout(() => {
+        try {
+          refetchBuyerOrders?.();
+        } catch {}
+      }, 0);
+    }
   };
 
   const renderStars = (rating) => {
@@ -785,7 +803,7 @@ const BuyerProfilePage = () => {
       <div className="max-w-8xl mx-auto px-4 md:px-8 py-8">
         <div className="flex flex-wrap justify-center gap-4 mb-10">
           <button
-            onClick={() => setActiveTab("recent")}
+            onClick={() => handleSetActiveTab("recent")}
             className={`px-8 py-4 rounded-full font-semibold transition-all duration-300 cursor-pointer border-2 ${
               activeTab === "recent"
                 ? "bg-primary text-white shadow-lg hover:bg-primary/95 hover:shadow-xl border-transparent"
@@ -795,7 +813,7 @@ const BuyerProfilePage = () => {
             Recent Orders
           </button>
           <button
-            onClick={() => setActiveTab("favorites")}
+            onClick={() => handleSetActiveTab("favorites")}
             className={`px-8 py-4 rounded-full font-semibold transition-all duration-300 cursor-pointer border-2 ${
               activeTab === "favorites"
                 ? "bg-primary text-white shadow-lg hover:bg-primary/95 hover:shadow-xl border-transparent"
@@ -805,7 +823,7 @@ const BuyerProfilePage = () => {
             Favorite Sellers
           </button>
           <button
-            onClick={() => setActiveTab("reviews")}
+            onClick={() => handleSetActiveTab("reviews")}
             className={`px-8 py-4 rounded-full font-semibold transition-all duration-300 cursor-pointer border-2 ${
               activeTab === "reviews"
                 ? "bg-primary text-white shadow-lg hover:bg-primary/95 hover:shadow-xl border-transparent"
@@ -829,7 +847,7 @@ const BuyerProfilePage = () => {
                 {/* Filters removed as requested */}
               </div>
 
-              {/* Right Side - Search */}
+              {/* Right Side - Search + Refresh */}
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <input
@@ -846,6 +864,15 @@ const BuyerProfilePage = () => {
                     />
                   </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { refetchBuyerOrders?.(); } catch {}
+                  }}
+                  className="px-3 py-2 bg-base-200 text-base-content rounded-lg hover:bg-base-300 transition-colors duration-200 cursor-pointer"
+                >
+                  Refresh
+                </button>
               </div>
             </div>
           </div>
