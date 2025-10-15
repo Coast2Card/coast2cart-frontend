@@ -290,7 +290,9 @@ const ProductDetail = () => {
                         description: product.description,
                         price: product.itemPrice || product.price,
                         image: product.image || product.imageUrl,
-                        unit: product.unit
+                        unit: product.unit,
+                        quantity: quantity, // Selected quantity for transaction
+                        availableQuantity: product.quantity || 0 // Available stock
                       }}
                     >
                       Message Seller

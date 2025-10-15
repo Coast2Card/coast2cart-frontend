@@ -171,8 +171,19 @@ export const api = createApi({
       transformResponse: (response) => {
         // Expect { success: boolean, data: array, cartTotal: number, itemCount: number, sellerCount: number }
         const rawItems = Array.isArray(response?.data) ? response.data : [];
+        console.log("Cart API Response Debug:", { response, rawItems });
+        
         const items = rawItems.map((entry) => {
           const item = entry?.item || {};
+          const seller = item?.seller || entry?.seller || {};
+          
+          console.log("Cart Item Debug:", { 
+            entry, 
+            item, 
+            itemQuantity: item?.quantity,
+            entryQuantity: entry?.quantity 
+          });
+          
           return {
             id: entry?.itemId || entry?._id || item?._id || entry?.id,
             name: item?.itemName || item?.name || entry?.name || "",
@@ -183,9 +194,12 @@ export const api = createApi({
                 ? Number(entry.price)
                 : 0,
             image: item?.image || entry?.image || "",
-            quantity: Number(entry?.quantity) || 1,
+            quantity: Number(entry?.quantity) || 1, // Cart quantity
+            availableQuantity: Number(item?.quantity) || 0, // Available stock quantity
             totalPrice:
               entry?.totalPrice != null ? Number(entry.totalPrice) : undefined,
+            sellerId: seller?._id || seller?.id || item?.sellerId,
+            sellerName: seller?.username || seller?.name,
             raw: entry,
           };
         });
@@ -438,13 +452,55 @@ export const api = createApi({
       providesTags: (result, error, chatRoomId) => [{ type: "Chat", id: chatRoomId }],
       transformResponse: (response) => response?.data || response,
     }),
+    // Create chat room or add first transaction
     createOrGetChatRoom: builder.mutation({
-      query: (participantId) => ({
+      query: ({ participantId, itemId, quantity }) => ({
         url: "/chat/rooms",
         method: "POST",
-        body: { participantId },
+        body: { 
+          participantId, 
+          itemId: itemId || undefined,
+          quantity: quantity || undefined
+        },
       }),
       invalidatesTags: ["Chat"],
+      transformResponse: (response) => response?.data || response,
+    }),
+    // Add new transaction to existing chat room
+    addChatTransaction: builder.mutation({
+      query: ({ chatRoomId, itemId, quantity }) => ({
+        url: `/chat/rooms/${chatRoomId}/transactions`,
+        method: "POST",
+        body: { itemId, quantity },
+      }),
+      invalidatesTags: (result, error, { chatRoomId }) => [
+        { type: "Chat", id: chatRoomId },
+        "Chat",
+      ],
+      transformResponse: (response) => response?.data || response,
+    }),
+    // Get all transactions in a chat room
+    getChatTransactions: builder.query({
+      query: (chatRoomId) => ({
+        url: `/chat/rooms/${chatRoomId}/transactions`,
+        method: "GET",
+      }),
+      providesTags: (result, error, chatRoomId) => [
+        { type: "Chat", id: `${chatRoomId}-transactions` },
+      ],
+      transformResponse: (response) => response?.data || response,
+    }),
+    // Mark transaction as sold (seller only)
+    markTransactionAsSold: builder.mutation({
+      query: ({ chatRoomId, transactionId }) => ({
+        url: `/chat/rooms/${chatRoomId}/transactions/${transactionId}/mark-sold`,
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, { chatRoomId }) => [
+        { type: "Chat", id: chatRoomId },
+        { type: "Chat", id: `${chatRoomId}-transactions` },
+        "Chat",
+      ],
       transformResponse: (response) => response?.data || response,
     }),
     sendMessage: builder.mutation({
@@ -519,6 +575,9 @@ export const {
   useGetChatRoomsQuery,
   useGetChatRoomQuery,
   useCreateOrGetChatRoomMutation,
+  useAddChatTransactionMutation,
+  useGetChatTransactionsQuery,
+  useMarkTransactionAsSoldMutation,
   useSendMessageMutation,
   useGetChatMessagesQuery,
   useMarkMessagesAsReadMutation,

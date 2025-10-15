@@ -1,43 +1,102 @@
 import { useState } from "react";
 import {
   useCreateOrGetChatRoomMutation,
-  useSendMessageMutation,
+  useAddChatTransactionMutation,
 } from "../services/api";
 import toast from "react-hot-toast";
 
 export const useChatRoomCreator = () => {
   const [createOrGetChatRoom, { isLoading }] = useCreateOrGetChatRoomMutation();
-  const [sendMessage] = useSendMessageMutation();
+  const [addChatTransaction] = useAddChatTransactionMutation();
 
   const startChat = async (participantId, productInfo = null) => {
     try {
-      const result = await createOrGetChatRoom(participantId).unwrap();
+      console.log("=== CHAT CREATION DEBUG ===");
+      console.log("Starting chat with seller:", { participantId, productInfo });
+      
+      // If product info is provided, include it in the chat room creation
+      // This will create the first transaction automatically
+      const payload = { 
+        participantId,
+      };
+      
+      // Add itemId and quantity if productInfo is provided
+      if (productInfo) {
+        payload.itemId = productInfo.id || productInfo._id;
+        // Ensure we use the correct quantity (selected quantity, not available quantity)
+        const selectedQuantity = Number(productInfo.quantity) || 1;
+        payload.quantity = selectedQuantity;
+        
+        console.log("📦 Creating transaction with:", {
+          itemId: payload.itemId,
+          quantity: payload.quantity,
+          selectedQuantity: selectedQuantity,
+          productInfo: productInfo
+        });
+      }
+      
+      console.log("🚀 Sending payload to backend:", payload);
+      console.log("📊 Payload details:", {
+        participantId: payload.participantId,
+        itemId: payload.itemId,
+        quantity: payload.quantity,
+        payloadKeys: Object.keys(payload),
+        payloadSize: JSON.stringify(payload).length
+      });
+      
+      const result = await createOrGetChatRoom(payload).unwrap();
+      
+      console.log("✅ Chat room result:", result);
+      console.log("🔍 Result analysis:", {
+        isNewChatRoom: result.isNewChatRoom,
+        hasTransaction: !!result.transaction,
+        transactionDetails: result.transaction ? {
+          id: result.transaction._id || result.transaction.id,
+          quantity: result.transaction.quantity,
+          itemId: result.transaction.itemId,
+          status: result.transaction.status
+        } : null,
+        chatRoomId: result.chatRoom?._id || result.chatRoom?.id || result._id || result.id
+      });
 
-      // If product info is provided, send it as the first message
-      if (productInfo && result) {
+      // If this is an existing chat room and we have product info, add a new transaction
+      if (productInfo && result.isNewChatRoom === false && result.chatRoom) {
         try {
-          await sendMessage({
-            chatRoomId: result._id || result.id,
-            messageType: "product",
-            content: {
-              product: {
-                productId: productInfo.id || productInfo._id,
-                name: productInfo.name || productInfo.itemName,
-                description: productInfo.description,
-                price: productInfo.price || productInfo.itemPrice,
-                image: productInfo.image || productInfo.imageUrl,
-              },
-            },
+          console.log("➕ Adding transaction to existing chat room");
+          const selectedQuantity = Number(productInfo.quantity) || 1;
+          
+          console.log("📦 Adding transaction with:", {
+            chatRoomId: result.chatRoom._id || result.chatRoom.id,
+            itemId: productInfo.id || productInfo._id,
+            quantity: selectedQuantity
+          });
+          
+          await addChatTransaction({
+            chatRoomId: result.chatRoom._id || result.chatRoom.id,
+            itemId: productInfo.id || productInfo._id,
+            quantity: selectedQuantity,
           }).unwrap();
-        } catch (messageError) {
-          console.error("Failed to send product message:", messageError);
-          // Don't show error to user, just log it
+          console.log("✅ Transaction added successfully");
+        } catch (transactionError) {
+          console.error("❌ Failed to add transaction:", transactionError);
+          // Continue even if transaction fails
         }
       }
 
-      toast.success("Chat started successfully!");
-      return result;
+      console.log("=== END CHAT CREATION DEBUG ===");
+      
+      toast.success(
+        result.isNewChatRoom 
+          ? "Chat started successfully!" 
+          : productInfo 
+            ? "Product added to existing chat!"
+            : "Chat opened successfully!"
+      );
+      
+      // Return the chat room for navigation
+      return result.chatRoom || result;
     } catch (error) {
+      console.error("❌ Chat creation error:", error);
       let errorMessage = "Failed to start chat. Please try again.";
 
       if (error?.status === 500) {

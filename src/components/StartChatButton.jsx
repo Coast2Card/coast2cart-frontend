@@ -14,8 +14,15 @@ const StartChatButton = ({
   const { startChat, isCreatingChat } = useChatRoomCreator();
   const { openChat } = useChatContext();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleStartChat = async () => {
+    // Prevent multiple rapid clicks
+    if (isProcessing || isCreatingChat) {
+      console.log("⏳ Already processing, ignoring click");
+      return;
+    }
+
     if (!userId) {
       alert("User ID is required to start a chat");
       return;
@@ -27,6 +34,9 @@ const StartChatButton = ({
       setShowLoginModal(true);
       return;
     }
+
+    setIsProcessing(true);
+    console.log("🚀 StartChatButton: Starting chat with productInfo:", productInfo);
 
     try {
       const chatRoom = await startChat(userId, productInfo);
@@ -46,6 +56,11 @@ const StartChatButton = ({
       if (error?.status === 401) {
         setShowLoginModal(true);
       }
+    } finally {
+      // Reset processing state after a delay to prevent rapid clicks
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 2000);
     }
   };
 
@@ -54,12 +69,12 @@ const StartChatButton = ({
       <>
         <button
           onClick={handleStartChat}
-          disabled={isCreatingChat}
+          disabled={isCreatingChat || isProcessing}
           className={`${className} ${
-            isCreatingChat ? "opacity-50 cursor-not-allowed" : ""
+            (isCreatingChat || isProcessing) ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          {children}
+          {isCreatingChat || isProcessing ? "Processing..." : children}
         </button>
         <LoginRequiredModal
           isOpen={showLoginModal}
@@ -74,9 +89,9 @@ const StartChatButton = ({
     <>
       <button
         onClick={handleStartChat}
-        disabled={isCreatingChat}
+        disabled={isCreatingChat || isProcessing}
         className={`${className} ${
-          isCreatingChat ? "opacity-50 cursor-not-allowed" : ""
+          (isCreatingChat || isProcessing) ? "opacity-50 cursor-not-allowed" : ""
         }`}
       >
         <svg
@@ -92,8 +107,8 @@ const StartChatButton = ({
             d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
           />
         </svg>
-        {isCreatingChat
-          ? "Starting Chat..."
+        {isCreatingChat || isProcessing
+          ? "Processing..."
           : `Chat with ${username || "User"}`}
       </button>
       <LoginRequiredModal
