@@ -30,15 +30,13 @@ import coconutMaracasImg from "../assets/images/coconut_maracas.webp";
 
 const BuyerProfilePage = () => {
   const [activeTab, setActiveTab] = useState("recent");
-  const [selectedCategory1, setSelectedCategory1] = useState("All");
-  const [selectedCategory2, setSelectedCategory2] = useState("All");
-  const [showSouvenirs, setShowSouvenirs] = useState(false);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [reviewForm, setReviewForm] = useState({ score: 5, reviewText: "" });
+  const [reviewForm, setReviewForm] = useState({ stars: 5, reviewText: "" });
 
   // Resolve logged-in account id from localStorage
   const resolveAccountId = () => {
@@ -97,6 +95,7 @@ const BuyerProfilePage = () => {
     data: reviewsData,
     isLoading: isLoadingReviews,
     error: reviewsError,
+    refetch: refetchBuyerReviews,
   } = useGetBuyerReviewsQuery(accountId, {
     skip: !accountId,
   });
@@ -136,21 +135,41 @@ const BuyerProfilePage = () => {
 
   // Transform API data to match UI expectations
   const recentOrders =
-    recentOrdersData?.orders?.map((order) => ({
-      id: order.id || order._id,
-      image: order.image || order.itemImage || bisugotImg, // fallback to default image
-      weight: order.weight || order.quantity || "N/A",
-      type: order.name || order.itemName || order.type || "Unknown Item",
-      status: order.status || "Completed",
-      seller: order.sellerName || order.seller || "Unknown Seller",
-      sellerId: order.sellerId || order.seller_id,
-      category: order.category || order.itemType || "Unknown",
-      price: order.price || order.totalPrice || 0,
-      currency: "PHP",
-      orderDate: order.orderDate || order.createdAt || order.soldAt,
-      completedDate: order.completedDate || order.updatedAt || order.soldAt,
-      raw: order,
-    })) || [];
+    recentOrdersData?.orders?.map((order) => {
+      const item = order?.itemId && typeof order.itemId === "object" ? order.itemId : {};
+      const sellerObj = order?.sellerId && typeof order.sellerId === "object" ? order.sellerId : {};
+
+      const quantityLabel =
+        (order?.quantity != null && order?.unit)
+          ? `${order.quantity} ${order.unit}`
+          : item?.formattedQuantity || "N/A";
+
+      const categoryLabel = item?.itemType || item?.category || "Unknown";
+
+      const sellerLabel =
+        sellerObj?.username ||
+        [sellerObj?.firstName, sellerObj?.lastName].filter(Boolean).join(" ") ||
+        "Unknown Seller";
+
+      const priceLabel = item?.formattedPrice || order?.totalPrice || item?.itemPrice || 0;
+
+      return {
+        id: order.id || order._id,
+        image: item?.image || bisugotImg,
+        weight: quantityLabel,
+        type: item?.itemName || "Unknown Item",
+        status: order?.status || "Sold",
+        seller: sellerLabel,
+        sellerId: sellerObj?._id || order?.sellerId || order?.seller_id,
+        category: categoryLabel,
+        price: priceLabel,
+        currency: item?.formattedPrice ? undefined : "PHP",
+        orderDate: order?.createdAt || undefined,
+        completedDate: order?.updatedAt || order?.markedSoldAt || undefined,
+        summary: order?.summary,
+        raw: order,
+      };
+    }) || [];
 
   // Transform API data for favorite sellers
   const favoriteSellers =
@@ -243,14 +262,14 @@ const BuyerProfilePage = () => {
   // Review handling functions
   const handleOpenReviewModal = (order) => {
     setSelectedOrder(order);
-    setReviewForm({ score: 5, reviewText: "" });
+    setReviewForm({ stars: 5, reviewText: "" });
     setShowReviewModal(true);
   };
 
   const handleCloseReviewModal = () => {
     setShowReviewModal(false);
     setSelectedOrder(null);
-    setReviewForm({ score: 5, reviewText: "" });
+    setReviewForm({ stars: 5, reviewText: "" });
   };
 
   const handleReviewSubmit = async () => {
@@ -262,11 +281,15 @@ const BuyerProfilePage = () => {
     try {
       await createSellerReview({
         sellerId: selectedOrder.sellerId,
-        score: reviewForm.score,
+        stars: reviewForm.stars,
         reviewText: reviewForm.reviewText.trim(),
       }).unwrap();
 
       toast.success("Review submitted successfully!");
+      // Refresh reviews immediately
+      try {
+        await refetchBuyerReviews();
+      } catch {}
       handleCloseReviewModal();
     } catch (error) {
       console.error("Error submitting review:", error);
@@ -285,27 +308,13 @@ const BuyerProfilePage = () => {
   const getFilteredOrders = () => {
     let filtered = recentOrders;
 
-    // Apply category filters
-    if (showSouvenirs) {
-      filtered = filtered.filter((order) => order.category === "Souvenirs");
-    } else {
-      const categories = [];
-      if (selectedCategory1 !== "All") categories.push(selectedCategory1);
-      if (selectedCategory2 !== "All") categories.push(selectedCategory2);
-
-      if (categories.length > 0) {
-        filtered = filtered.filter((order) =>
-          categories.includes(order.category)
-        );
-      }
-    }
-
-    // Apply search filter
+    // Search filter only
     if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (order) =>
-          order.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.seller.toLowerCase().includes(searchTerm.toLowerCase())
+          order.type.toLowerCase().includes(q) ||
+          order.seller.toLowerCase().includes(q)
       );
     }
 
@@ -664,14 +673,6 @@ const BuyerProfilePage = () => {
                 <h1 className="text-4xl md:text-5xl font-bold text-white">
                   {userData.name}
                 </h1>
-                {!isEditing && (
-                  <button
-                    onClick={handleEditProfile}
-                    className="px-6 py-2 bg-white/90 hover:bg-white rounded-full text-[#FF773C] font-semibold transition-all duration-200 hover:scale-105 active:scale-95 text-sm md:text-base"
-                  >
-                    Edit Profile
-                  </button>
-                )}
               </div>
 
               {isEditing ? (
@@ -819,68 +820,13 @@ const BuyerProfilePage = () => {
         {activeTab === "recent" && (
           <div className="bg-white rounded-xl p-6 mb-8 shadow-sm border border-base-200">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              {/* Left Side - Product Count and Filters */}
+              {/* Left Side - Product Count */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-6">
                 <span className="font-semibold text-base-content text-xl whitespace-nowrap">
                   {getFilteredOrders().length} Products
                 </span>
                 <div className="w-2 h-2 bg-yellow-400 rounded-full hidden sm:block"></div>
-                <div className="flex items-center gap-4">
-                  <select
-                    className="select bg-[#B8D4E3] border-none rounded-lg px-6 py-4 pr-12 w-[180px] h-[52px] font-medium text-base text-gray-700 hover:bg-[#A5C9DC] transition-colors focus:ring-2 focus:ring-primary appearance-none focus:outline-none"
-                    value={selectedCategory1}
-                    onChange={(e) => {
-                      setSelectedCategory1(e.target.value);
-                      setShowSouvenirs(false);
-                    }}
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                      backgroundPosition: "right 12px center",
-                      backgroundRepeat: "no-repeat",
-                      backgroundSize: "16px",
-                      border: "none",
-                      outline: "none",
-                    }}
-                  >
-                    <option value="All">All Categories</option>
-                    <option value="Fresh Catch">Fresh Catch</option>
-                    <option value="Dried Seafood">Dried Seafood</option>
-                  </select>
-                  <select
-                    className="select bg-[#B8D4E3] border-none rounded-lg px-6 py-4 pr-12 w-[160px] h-[52px] font-medium text-base text-gray-700 hover:bg-[#A5C9DC] transition-colors focus:ring-2 focus:ring-primary appearance-none focus:outline-none"
-                    value={selectedCategory2}
-                    onChange={(e) => {
-                      setSelectedCategory2(e.target.value);
-                      setShowSouvenirs(false);
-                    }}
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                      backgroundPosition: "right 12px center",
-                      backgroundRepeat: "no-repeat",
-                      backgroundSize: "16px",
-                      border: "none",
-                      outline: "none",
-                    }}
-                  >
-                    <option value="All">All Types</option>
-                    <option value="Fresh Catch">Fresh Catch</option>
-                    <option value="Dried Seafood">Dried Seafood</option>
-                  </select>
-                  <button
-                    className={`btn border-none rounded-lg px-8 py-4 font-medium text-base transition-all duration-200 hover:scale-105 active:scale-95 w-[140px] h-[52px] ${
-                      showSouvenirs
-                        ? "bg-primary text-white shadow-lg hover:bg-primary/90"
-                        : "bg-[#B8D4E3] text-gray-700 hover:bg-[#A5C9DC]"
-                    }`}
-                    onClick={() => {
-                      setShowSouvenirs(!showSouvenirs);
-                      setSelectedCategory1("All");
-                      setSelectedCategory2("All");
-                    }}
-                  >
-                    Souvenirs
-                  </button>
-                </div>
+                {/* Filters removed as requested */}
               </div>
 
               {/* Right Side - Search */}
@@ -963,14 +909,14 @@ const BuyerProfilePage = () => {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
-                    onClick={() => handleReviewFormChange("score", star)}
+                    onClick={() => handleReviewFormChange("stars", star)}
                     className="text-2xl transition-colors duration-200 cursor-pointer"
                   >
                     <Star
                       size={24}
-                      weight={star <= reviewForm.score ? "fill" : "regular"}
+                      weight={star <= reviewForm.stars ? "fill" : "regular"}
                       className={
-                        star <= reviewForm.score ? "text-warning" : "text-black"
+                        star <= reviewForm.stars ? "text-warning" : "text-black"
                       }
                     />
                   </button>

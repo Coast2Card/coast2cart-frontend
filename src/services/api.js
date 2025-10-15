@@ -62,7 +62,7 @@ const baseQueryWithFriendlyErrors = async (args, apiCtx, extraOptions) => {
 export const api = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithFriendlyErrors,
-  tagTypes: ["Products", "Users", "Cart", "Chat"],
+  tagTypes: ["Products", "Users", "Cart", "Chat", "Reviews"],
   endpoints: (builder) => ({
     createSellerAccount: builder.mutation({
       query: (formData) => ({
@@ -619,6 +619,10 @@ export const api = createApi({
         url: `/reviews/buyer/${buyerId}`,
         method: "GET",
       }),
+      providesTags: (result, error, buyerId) => [
+        { type: "Reviews", id: buyerId },
+        "Reviews",
+      ],
       transformResponse: (response) => {
         // Expect { success: true, data: [], pagination: {...} }
         const reviews = Array.isArray(response?.data) ? response.data : [];
@@ -627,10 +631,10 @@ export const api = createApi({
       },
     }),
     createSellerReview: builder.mutation({
-      query: ({ sellerId, score, reviewText }) => ({
+      query: ({ sellerId, stars, score, reviewText }) => ({
         url: `/reviews/seller/${sellerId}`,
         method: "POST",
-        body: { score, reviewText },
+        body: { stars: stars ?? score, reviewText },
       }),
       transformResponse: (response) => response?.data || response,
       invalidatesTags: (result, error, { sellerId }) => [
