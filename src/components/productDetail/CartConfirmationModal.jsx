@@ -1,12 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useGetItemByIdQuery, useUpdateCartItemMutation, useAddToCartMutation } from "../../services/api";
+import {
+  useGetItemByIdQuery,
+  useUpdateCartItemMutation,
+  useAddToCartMutation,
+} from "../../services/api";
 
-const CartConfirmationModal = ({ isOpen, onClose, product, seller, quantity: initialQuantity = 1 }) => {
+const CartConfirmationModal = ({
+  isOpen,
+  onClose,
+  product,
+  seller,
+  quantity: initialQuantity = 1,
+}) => {
   const navigate = useNavigate();
   const { itemId } = useParams();
   const effectiveItemId = itemId || product?.id;
-  const { data: itemFromRoute } = useGetItemByIdQuery(effectiveItemId, { skip: !effectiveItemId });
+  const { data: itemFromRoute } = useGetItemByIdQuery(effectiveItemId, {
+    skip: !effectiveItemId,
+  });
   const [quantity, setQuantity] = useState(initialQuantity);
   const [updateCartItem] = useUpdateCartItemMutation();
   const [addToCart] = useAddToCartMutation();
@@ -102,24 +114,36 @@ const CartConfirmationModal = ({ isOpen, onClose, product, seller, quantity: ini
   };
 
   const deriveUnitPrice = () => {
-    if (typeof product?.price === "number" && product.price > 0) return product.price;
+    if (typeof product?.price === "number" && product.price > 0)
+      return product.price;
     if (product?.price != null) {
       const parsed = parseFloat(String(product.price).replace(/[^0-9.]/g, ""));
       if (!Number.isNaN(parsed) && parsed > 0) return parsed;
     }
-    if (typeof product?.itemPrice === "number" && product.itemPrice > 0) return product.itemPrice;
+    if (typeof product?.itemPrice === "number" && product.itemPrice > 0)
+      return product.itemPrice;
     if (product?.formattedPrice) {
-      const parsed = parseFloat(String(product.formattedPrice).replace(/[^0-9.]/g, ""));
+      const parsed = parseFloat(
+        String(product.formattedPrice).replace(/[^0-9.]/g, "")
+      );
       if (!Number.isNaN(parsed) && parsed > 0) return parsed;
     }
     if (product?.priceDisplay) {
-      const parsed = parseFloat(String(product.priceDisplay).replace(/[^0-9.]/g, ""));
+      const parsed = parseFloat(
+        String(product.priceDisplay).replace(/[^0-9.]/g, "")
+      );
       if (!Number.isNaN(parsed) && parsed > 0) return parsed;
     }
     // Fallbacks from route item details
-    if (typeof itemFromRoute?.itemPrice === "number" && itemFromRoute.itemPrice > 0) return itemFromRoute.itemPrice;
+    if (
+      typeof itemFromRoute?.itemPrice === "number" &&
+      itemFromRoute.itemPrice > 0
+    )
+      return itemFromRoute.itemPrice;
     if (itemFromRoute?.formattedPrice) {
-      const parsed = parseFloat(String(itemFromRoute.formattedPrice).replace(/[^0-9.]/g, ""));
+      const parsed = parseFloat(
+        String(itemFromRoute.formattedPrice).replace(/[^0-9.]/g, "")
+      );
       if (!Number.isNaN(parsed) && parsed > 0) return parsed;
     }
     return 0;
@@ -134,11 +158,15 @@ const CartConfirmationModal = ({ isOpen, onClose, product, seller, quantity: ini
     const fromRoute = Number(itemFromRoute?.quantity);
     if (!Number.isNaN(fromRoute) && fromRoute > 0) return fromRoute;
     if (product?.formattedQuantity) {
-      const parsed = parseFloat(String(product.formattedQuantity).replace(/[^0-9.]/g, ""));
+      const parsed = parseFloat(
+        String(product.formattedQuantity).replace(/[^0-9.]/g, "")
+      );
       if (!Number.isNaN(parsed) && parsed > 0) return Math.floor(parsed);
     }
     if (itemFromRoute?.formattedQuantity) {
-      const parsed = parseFloat(String(itemFromRoute.formattedQuantity).replace(/[^0-9.]/g, ""));
+      const parsed = parseFloat(
+        String(itemFromRoute.formattedQuantity).replace(/[^0-9.]/g, "")
+      );
       if (!Number.isNaN(parsed) && parsed > 0) return Math.floor(parsed);
     }
     return undefined; // unknown
@@ -176,7 +204,10 @@ const CartConfirmationModal = ({ isOpen, onClose, product, seller, quantity: ini
           />
           <div className="flex items-center gap-2">
             <span className="text-base font-medium text-gray-800">
-              {seller?.name || product?.seller?.username || itemFromRoute?.seller?.username || "Juan Dela Cruz"}
+              {seller?.name ||
+                product?.seller?.username ||
+                itemFromRoute?.seller?.username ||
+                "Juan Dela Cruz"}
             </span>
             <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
               ✓
@@ -199,7 +230,7 @@ const CartConfirmationModal = ({ isOpen, onClose, product, seller, quantity: ini
               {product?.description || "Fresh Chilled Milkfish All Sizes"}
             </p>
             <p className="text-base font-bold text-gray-800">
-              P{product?.price || 289}
+              {`₱${Number(unitPrice).toFixed(2)}`}
             </p>
           </div>
         </div>
@@ -227,7 +258,9 @@ const CartConfirmationModal = ({ isOpen, onClose, product, seller, quantity: ini
             </button>
           </div>
           {maxQuantity && (
-            <span className="ml-3 text-xs text-gray-500">Max {maxQuantity}</span>
+            <span className="ml-3 text-xs text-gray-500">
+              Max {maxQuantity}
+            </span>
           )}
           <button
             className="bg-none border-none text-orange-500 text-sm cursor-pointer underline p-0 hover:text-orange-600"
