@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   User,
   Plus,
@@ -36,9 +37,35 @@ const ToolbarBadge = ({ count }) => (
 );
 
 const AdminAccountManagement = () => {
-  const { data, isFetching, refetch } = useGetAdminAccountsQuery();
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({ search: "", status: "" });
+  const [searchParams] = useSearchParams();
+  const qParam = searchParams.get("q") || "";
+
+  useEffect(() => {
+    setFilters((f) => (f.search === qParam ? f : { ...f, search: qParam }));
+  }, [qParam]);
+
+  // Note: RTK Query should automatically refetch when queryParams change
+
+  const queryParams = {
+    ...(filters.search && { search: filters.search }),
+    ...(filters.status && { status: filters.status }),
+  };
+
+  const { data, isFetching, refetch } = useGetAdminAccountsQuery(queryParams);
+
   const accounts = data?.accounts ?? [];
-  const rows = accounts.map((a, idx) => ({
+
+  // Client-side filtering as workaround for backend status filtering issue
+  const filteredAccounts = accounts.filter((account) => {
+    if (filters.status && account.status !== filters.status) {
+      return false;
+    }
+    return true;
+  });
+
+  const rows = filteredAccounts.map((a, idx) => ({
     id: a._id || idx + 1,
     name: a.fullName || a.username || a.email || "",
     email: a.email || "",
@@ -47,7 +74,7 @@ const AdminAccountManagement = () => {
     lastActive: (a.updatedAt || a.createdAt || "").slice(0, 10),
     raw: a,
   }));
-  const total = data?.pagination?.totalAccounts ?? rows.length;
+  const total = filteredAccounts.length; // Use client-side filtered count
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -78,9 +105,14 @@ const AdminAccountManagement = () => {
               )}
               Update
             </button>
-            <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
+            <button
+              className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline"
+              onClick={() => setIsFilterOpen((v) => !v)}
+            >
               <FunnelSimple size={16} weight="bold" className="mr-1" /> Filter{" "}
-              <ToolbarBadge count={0} />
+              <ToolbarBadge
+                count={[filters.search, filters.status].filter(Boolean).length}
+              />
             </button>
             <div className="text-sm md:text-base text-base-content/70">
               {isFetching ? "Loading..." : `${total} Results`}
@@ -96,6 +128,48 @@ const AdminAccountManagement = () => {
           </div>
         </div>
 
+        {isFilterOpen && (
+          <div className="p-4 border-t border-row-outline grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input
+              type="text"
+              className="input input-sm input-bordered"
+              placeholder="Search name or email"
+              value={filters.search}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, search: e.target.value }))
+              }
+            />
+            <select
+              className="select select-sm select-bordered"
+              value={filters.status}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, status: e.target.value }))
+              }
+            >
+              <option value="">All statuses</option>
+              <option value="verified">verified</option>
+              <option value="unverified">unverified</option>
+            </select>
+            <div className="flex gap-2">
+              <button
+                className="btn btn-sm bg-primary text-primary-content border border-primary"
+                onClick={() => {
+                  refetch();
+                  setIsFilterOpen(false);
+                }}
+              >
+                Apply
+              </button>
+              <button
+                className="btn btn-sm bg-white text-base-content border border-row-outline"
+                onClick={() => setFilters({ search: "", status: "" })}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto border-t border-row-outline">
           <table className="table table-row-outline">
             <thead>
@@ -109,61 +183,107 @@ const AdminAccountManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {isFetching && rows.length === 0
-                ? Array.from({ length: 8 }).map((_, idx) => (
-                    <tr
-                      key={`admin-skel-${idx}`}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
-                    >
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
-                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+              {isFetching && rows.length === 0 ? (
+                Array.from({ length: 8 }).map((_, idx) => (
+                  <tr
+                    key={`admin-skel-${idx}`}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                  >
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                      </div>
+                    </td>
+                    <td>
+                      <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                  </tr>
+                ))
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                        <User
+                          size={24}
+                          weight="light"
+                          className="text-gray-400"
+                        />
+                      </div>
+                      <div className="text-gray-500">
+                        <p className="text-lg font-medium">
+                          No admin accounts found
+                        </p>
+                        <p className="text-sm">
+                          {filters.search || filters.status
+                            ? "Try adjusting your search criteria or filters"
+                            : "No admin accounts have been created yet"}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row, idx) => (
+                  <tr
+                    key={row.id}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                  >
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="avatar">
+                          <User
+                            size={16}
+                            weight="fill"
+                            className="text-base-content/80"
+                          />
                         </div>
-                      </td>
-                      <td>
-                        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                    </tr>
-                  ))
-                : rows.map((row, idx) => (
-                    <tr
-                      key={row.id}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
-                    >
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className="avatar">
-                            <User
-                              size={16}
-                              weight="fill"
-                              className="text-base-content/80"
-                            />
-                          </div>
-                          <div className="font-medium">{row.name}</div>
-                        </div>
-                      </td>
-                      <td className="text-base-content/80">{row.email}</td>
-                      <td>
-                        <StatusPill value={row.status} />
-                      </td>
-                      <td className="text-base-content/80">{row.created}</td>
-                      <td className="text-base-content/80">{row.lastActive}</td>
-                      <td>
+                        <div className="font-medium">{row.name}</div>
+                      </div>
+                    </td>
+                    <td className="text-base-content/80">{row.email}</td>
+                    <td>
+                      <StatusPill value={row.status} />
+                    </td>
+                    <td className="text-base-content/80">{row.created}</td>
+                    <td className="text-base-content/80">{row.lastActive}</td>
+                    <td>
+                      <button
+                        className="btn btn-xs bg-white text-base-content border border-row-outline"
+                        onClick={() => {
+                          const prefill = {
+                            id: row.raw?._id || row.raw?.id || row.id,
+                            fullName: row.raw?.fullName || row.name,
+                            firstName: row.raw?.firstName,
+                            lastName: row.raw?.lastName,
+                            email: row.raw?.email || row.email,
+                            username: row.raw?.username,
+                            status: row.raw?.status,
+                            createdAt: row.raw?.createdAt,
+                            updatedAt: row.raw?.updatedAt,
+                          };
+                          setFocusedAdmin(prefill);
+                          setIsViewOpen(true);
+                        }}
+                      >
+                        <Eye size={14} weight="bold" className="mr-1" /> View
+                      </button>
+                      {row.status === "unverified" && (
                         <button
-                          className="btn btn-xs bg-white text-base-content border border-row-outline"
+                          className="btn btn-xs bg-success text-white border border-success ml-2"
                           onClick={() => {
                             const prefill = {
                               id: row.raw?._id || row.raw?.id || row.id,
@@ -171,40 +291,20 @@ const AdminAccountManagement = () => {
                               firstName: row.raw?.firstName,
                               lastName: row.raw?.lastName,
                               email: row.raw?.email || row.email,
+                              contactNo: row.raw?.contactNo,
                               username: row.raw?.username,
-                              status: row.raw?.status,
-                              createdAt: row.raw?.createdAt,
-                              updatedAt: row.raw?.updatedAt,
                             };
                             setFocusedAdmin(prefill);
-                            setIsViewOpen(true);
+                            setIsVerifyOpen(true);
                           }}
                         >
-                          <Eye size={14} weight="bold" className="mr-1" /> View
+                          Verify
                         </button>
-                        {row.status === "unverified" && (
-                          <button
-                            className="btn btn-xs bg-success text-white border border-success ml-2"
-                            onClick={() => {
-                              const prefill = {
-                                id: row.raw?._id || row.raw?.id || row.id,
-                                fullName: row.raw?.fullName || row.name,
-                                firstName: row.raw?.firstName,
-                                lastName: row.raw?.lastName,
-                                email: row.raw?.email || row.email,
-                                contactNo: row.raw?.contactNo,
-                                username: row.raw?.username,
-                              };
-                              setFocusedAdmin(prefill);
-                              setIsVerifyOpen(true);
-                            }}
-                          >
-                            Verify
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

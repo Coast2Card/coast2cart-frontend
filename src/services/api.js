@@ -1,8 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const baseUrl =
-  import.meta.env.VITE_API_BASE_URL ||
-  "/api";
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl,
@@ -509,6 +507,65 @@ export const api = createApi({
       ],
       transformResponse: (response) => response?.data || response,
     }),
+    // Buyer profile endpoints
+    getBuyerRecentOrders: builder.query({
+      query: (buyerId) => ({
+        url: `/items/sold/buyer/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Expect { success: true, data: [], pagination: {...} }
+        const orders = Array.isArray(response?.data) ? response.data : [];
+        const pagination = response?.pagination || null;
+        return { orders, pagination, raw: response };
+      },
+    }),
+    getBuyerFavoriteSellers: builder.query({
+      query: (buyerId) => ({
+        url: `/items/favorite-sellers/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Expect { success: true, data: [], pagination: {...}, search: null, sortBy: "purchaseCount", sortOrder: "desc" }
+        const sellers = Array.isArray(response?.data) ? response.data : [];
+        const pagination = response?.pagination || null;
+        const search = response?.search || null;
+        const sortBy = response?.sortBy || "purchaseCount";
+        const sortOrder = response?.sortOrder || "desc";
+        return {
+          sellers,
+          pagination,
+          search,
+          sortBy,
+          sortOrder,
+          raw: response,
+        };
+      },
+    }),
+    getBuyerReviews: builder.query({
+      query: (buyerId) => ({
+        url: `/reviews/buyer/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        // Expect { success: true, data: [], pagination: {...} }
+        const reviews = Array.isArray(response?.data) ? response.data : [];
+        const pagination = response?.pagination || null;
+        return { reviews, pagination, raw: response };
+      },
+    }),
+    createSellerReview: builder.mutation({
+      query: ({ sellerId, score, reviewText }) => ({
+        url: `/reviews/seller/${sellerId}`,
+        method: "POST",
+        body: { score, reviewText },
+      }),
+      transformResponse: (response) => response?.data || response,
+      invalidatesTags: (result, error, { sellerId }) => [
+        { type: "Reviews", id: sellerId },
+        "Reviews",
+      ],
+    }),
   }),
 });
 
@@ -546,4 +603,8 @@ export const {
   useSendMessageMutation,
   useGetChatMessagesQuery,
   useMarkMessagesAsReadMutation,
+  useGetBuyerRecentOrdersQuery,
+  useGetBuyerFavoriteSellersQuery,
+  useGetBuyerReviewsQuery,
+  useCreateSellerReviewMutation,
 } = api;

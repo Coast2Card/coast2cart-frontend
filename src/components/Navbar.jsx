@@ -61,6 +61,8 @@ const Navbar = () => {
   const profilePath = roleToProfilePath(currentUser?.role);
   const { data: cartSummary } = useGetCartSummaryQuery(undefined, {
     skip: !isLoggedIn,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
   });
 
   // Fetch chat rooms to get unread count

@@ -301,11 +301,12 @@ const Cart = () => {
                       <input
                         type="number"
                         value={it.quantity || 1}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const newQty = Math.max(
                             1,
                             Math.min(99, parseInt(e.target.value) || 1)
                           );
+                          const previous = items;
                           persist(
                             items.map((item) =>
                               item.id === it.id
@@ -313,6 +314,13 @@ const Cart = () => {
                                 : item
                             )
                           );
+                          try {
+                            await updateCartItem({ itemId: it.id, quantity: newQty }).unwrap();
+                            await refetch();
+                          } catch (error) {
+                            persist(previous);
+                            toast.error(error?.data?.message || "Failed to update quantity");
+                          }
                         }}
                         className="w-12 h-8 text-center border-2 border-base-300 rounded text-sm text-base-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         min="1"

@@ -14,6 +14,7 @@ const Topbar = () => {
     const sub = path.split("/")[2] || "";
     if (sub === "buyers") current = "Buyer Account Management";
     else if (sub === "sellers") current = "Seller Account Management";
+    else if (sub === "admins") current = "Admin Account Management";
     else current = "Dashboard";
   }
 
@@ -29,7 +30,11 @@ const Topbar = () => {
         {current !== "Dashboard" && (
           <div className="hidden md:flex items-center gap-3">
             <div className="flex items-center gap-2 bg-gray-100 text-base-content/70 h-10 rounded-full px-4">
-              <img src={searchIcon} alt="Search" className="w-4 h-4 opacity-60" />
+              <img
+                src={searchIcon}
+                alt="Search"
+                className="w-4 h-4 opacity-60"
+              />
               <input
                 className="bg-transparent outline-none w-56 placeholder:text-base-content/50"
                 placeholder={`Search ${current.toLowerCase()}`}
@@ -50,7 +55,10 @@ const Topbar = () => {
                     if (value) next.set("q", value);
                     else next.delete("q");
                     setSearchParams(next, { replace: true });
-                    navigate({ pathname: location.pathname, search: next.toString() }, { replace: true });
+                    navigate(
+                      { pathname: location.pathname, search: next.toString() },
+                      { replace: true }
+                    );
                   }
                 }}
                 onBlur={(e) => {
