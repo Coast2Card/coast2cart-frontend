@@ -48,22 +48,11 @@ const AdminAccountManagement = () => {
     raw: a,
   }));
   const total = data?.pagination?.totalAccounts ?? rows.length;
-  const [selected, setSelected] = useState(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const allSelected = selected.size > 0 && selected.size === rows.length;
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [focusedAdmin, setFocusedAdmin] = useState(null);
   const [isVerifyOpen, setIsVerifyOpen] = useState(false);
-
-  const toggleAll = () =>
-    setSelected(allSelected ? new Set() : new Set(rows.map((d) => d.id)));
-  const toggleOne = (id) => {
-    const copy = new Set(selected);
-    if (copy.has(id)) copy.delete(id);
-    else copy.add(id);
-    setSelected(copy);
-  };
 
   return (
     <div className="space-y-6">
@@ -90,9 +79,6 @@ const AdminAccountManagement = () => {
               Update
             </button>
             <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
-              {selected.size || 0} Selected
-            </button>
-            <button className="btn btn-sm md:btn-md bg-white text-base-content border border-row-outline">
               <FunnelSimple size={16} weight="bold" className="mr-1" /> Filter{" "}
               <ToolbarBadge count={0} />
             </button>
@@ -114,14 +100,6 @@ const AdminAccountManagement = () => {
           <table className="table table-row-outline">
             <thead>
               <tr>
-                <th className="w-10">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-sm"
-                    checked={allSelected}
-                    onChange={toggleAll}
-                  />
-                </th>
                 <th>Fullname</th>
                 <th>Email</th>
                 <th>Status</th>
@@ -137,9 +115,6 @@ const AdminAccountManagement = () => {
                       key={`admin-skel-${idx}`}
                       className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
                     >
-                      <td>
-                        <div className="w-4 h-4 rounded bg-gray-200 animate-pulse" />
-                      </td>
                       <td>
                         <div className="flex items-center gap-3">
                           <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
@@ -158,6 +133,9 @@ const AdminAccountManagement = () => {
                       <td>
                         <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
                       </td>
+                      <td>
+                        <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
+                      </td>
                     </tr>
                   ))
                 : rows.map((row, idx) => (
@@ -165,14 +143,6 @@ const AdminAccountManagement = () => {
                       key={row.id}
                       className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
                     >
-                      <td>
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm"
-                          checked={selected.has(row.id)}
-                          onChange={() => toggleOne(row.id)}
-                        />
-                      </td>
                       <td>
                         <div className="flex items-center gap-3">
                           <div className="avatar">

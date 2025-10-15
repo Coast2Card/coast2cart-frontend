@@ -56,7 +56,7 @@ const StartChatButton = ({
           onClick={handleStartChat}
           disabled={isCreatingChat}
           className={`${className} ${
-            isCreatingChat ? "opacity-50 cursor-not-allowed" : ""
+            isCreatingChat ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           }`}
         >
           {children}
@@ -76,7 +76,7 @@ const StartChatButton = ({
         onClick={handleStartChat}
         disabled={isCreatingChat}
         className={`${className} ${
-          isCreatingChat ? "opacity-50 cursor-not-allowed" : ""
+          isCreatingChat ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
       >
         <svg
