@@ -144,6 +144,21 @@ const SellerProfilePage = ({ sellerId }) => {
   // Fallback to mock listings if no sellerId or no items
   const activeListings = apiActiveListings.length > 0 ? apiActiveListings : [];
 
+  // Helper function to format dates to Philippine time
+  const formatToPHT = (isoString) => {
+    if (!isoString) return "";
+    try {
+      const dtf = new Intl.DateTimeFormat("en-PH", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Manila",
+      });
+      return dtf.format(new Date(isoString));
+    } catch {
+      return (isoString || "").slice(0, 10);
+    }
+  };
+
   // Seller sold items from API
   const { data: sellerSoldData } = useGetSellerSoldItemsQuery(
     resolvedSellerId,

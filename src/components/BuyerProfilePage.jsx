@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { useGetAccountByIdQuery } from "../services/api";
+import {
+  useGetAccountByIdQuery,
+  useGetBuyerSoldItemsQuery,
+  useGetFavoriteSellersQuery,
+  useGetBuyerReviewsQuery,
+} from "../services/api";
 import {
   MapPin,
   Phone,
@@ -9,17 +14,6 @@ import {
   MagnifyingGlass,
 } from "@phosphor-icons/react";
 import c2cLogo from "../assets/logos/c2c_white_transparent.png";
-
-// Import actual images
-import bisugotImg from "../assets/images/bisugo.png";
-import bangusImg from "../assets/images/bangus.png";
-import hiponImg from "../assets/images/hipon.png";
-import pusitImg from "../assets/images/pusit.png";
-import tunaImg from "../assets/images/tuna.png";
-import fisherManImg from "../assets/images/fisher_man.png";
-import bottleOpenerImg from "../assets/images/bottle_opener.webp";
-import fishWalletImg from "../assets/images/fish_wallet.jpg";
-import coconutMaracasImg from "../assets/images/coconut_maracas.webp";
 
 const BuyerProfilePage = () => {
   const [activeTab, setActiveTab] = useState("recent");
@@ -63,6 +57,31 @@ const BuyerProfilePage = () => {
     skip: !accountId,
   });
 
+  // Fetch buyer profile data from backend
+  const {
+    data: soldItemsData,
+    isLoading: isLoadingSoldItems,
+    error: errorSoldItems,
+  } = useGetBuyerSoldItemsQuery(accountId, {
+    skip: !accountId,
+  });
+
+  const {
+    data: favoriteSellersData,
+    isLoading: isLoadingFavoriteSellers,
+    error: errorFavoriteSellers,
+  } = useGetFavoriteSellersQuery(accountId, {
+    skip: !accountId,
+  });
+
+  const {
+    data: buyerReviewsData,
+    isLoading: isLoadingReviews,
+    error: errorReviews,
+  } = useGetBuyerReviewsQuery(accountId, {
+    skip: !accountId,
+  });
+
   const [userData, setUserData] = useState(() => ({
     id: account?.id || "",
     name: account?.fullName || "",
@@ -93,202 +112,10 @@ const BuyerProfilePage = () => {
     }));
   }
 
-  const [recentOrders, _setRecentOrders] = useState([
-    {
-      id: "order_001",
-      image: bisugotImg,
-      weight: "3 kg",
-      type: "Bisugo",
-      status: "Completed",
-      seller: "Sarah Discaya",
-      sellerId: "seller_001",
-      category: "Fresh Catch",
-      price: 450,
-      currency: "PHP",
-      orderDate: "2025-01-10T14:30:00Z",
-      completedDate: "2025-01-10T16:45:00Z",
-    },
-    {
-      id: "order_002",
-      image: bottleOpenerImg,
-      quantity: "5 pcs",
-      type: "Boat Bottle Opener",
-      status: "Completed",
-      seller: "Katrina's Store",
-      sellerId: "seller_002",
-      category: "Souvenirs",
-      price: 250,
-      currency: "PHP",
-      orderDate: "2025-01-08T11:20:00Z",
-      completedDate: "2025-01-08T13:15:00Z",
-    },
-    {
-      id: "order_003",
-      image: hiponImg,
-      weight: "7 kg",
-      type: "Hipon",
-      status: "Completed",
-      seller: "Katrina's Store",
-      sellerId: "seller_002",
-      category: "Fresh Catch",
-      price: 700,
-      currency: "PHP",
-      orderDate: "2025-01-07T09:30:00Z",
-      completedDate: "2025-01-07T11:45:00Z",
-    },
-    {
-      id: "order_004",
-      image: bangusImg,
-      weight: "5 kg",
-      type: "Bangus",
-      status: "Completed",
-      seller: "Katrina's Store",
-      sellerId: "seller_002",
-      category: "Fresh Catch",
-      price: 600,
-      currency: "PHP",
-      orderDate: "2025-01-06T15:20:00Z",
-      completedDate: "2025-01-06T17:10:00Z",
-    },
-    {
-      id: "order_005",
-      image: tunaImg,
-      weight: "2 kg",
-      type: "Tuna",
-      status: "Completed",
-      seller: "Mark Allan",
-      sellerId: "seller_003",
-      category: "Fresh Catch",
-      price: 320,
-      currency: "PHP",
-      orderDate: "2025-01-05T12:15:00Z",
-      completedDate: "2025-01-05T14:30:00Z",
-    },
-    {
-      id: "order_006",
-      image: pusitImg,
-      weight: "4 kg",
-      type: "Pusit",
-      status: "Completed",
-      seller: "Sarah Discaya",
-      sellerId: "seller_001",
-      category: "Fresh Catch",
-      price: 520,
-      currency: "PHP",
-      orderDate: "2025-01-04T16:45:00Z",
-      completedDate: "2025-01-04T18:20:00Z",
-    },
-    {
-      id: "order_007",
-      image: fishWalletImg,
-      quantity: "2 pcs",
-      type: "Fish Wallet",
-      status: "Completed",
-      seller: "Mark Allan",
-      sellerId: "seller_003",
-      category: "Souvenirs",
-      price: 180,
-      currency: "PHP",
-      orderDate: "2025-01-03T10:30:00Z",
-      completedDate: "2025-01-03T12:15:00Z",
-    },
-    {
-      id: "order_008",
-      image: coconutMaracasImg,
-      quantity: "3 pcs",
-      type: "Coconut Maracas",
-      status: "Completed",
-      seller: "Katrina's Store",
-      sellerId: "seller_002",
-      category: "Souvenirs",
-      price: 150,
-      currency: "PHP",
-      orderDate: "2025-01-02T14:00:00Z",
-      completedDate: "2025-01-02T16:30:00Z",
-    },
-  ]);
-
-  const [favoriteSellers, _setFavoriteSellers] = useState([
-    {
-      id: "seller_001",
-      name: "Sarah Discaya",
-      image: fisherManImg,
-      rating: 4.0,
-      purchases: 30,
-      location: "Barangay Tubigan, Quezon",
-      joinedDate: "2024-03-15T00:00:00Z",
-      isVerified: true,
-      specialties: ["Fresh Fish", "Crustaceans"],
-      totalEarnings: 45000,
-      responseTime: "2 hours",
-      completionRate: 98.5,
-    },
-    {
-      id: "seller_002",
-      name: "Mark Allan",
-      image: fisherManImg,
-      rating: 5.0,
-      purchases: 83,
-      location: "Barangay Dalahican, Quezon",
-      joinedDate: "2024-01-20T00:00:00Z",
-      isVerified: true,
-      specialties: ["Souvenirs", "Dried Seafood"],
-      totalEarnings: 120000,
-      responseTime: "1 hour",
-      completionRate: 99.2,
-    },
-  ]);
-
-  const [reviews, _setReviews] = useState([
-    {
-      id: "review_001",
-      seller: "Sarah Discaya",
-      sellerId: "seller_001",
-      orderId: "order_004",
-      productType: "Bangus",
-      date: "2 days ago",
-      createdAt: "2025-01-13T09:15:00Z",
-      rating: 4,
-      comment:
-        "Fresh bangus! Very good quality and the seller was very accommodating. Will definitely buy again!",
-      helpful: 12,
-      verified: true,
-      images: [],
-      buyerResponse: null,
-    },
-    {
-      id: "review_002",
-      seller: "Mark Allan",
-      sellerId: "seller_003",
-      orderId: "order_003",
-      productType: "Hipon",
-      date: "3 days ago",
-      createdAt: "2025-01-12T15:45:00Z",
-      rating: 4,
-      comment:
-        "Good service and fresh catch. The shrimp was excellent for my family dinner.",
-      helpful: 8,
-      verified: true,
-      images: [],
-      buyerResponse: null,
-    },
-    {
-      id: "review_003",
-      seller: "Katrina's Store",
-      sellerId: "seller_002",
-      orderId: "order_002",
-      productType: "Boat Bottle Opener",
-      date: "2 days ago",
-      createdAt: "2025-01-13T11:20:00Z",
-      rating: 5,
-      comment:
-        "Fresh bangus! Very good quality and the seller was very accommodating. Will definitely buy again!",
-      helpful: 15,
-      verified: true,
-      images: [],
-      buyerResponse: null,
-    },
-  ]);
+  // Use API data or fallback to empty arrays
+  const recentOrders = soldItemsData?.items || [];
+  const favoriteSellers = favoriteSellersData?.sellers || [];
+  const reviews = buyerReviewsData?.reviews || [];
 
   // Profile editing functions
   const handleEditProfile = () => {
@@ -373,6 +200,27 @@ const BuyerProfilePage = () => {
   };
 
   const renderRecentOrders = () => {
+    // Show loading state
+    if (isLoadingSoldItems) {
+      return (
+        <div className="flex justify-center items-center py-20">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+        </div>
+      );
+    }
+
+    // Show error state
+    if (errorSoldItems) {
+      return (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">⚠️</div>
+          <p className="text-error text-lg">
+            Failed to load your recent orders. Please try again later.
+          </p>
+        </div>
+      );
+    }
+
     const filteredOrders = getFilteredOrders();
 
     return (
@@ -435,9 +283,46 @@ const BuyerProfilePage = () => {
     );
   };
 
-  const renderFavoriteSellers = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      {favoriteSellers.map((seller) => (
+  const renderFavoriteSellers = () => {
+    // Show loading state
+    if (isLoadingFavoriteSellers) {
+      return (
+        <div className="flex justify-center items-center py-20">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+        </div>
+      );
+    }
+
+    // Show error state
+    if (errorFavoriteSellers) {
+      return (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">⚠️</div>
+          <p className="text-error text-lg">
+            Failed to load your favorite sellers. Please try again later.
+          </p>
+        </div>
+      );
+    }
+
+    // Show empty state
+    if (favoriteSellers.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">👥</div>
+          <p className="text-base-content/60 text-lg">
+            You haven't favorited any sellers yet.
+          </p>
+          <p className="text-base-content/40 text-sm mt-2">
+            Start shopping to find your favorite sellers!
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {favoriteSellers.map((seller) => (
         <div
           key={seller.id}
           className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:bg-gray-50/70 transition-all duration-300 group cursor-pointer active:scale-98 hover:border-2 hover:border-primary/20"
@@ -479,11 +364,49 @@ const BuyerProfilePage = () => {
         </div>
       ))}
     </div>
-  );
+    );
+  };
 
-  const renderMyReviews = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {reviews.map((review) => (
+  const renderMyReviews = () => {
+    // Show loading state
+    if (isLoadingReviews) {
+      return (
+        <div className="flex justify-center items-center py-20">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+        </div>
+      );
+    }
+
+    // Show error state
+    if (errorReviews) {
+      return (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">⚠️</div>
+          <p className="text-error text-lg">
+            Failed to load your reviews. Please try again later.
+          </p>
+        </div>
+      );
+    }
+
+    // Show empty state
+    if (reviews.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">⭐</div>
+          <p className="text-base-content/60 text-lg">
+            You haven't written any reviews yet.
+          </p>
+          <p className="text-base-content/40 text-sm mt-2">
+            Share your experience with sellers after your purchases!
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {reviews.map((review) => (
         <div
           key={review.id}
           className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md hover:bg-gray-50/70 transition-all duration-300 cursor-pointer active:scale-98 group hover:border-2 hover:border-primary/20"
@@ -518,7 +441,8 @@ const BuyerProfilePage = () => {
         </div>
       ))}
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-base-300">

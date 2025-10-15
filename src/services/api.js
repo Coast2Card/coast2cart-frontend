@@ -413,6 +413,131 @@ export const api = createApi({
         return { reviews, pagination };
       },
     }),
+    getBuyerSoldItems: builder.query({
+      query: (buyerId) => ({
+        url: `/items/sold/buyer/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        const raw = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response?.items)
+          ? response.items
+          : Array.isArray(response)
+          ? response
+          : [];
+        const items = raw.map((r) => {
+          const item = r?.item || r?.product || r;
+          const id = r?._id || r?.id || item?._id || item?.id;
+          const name = item?.itemName || item?.name || r?.name || r?.type || "";
+          const image = item?.image || item?.imageUrl || r?.image || "";
+          const category = item?.category || item?.itemType || r?.category || "";
+          const qty = r?.quantity ?? r?.qty ?? item?.quantity ?? undefined;
+          const unit = item?.unit || r?.unit || "";
+          const weight = r?.weight || "";
+          const quantity = qty != null
+            ? `${qty} ${unit || ""}`.trim()
+            : weight || r?.quantityLabel || "";
+          const status = r?.status || "Completed";
+          const seller = r?.seller || r?.sellerName || item?.seller || "";
+          const sellerId = r?.sellerId || r?.seller_id || item?.sellerId || "";
+          const price = r?.price != null ? Number(r.price) : item?.itemPrice != null ? Number(item.itemPrice) : 0;
+          const orderDate = r?.orderDate || r?.createdAt || r?.soldAt || "";
+          const completedDate = r?.completedDate || r?.completedAt || r?.updatedAt || "";
+          return {
+            id,
+            name,
+            type: name,
+            image,
+            category,
+            quantity,
+            weight,
+            status,
+            seller,
+            sellerId,
+            price,
+            currency: "PHP",
+            orderDate,
+            completedDate,
+            raw: r,
+          };
+        });
+        const pagination = response?.pagination || null;
+        return { items, pagination };
+      },
+    }),
+    getFavoriteSellers: builder.query({
+      query: (buyerId) => ({
+        url: `/items/favorite-sellers/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        const raw = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response?.sellers)
+          ? response.sellers
+          : Array.isArray(response)
+          ? response
+          : [];
+        const sellers = raw.map((s) => ({
+          id: s?._id || s?.id || s?.sellerId,
+          name: s?.name || s?.sellerName || "",
+          image: s?.image || s?.profileImage || null,
+          rating: s?.rating != null ? Number(s.rating) : 0,
+          purchases: s?.purchases != null ? Number(s.purchases) : 0,
+          location: s?.location || s?.address || "",
+          joinedDate: s?.joinedDate || s?.createdAt || "",
+          isVerified: Boolean(s?.isVerified),
+          specialties: Array.isArray(s?.specialties) ? s.specialties : [],
+          totalEarnings: s?.totalEarnings != null ? Number(s.totalEarnings) : 0,
+          responseTime: s?.responseTime || "",
+          completionRate: s?.completionRate != null ? Number(s.completionRate) : 0,
+          raw: s,
+        }));
+        const pagination = response?.pagination || null;
+        return { sellers, pagination };
+      },
+    }),
+    getBuyerReviews: builder.query({
+      // NOTE: This endpoint is not documented in Coast2Cart-v6.json (line 1412 has no URL)
+      // Assuming endpoint pattern based on seller reviews: /api/reviews/buyer/:buyerId
+      // If backend doesn't have this endpoint yet, the UI will show a graceful error message
+      query: (buyerId) => ({
+        url: `/reviews/buyer/${buyerId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        const raw = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response?.reviews)
+          ? response.reviews
+          : Array.isArray(response)
+          ? response
+          : [];
+        const reviews = raw.map((r) => ({
+          id: r?._id || r?.id,
+          seller: r?.seller || r?.sellerName || "",
+          sellerId: r?.sellerId || r?.seller_id || "",
+          orderId: r?.orderId || r?.order_id || "",
+          productType: r?.productType || r?.itemName || "",
+          date: r?.date || "",
+          createdAt: r?.createdAt || "",
+          rating: r?.rating != null
+            ? Number(r.rating)
+            : r?.score != null
+            ? Number(r.score)
+            : 0,
+          comment: r?.comment || r?.reviewText || "",
+          helpful: r?.helpful != null ? Number(r.helpful) : 0,
+          verified: Boolean(r?.verified),
+          images: Array.isArray(r?.images) ? r.images : [],
+          buyerResponse: r?.buyerResponse || null,
+          raw: r,
+        }));
+        const pagination = response?.pagination || null;
+        return { reviews, pagination };
+      },
+    }),
     login: builder.mutation({
       query: (credentials) => ({
         url: "/auth/login",
@@ -552,6 +677,9 @@ export const {
   useGetSouvenirsQuery,
   useGetProductsQuery,
   useGetSellerReviewsQuery,
+  useGetBuyerSoldItemsQuery,
+  useGetFavoriteSellersQuery,
+  useGetBuyerReviewsQuery,
   useLoginMutation,
   useSignupMutation,
   useVerifyOtpMutation,
