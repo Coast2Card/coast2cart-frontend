@@ -63,6 +63,7 @@ const Seafood = () => {
       item?.owner?._id ||
       item?.owner?.id;
 
+    // Only block if the current user is the specific seller of this item
     return currentUserId === sellerId;
   };
 

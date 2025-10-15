@@ -1,5 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useGetCartSummaryQuery, useGetItemsQuery, useGetChatRoomsQuery } from "../services/api";
+import {
+  useGetCartSummaryQuery,
+  useGetItemsQuery,
+  useGetChatRoomsQuery,
+} from "../services/api";
 import { UserCircle, SignOut } from "@phosphor-icons/react";
 import toast from "react-hot-toast";
 import { useState, useEffect, useRef } from "react";
@@ -64,12 +68,13 @@ const Navbar = () => {
   });
 
   // Fetch chat rooms to get unread count
-  const { data: chatRoomsData, isLoading: isLoadingChatRooms } = useGetChatRoomsQuery(undefined, {
-    skip: !isLoggedIn,
-    pollingInterval: 5000, // Refresh every 5 seconds to get real-time updates
-    refetchOnMountOrArgChange: true, // Always fetch fresh data
-    refetchOnFocus: true, // Refetch when window regains focus
-  });
+  const { data: chatRoomsData, isLoading: isLoadingChatRooms } =
+    useGetChatRoomsQuery(undefined, {
+      skip: !isLoggedIn,
+      pollingInterval: 5000, // Refresh every 5 seconds to get real-time updates
+      refetchOnMountOrArgChange: true, // Always fetch fresh data
+      refetchOnFocus: true, // Refetch when window regains focus
+    });
 
   // Safely handle chat rooms data - could be array or nested in data
   const chatRooms = Array.isArray(chatRoomsData) ? chatRoomsData : [];
@@ -77,7 +82,9 @@ const Navbar = () => {
   // Calculate unread count for a specific chat (frontend-only tracking)
   const getUnreadCountForChat = (chat) => {
     const chatId = chat._id || chat.id;
-    const readTimestamps = JSON.parse(localStorage.getItem('chat_read_timestamps') || '{}');
+    const readTimestamps = JSON.parse(
+      localStorage.getItem("chat_read_timestamps") || "{}"
+    );
     const lastReadTime = readTimestamps[chatId];
 
     // If never read, and there's a last message, count as 1 unread
@@ -279,7 +286,17 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-            <button onClick={toggleChat} className="relative" title={totalUnreadCount > 0 ? `${totalUnreadCount} unread message${totalUnreadCount > 1 ? 's' : ''}` : 'Chat'}>
+            <button
+              onClick={toggleChat}
+              className="relative"
+              title={
+                totalUnreadCount > 0
+                  ? `${totalUnreadCount} unread message${
+                      totalUnreadCount > 1 ? "s" : ""
+                    }`
+                  : "Chat"
+              }
+            >
               <img
                 src={commentIcon}
                 alt="Comment"
@@ -291,18 +308,21 @@ const Navbar = () => {
                 </span>
               )}
             </button>
-            <Link to="/cart" className="relative">
-              <img
-                src={cartIcon}
-                alt="Cart"
-                className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
-              />
-              {cartSummary?.itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] leading-none px-1.5 py-1 rounded-full">
-                  {cartSummary.itemCount}
-                </span>
-              )}
-            </Link>
+            {/* Only show cart button for buyers, not sellers */}
+            {currentUser?.role !== "seller" && (
+              <Link to="/cart" className="relative">
+                <img
+                  src={cartIcon}
+                  alt="Cart"
+                  className="h-5 w-5 lg:h-5.5 lg:w-5.5 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
+                />
+                {cartSummary?.itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] leading-none px-1.5 py-1 rounded-full">
+                    {cartSummary.itemCount}
+                  </span>
+                )}
+              </Link>
+            )}
             {isLoggedIn ? (
               <div className="relative">
                 <button
@@ -444,7 +464,17 @@ const Navbar = () => {
               alt="Search"
               className="h-6 w-6 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
             />
-            <button onClick={toggleChat} className="relative" title={totalUnreadCount > 0 ? `${totalUnreadCount} unread message${totalUnreadCount > 1 ? 's' : ''}` : 'Chat'}>
+            <button
+              onClick={toggleChat}
+              className="relative"
+              title={
+                totalUnreadCount > 0
+                  ? `${totalUnreadCount} unread message${
+                      totalUnreadCount > 1 ? "s" : ""
+                    }`
+                  : "Chat"
+              }
+            >
               <img
                 src={commentIcon}
                 alt="Comment"
@@ -456,13 +486,16 @@ const Navbar = () => {
                 </span>
               )}
             </button>
-            <Link to="/cart" onClick={closeMobileMenu}>
-              <img
-                src={cartIcon}
-                alt="Cart"
-                className="h-6 w-6 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
-              />
-            </Link>
+            {/* Only show cart button for buyers, not sellers */}
+            {currentUser?.role !== "seller" && (
+              <Link to="/cart" onClick={closeMobileMenu}>
+                <img
+                  src={cartIcon}
+                  alt="Cart"
+                  className="h-6 w-6 hover:cursor-pointer hover:opacity-60 transition-opacity duration-300"
+                />
+              </Link>
+            )}
             {isLoggedIn ? (
               <Link to="/profile/buyer" onClick={closeMobileMenu}>
                 <img

@@ -133,6 +133,7 @@ const ProductDetail = () => {
       product?.owner?._id ||
       product?.owner?.id;
 
+    // Only block if the current user is the specific seller of this item
     return currentUserId === sellerId;
   };
 

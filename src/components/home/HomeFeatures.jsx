@@ -1,26 +1,26 @@
-import cartIcon from "../../assets/icons/cart.png";
-import commentIcon from "../../assets/icons/comment.png";
-import profileIcon from "../../assets/icons/profile.png";
-import searchIcon from "../../assets/icons/search.png";
+import fishIcon from "../../assets/icons/fish.png";
+import driedIcon from "../../assets/icons/dried.png";
+import souvenirsIcon from "../../assets/icons/souvenirs.png";
+import marketplaceIcon from "../../assets/icons/marketplace.png";
 
 const features = [
   {
-    icon: cartIcon,
+    icon: fishIcon,
     title: "Fresh Catch",
     description: "Daily seafood direct from local fishers.",
   },
   {
-    icon: searchIcon,
+    icon: driedIcon,
     title: "Dried Goods",
     description: "High-quality dried seafood.",
   },
   {
-    icon: commentIcon,
+    icon: souvenirsIcon,
     title: "Souvenirs",
     description: "Souvenirs made by our community.",
   },
   {
-    icon: profileIcon,
+    icon: marketplaceIcon,
     title: "Marketplace",
     description: "Easy orders and pickup with fishing time.",
   },
@@ -36,7 +36,11 @@ const HomeFeatures = ({ className = "" }) => {
             className="flex flex-col items-center justify-start gap-2"
           >
             <div className="bg-accent mb-2 p-11 sm:p-11 flex justify-center items-center rounded-full">
-              <div className="bg-gray-300 rounded-xl p-1 h-14 w-14"></div>
+              <img
+                src={item.icon}
+                alt={item.title}
+                className="h-14 w-14 object-contain"
+              />
             </div>
             <h3 className="text-2xl font-bold text-primary">{item.title}</h3>
             <h3 className="text-md text-center">{item.description}</h3>

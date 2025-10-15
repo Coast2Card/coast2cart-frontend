@@ -18,6 +18,29 @@ const Cart = () => {
   const [isBulkRemoving, setIsBulkRemoving] = useState(false);
   const { data: cartData, isLoading, isError, refetch } = useGetCartQuery();
 
+  // Get current user info and check if seller
+  const currentUser = (() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  // Redirect sellers away from cart page
+  useEffect(() => {
+    if (currentUser?.role === "seller") {
+      toast.error("Sellers cannot access the cart page");
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
+
+  // Early return for sellers
+  if (currentUser?.role === "seller") {
+    return null;
+  }
+
   // Load cart items from API
   useEffect(() => {
     if (cartData && Array.isArray(cartData.items)) {
