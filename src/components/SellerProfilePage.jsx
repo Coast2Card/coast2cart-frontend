@@ -151,12 +151,12 @@ const SellerProfilePage = ({ sellerId }) => {
     { skip: !resolvedSellerId }
   );
   const apiSoldItems = (sellerSoldData?.items || []).map((it) => ({
-    id: it?.id,
-    name: it?.name || "",
+    id: it?._id || it?.id,
+    name: it?.itemId?.itemName || it?.itemId?.name || it?.name || "",
     quantity: it?.quantity || "",
-    image: it?.image || bisugotImg,
-    soldDate: it?.soldDate ? formatToPHT(it.soldDate) : "",
-    category: it?.category || "",
+    image: it?.itemId?.image || it?.itemId?.imageUrl || it?.image || bisugotImg,
+    soldDate: it?.markedSoldAt ? formatToPHT(it.markedSoldAt) : "",
+    category: it?.itemId?.itemType || it?.category || "",
   }));
 
   // Seller reviews from API
