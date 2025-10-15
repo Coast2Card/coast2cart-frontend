@@ -25,8 +25,9 @@ const useBuyersData = (queryParams) => {
       (a.status || "").toLowerCase() === "verified" ? "verified" : "unverified",
     raw: a,
   }));
-  const total = data?.pagination?.totalAccounts ?? rows.length;
-  return { rows, total, isFetching, isError, refetch };
+  const pagination = data?.pagination ?? null;
+  const total = pagination?.totalAccounts ?? rows.length;
+  return { rows, total, isFetching, isError, refetch, pagination };
 };
 
 const StatusPill = ({ value }) => {
@@ -45,7 +46,7 @@ const StatusPill = ({ value }) => {
           isVerified ? "bg-emerald-500" : "bg-gray-400"
         }`}
       ></span>
-      {normalized}
+      {normalized.charAt(0).toUpperCase() + normalized.slice(1)}
     </div>
   );
 };
@@ -59,24 +60,61 @@ const ToolbarBadge = ({ count }) => (
 const BuyerAccountManagement = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ search: "", status: "" });
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchParams] = useSearchParams();
   const qParam = searchParams.get("q") || "";
+
   useEffect(() => {
     setFilters((f) => (f.search === qParam ? f : { ...f, search: qParam }));
-    // useGetAccountsQuery will refetch when params change via filters
   }, [qParam]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.search, filters.status]);
+
   const {
-    rows: data,
-    total,
+    rows: accounts,
+    total: serverTotal,
     isFetching,
     refetch,
+    pagination,
   } = useBuyersData({
+    page: currentPage,
     search: filters.search || undefined,
     status: filters.status || undefined,
   });
+
+  // Client-side filtering as workaround for backend status filtering issue
+  const filteredAccounts = accounts.filter((account) => {
+    if (filters.status && account.status !== filters.status) {
+      return false;
+    }
+    return true;
+  });
+
+  const data = filteredAccounts;
+  const total = filteredAccounts.length; // Use client-side filtered count
   const [isUpdating, setIsUpdating] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [focusedBuyer, setFocusedBuyer] = useState(null);
+
+  // Pagination handlers
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handlePrevPage = () => {
+    if (pagination?.hasPrev) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pagination?.hasNext) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -248,6 +286,77 @@ const BuyerAccountManagement = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-row-outline bg-gray-50">
+            <div className="text-sm text-gray-600">
+              Showing page {pagination.currentPage} of {pagination.totalPages}(
+              {pagination.totalAccounts} total accounts)
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePrevPage}
+                disabled={!pagination.hasPrev}
+                className={`px-3 py-1 text-sm rounded-md border ${
+                  pagination.hasPrev
+                    ? "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                }`}
+              >
+                Previous
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from(
+                  { length: Math.min(5, pagination.totalPages) },
+                  (_, i) => {
+                    let pageNum;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (pagination.currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (
+                      pagination.currentPage >=
+                      pagination.totalPages - 2
+                    ) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = pagination.currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 text-sm rounded-md border ${
+                          pageNum === pagination.currentPage
+                            ? "bg-primary text-white border-primary"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+
+              <button
+                onClick={handleNextPage}
+                disabled={!pagination.hasNext}
+                className={`px-3 py-1 text-sm rounded-md border ${
+                  pagination.hasNext
+                    ? "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <ViewBuyerModal
         open={isViewOpen}
