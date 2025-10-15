@@ -444,6 +444,22 @@ export const api = createApi({
         body: payload, // { contactNo }
       }),
     }),
+    forgotPassword: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/forgot-password",
+        method: "POST",
+        body: payload, // { contactNo }
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
+    resetPassword: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/reset-password",
+        method: "POST",
+        body: payload, // { contactNo, otp, newPassword, confirmPassword }
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
     // Chat endpoints
     getChatRooms: builder.query({
       query: () => "/chat/rooms",
@@ -540,6 +556,8 @@ export const {
   useSignupMutation,
   useVerifyOtpMutation,
   useResendOtpMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useGetChatRoomsQuery,
   useGetChatRoomQuery,
   useCreateOrGetChatRoomMutation,

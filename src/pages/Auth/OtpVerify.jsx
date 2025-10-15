@@ -12,7 +12,7 @@ const OtpVerify = () => {
   const navigate = useNavigate();
   // TEMP: use dummy contact to preview masked format; replace with query param after review
   const initialContact = query.get("contactNo") || "9123456789";
-  const userId = query.get("userId") || "";
+  const isForgotPassword = query.get("forgotPassword") === "true";
 
   const [contactNo] = useState(initialContact);
   const [otp, setOtp] = useState("");
@@ -43,6 +43,21 @@ const OtpVerify = () => {
         setFormError(res?.message || "Verification failed");
         return;
       }
+
+      if (isForgotPassword) {
+        // For forgot password flow, just verify OTP and redirect to reset password page
+        toast.success(
+          "OTP verified successfully. You can now reset your password."
+        );
+        navigate(
+          `/reset-password?contactNo=${encodeURIComponent(
+            contactNo
+          )}&otp=${encodeURIComponent(otp)}&verified=true`
+        );
+        return;
+      }
+
+      // Regular account verification flow
       const token = res?.data?.token;
       const user = res?.data?.user;
       const role = user?.role;
@@ -60,6 +75,7 @@ const OtpVerify = () => {
         localStorage.setItem("auth_user", JSON.stringify(user));
       }
       const displayName = user?.username || user?.firstName || "";
+
       toast.success(
         displayName
           ? `Account verified successfully. Welcome, ${displayName}`
@@ -126,7 +142,7 @@ const OtpVerify = () => {
             <h3 className="uppercase font-bold text-3xl">Verify OTP</h3>
             <p>
               Enter the 6-digit code sent to your phone
-              {true && (
+              {contactNo && (
                 <>
                   {" "}
                   <span className="font-medium">

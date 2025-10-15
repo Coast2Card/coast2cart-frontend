@@ -26,6 +26,16 @@ const Seafood = () => {
   const [addToCart] = useAddToCartMutation();
   const [addingId, setAddingId] = useState(null);
 
+  // Get current user info
+  const currentUser = (() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
   const { data, isLoading, isFetching, isError } = useGetItemsQuery({
     page,
     itemType: "seafood",
@@ -39,6 +49,22 @@ const Seafood = () => {
     return data && Array.isArray(data.items) ? data.items : [];
   }, [data]);
   const pagination = data?.pagination ?? null;
+
+  // Check if current user is the seller of an item
+  const isCurrentUserSeller = (item) => {
+    if (!currentUser || !item) return false;
+
+    const currentUserId = currentUser._id || currentUser.id;
+    const sellerId =
+      item?.seller?._id ||
+      item?.seller?.id ||
+      item?.postedBy?._id ||
+      item?.postedBy?.id ||
+      item?.owner?._id ||
+      item?.owner?.id;
+
+    return currentUserId === sellerId;
+  };
 
   // Filter items based on search term
   const filteredItems = useMemo(() => {
@@ -267,9 +293,14 @@ const Seafood = () => {
                           <div className="mt-auto">
                             <button
                               disabled={
-                                addingId === (product.id || product._id)
+                                addingId === (product.id || product._id) ||
+                                isCurrentUserSeller(product)
                               }
-                              className="w-full h-9 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold text-sm disabled:opacity-60"
+                              className={`w-full h-9 rounded-full font-semibold text-sm disabled:opacity-60 ${
+                                isCurrentUserSeller(product)
+                                  ? "bg-gray-400 cursor-not-allowed text-white"
+                                  : "bg-[#E4490F] hover:bg-[#d0410d] text-white"
+                              }`}
                               onClick={async (e) => {
                                 e.preventDefault();
                                 const token =
@@ -325,6 +356,8 @@ const Seafood = () => {
                             >
                               {addingId === (product.id || product._id)
                                 ? "Adding..."
+                                : isCurrentUserSeller(product)
+                                ? "Your Item"
                                 : "Add to Cart"}
                             </button>
                           </div>

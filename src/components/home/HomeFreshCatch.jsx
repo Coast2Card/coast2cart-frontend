@@ -9,6 +9,7 @@ const HomeFreshCatch = ({ className = "" }) => {
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4  gap-6 mb-8">
         {freshCatchItems.map((item) => (
           <ItemCard
+            key={item.id}
             name={item.name}
             price={item.price}
             description={item.description}
