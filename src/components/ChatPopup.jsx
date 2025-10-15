@@ -901,7 +901,25 @@ const ChatPopup = () => {
                                       </p>
                                     </div>
                                     <p className="font-bold text-lg mt-1">
-                                      {msg.content?.product?.price || ""}
+                                      {(() => {
+                                        const product =
+                                          msg.content?.product || {};
+                                        const rawPrice =
+                                          product.itemPrice != null
+                                            ? product.itemPrice
+                                            : product.price;
+                                        if (typeof rawPrice === "number") {
+                                          return `₱${Number(rawPrice).toFixed(
+                                            2
+                                          )}`;
+                                        }
+                                        if (typeof rawPrice === "string") {
+                                          return rawPrice.startsWith("₱")
+                                            ? rawPrice
+                                            : `₱${rawPrice}`;
+                                        }
+                                        return "";
+                                      })()}
                                     </p>
                                   </div>
                                 </div>
