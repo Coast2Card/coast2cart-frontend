@@ -15,6 +15,7 @@ import Colors from "./pages/Colors";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import OtpVerify from "./pages/Auth/OtpVerify";
+import ResetPassword from "./pages/Auth/ResetPassword";
 import NotFound from "./pages/NotFound";
 import SuperAdmin from "./pages/SuperAdmin";
 import AdminLayout from "./components/AdminLayout";
@@ -137,6 +138,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify-otp" element={<OtpVerify />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       </ChatProvider>

@@ -18,6 +18,16 @@ const ProductDetail = () => {
   const [showAnimation, setShowAnimation] = useState(false);
   const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
 
+  // Get current user info
+  const currentUser = (() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
   // Fetch item by ID from API
   const {
     data: product,
@@ -36,7 +46,6 @@ const ProductDetail = () => {
     isError,
     error,
   });
-
 
   // Loading state with skeletons
   if (isLoading) {
@@ -111,10 +120,27 @@ const ProductDetail = () => {
   // Use item image or fallback
   const imageSrc = product.image || product.imageUrl || bisugo;
 
+  // Check if current user is the seller of this item
+  const isCurrentUserSeller = () => {
+    if (!currentUser || !product) return false;
+
+    const currentUserId = currentUser._id || currentUser.id;
+    const sellerId =
+      product?.seller?._id ||
+      product?.seller?.id ||
+      product?.postedBy?._id ||
+      product?.postedBy?.id ||
+      product?.owner?._id ||
+      product?.owner?.id;
+
+    return currentUserId === sellerId;
+  };
+
   // Handle quantity changes
   const handleQuantityChange = (change) => {
+    const availableQuantity = product.quantity || 0;
     const newQuantity = quantity + change;
-    if (newQuantity >= 1) {
+    if (newQuantity >= 1 && newQuantity <= availableQuantity) {
       setQuantity(newQuantity);
     }
   };
@@ -128,6 +154,16 @@ const ProductDetail = () => {
       navigate("/login");
       return;
     }
+
+    // Check if quantity exceeds available quantity
+    const availableQuantity = product.quantity || 0;
+    if (quantity > availableQuantity) {
+      toast.error(
+        `Cannot add ${quantity} items. Only ${availableQuantity} available.`
+      );
+      return;
+    }
+
     const payload = { itemId, quantity };
     console.log("[AddToCart] Submitting:", payload);
     try {
@@ -251,36 +287,103 @@ const ProductDetail = () => {
 
             <div className="mb-6">
               <div className="flex items-stretch gap-3 mb-3">
-                <div className="flex items-center justify-between rounded-full border border-gray-300 h-11 px-3 min-w-[112px] select-none">
+                <div
+                  className={`flex items-center justify-between rounded-full border h-11 px-3 min-w-[112px] select-none ${
+                    (product.quantity || 0) <= 0
+                      ? "border-gray-200 bg-gray-50"
+                      : "border-gray-300"
+                  }`}
+                >
                   <button
-                    className="text-gray-600 hover:text-gray-900"
+                    className={`${
+                      quantity <= 1 || (product.quantity || 0) <= 0
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
                     onClick={() => handleQuantityChange(-1)}
+                    disabled={quantity <= 1 || (product.quantity || 0) <= 0}
                   >
                     −
                   </button>
-                  <span className="font-medium text-gray-800">{quantity}</span>
+                  <span
+                    className={`font-medium ${
+                      (product.quantity || 0) <= 0
+                        ? "text-gray-400"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {quantity}
+                  </span>
                   <button
-                    className="text-gray-600 hover:text-gray-900"
+                    className={`${
+                      quantity >= (product.quantity || 0) ||
+                      (product.quantity || 0) <= 0
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
                     onClick={() => handleQuantityChange(1)}
+                    disabled={
+                      quantity >= (product.quantity || 0) ||
+                      (product.quantity || 0) <= 0
+                    }
                   >
                     +
                   </button>
                 </div>
                 <button
-                  className="flex-1 h-11 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold disabled:opacity-60"
+                  className={`flex-1 h-11 rounded-full font-semibold disabled:opacity-60 ${
+                    (product.quantity || 0) <= 0 || isCurrentUserSeller()
+                      ? "bg-gray-400 cursor-not-allowed text-white"
+                      : "bg-[#E4490F] hover:bg-[#d0410d] text-white"
+                  }`}
                   onClick={handleAddToCart}
-                  disabled={isAdding}
+                  disabled={
+                    isAdding ||
+                    (product.quantity || 0) <= 0 ||
+                    isCurrentUserSeller()
+                  }
                 >
-                  {isAdding ? "Adding..." : "Add to Cart"}
+                  {isAdding
+                    ? "Adding..."
+                    : isCurrentUserSeller()
+                    ? "Your Item"
+                    : (product.quantity || 0) <= 0
+                    ? "Out of Stock"
+                    : "Add to Cart"}
                 </button>
               </div>
               {(() => {
-                const sellerId = product?.seller?._id || product?.seller?.id || product?.postedBy?._id || product?.postedBy?.id || product?.owner?._id || product?.owner?.id;
-                const sellerName = product?.seller?.username || product?.seller?.name || product?.postedBy?.username || product?.postedBy?.name || product?.owner?.username || product?.owner?.name || 'Seller';
-                
+                const sellerId =
+                  product?.seller?._id ||
+                  product?.seller?.id ||
+                  product?.postedBy?._id ||
+                  product?.postedBy?.id ||
+                  product?.owner?._id ||
+                  product?.owner?.id;
+                const sellerName =
+                  product?.seller?.username ||
+                  product?.seller?.name ||
+                  product?.postedBy?.username ||
+                  product?.postedBy?.name ||
+                  product?.owner?.username ||
+                  product?.owner?.name ||
+                  "Seller";
+
+                // Don't show message button if current user is the seller
+                if (isCurrentUserSeller()) {
+                  return (
+                    <button
+                      className="w-full h-11 rounded-full border border-gray-300 text-gray-400 cursor-not-allowed font-medium"
+                      disabled
+                    >
+                      This is your item
+                    </button>
+                  );
+                }
+
                 if (sellerId) {
                   return (
-                    <StartChatButton 
+                    <StartChatButton
                       userId={sellerId}
                       username={sellerName}
                       className="w-full h-11 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium"
@@ -290,7 +393,7 @@ const ProductDetail = () => {
                         description: product.description,
                         price: product.itemPrice || product.price,
                         image: product.image || product.imageUrl,
-                        unit: product.unit
+                        unit: product.unit,
                       }}
                     >
                       Message Seller
@@ -311,7 +414,7 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Seller info and reviews */}
       <SellerSection itemId={itemId} product={product} />
       {/* Related products */}

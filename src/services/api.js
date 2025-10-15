@@ -427,6 +427,22 @@ export const api = createApi({
         body: payload, // { contactNo }
       }),
     }),
+    forgotPassword: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/forgot-password",
+        method: "POST",
+        body: payload, // { contactNo }
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
+    resetPassword: builder.mutation({
+      query: (payload) => ({
+        url: "/auth/reset-password",
+        method: "POST",
+        body: payload, // { contactNo, otp, newPassword, confirmPassword }
+      }),
+      transformResponse: (response) => response?.data || response,
+    }),
     // Chat endpoints
     getChatRooms: builder.query({
       query: () => "/chat/rooms",
@@ -435,7 +451,9 @@ export const api = createApi({
     }),
     getChatRoom: builder.query({
       query: (chatRoomId) => `/chat/rooms/${chatRoomId}`,
-      providesTags: (result, error, chatRoomId) => [{ type: "Chat", id: chatRoomId }],
+      providesTags: (result, error, chatRoomId) => [
+        { type: "Chat", id: chatRoomId },
+      ],
       transformResponse: (response) => response?.data || response,
     }),
     createOrGetChatRoom: builder.mutation({
@@ -469,8 +487,13 @@ export const api = createApi({
         "Chat",
       ],
       transformResponse: (response) => {
-        const messages = response?.data?.messages || response?.messages || response?.data || [];
-        const pagination = response?.data?.pagination || response?.pagination || null;
+        const messages =
+          response?.data?.messages ||
+          response?.messages ||
+          response?.data ||
+          [];
+        const pagination =
+          response?.data?.pagination || response?.pagination || null;
         return { messages, pagination };
       },
     }),
@@ -516,6 +539,8 @@ export const {
   useSignupMutation,
   useVerifyOtpMutation,
   useResendOtpMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useGetChatRoomsQuery,
   useGetChatRoomQuery,
   useCreateOrGetChatRoomMutation,

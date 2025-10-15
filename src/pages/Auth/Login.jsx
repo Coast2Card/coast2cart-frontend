@@ -7,6 +7,7 @@ import c2c_transparent from "../../assets/logos/c2c_transparent.png";
 import { UserCircleIcon } from "@phosphor-icons/react/dist/csr/UserCircle";
 import { LockIcon } from "@phosphor-icons/react/dist/ssr";
 import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
+import CompleteForgotPasswordModal from "../../modals/CompleteForgotPasswordModal";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +16,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [formError, setFormError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -156,7 +158,10 @@ const Login = () => {
               </button>
             </label>
             <div className="flex w-full justify-end">
-              <p className="text-lg text-black mb-6 mt-[-10px] hover:underline cursor-pointer">
+              <p
+                className="text-lg text-black mb-6 mt-[-10px] hover:underline cursor-pointer"
+                onClick={() => setShowForgotPasswordModal(true)}
+              >
                 Forgot password?
               </p>
             </div>
@@ -183,6 +188,12 @@ const Login = () => {
           </div>
         </div>
       </section>
+
+      {/* Forgot Password Modal */}
+      <CompleteForgotPasswordModal
+        isOpen={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+      />
     </main>
   );
 };
