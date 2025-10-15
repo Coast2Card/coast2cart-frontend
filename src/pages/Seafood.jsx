@@ -36,6 +36,11 @@ const Seafood = () => {
     }
   })();
 
+  const isSellerRole = (() => {
+    const role = currentUser?.role;
+    return typeof role === "string" && role.toLowerCase() === "seller";
+  })();
+
   const { data, isLoading, isFetching, isError } = useGetItemsQuery({
     page,
     itemType: "seafood",
@@ -292,75 +297,79 @@ const Seafood = () => {
                             </p>
                           )}
                           <div className="mt-auto">
-                            <button
-                              disabled={
-                                addingId === (product.id || product._id) ||
-                                isCurrentUserSeller(product)
-                              }
-                              className={`w-full h-9 rounded-full font-semibold text-sm disabled:opacity-60 ${
-                                isCurrentUserSeller(product)
-                                  ? "bg-gray-400 cursor-not-allowed text-white"
-                                  : "bg-[#E4490F] hover:bg-[#d0410d] text-white"
-                              }`}
-                              onClick={async (e) => {
-                                e.preventDefault();
-                                const token =
-                                  localStorage.getItem("auth_token");
-                                if (!token) {
-                                  toast.error(
-                                    "Please log in to add items to your cart"
-                                  );
-                                  window.location.href = "/login";
-                                  return;
-                                }
-                                const itemId = product.id || product._id;
-                                if (!itemId) return;
-                                try {
-                                  setAddingId(itemId);
-                                  await addToCart({
-                                    itemId,
-                                    quantity: 1,
-                                  }).unwrap();
-                                  setModalProduct({
-                                    id: product.id || product._id,
-                                    name: product.itemName || product.name,
-                                    description:
-                                      product.description || "Fresh seafood",
-                                    price:
-                                      product.itemPrice ?? product.price ?? 0,
-                                    formattedPrice:
-                                      product.formattedPrice || null,
-                                    image:
-                                      product.imageUrl ||
-                                      product.image ||
-                                      bisugo,
-                                  });
-                                  setModalSeller({
-                                    name: product?.seller?.username || "",
-                                    profileImage:
-                                      "/src/assets/icons/profile.png",
-                                  });
-                                  setShowCartModal(true);
-                                } catch (err) {
-                                  console.error(
-                                    "[AddToCart:Seafood] Error:",
-                                    err
-                                  );
-                                  toast.error(
-                                    err?.data?.message ||
-                                      "Failed to add to cart"
-                                  );
-                                } finally {
-                                  setAddingId(null);
-                                }
-                              }}
-                            >
-                              {addingId === (product.id || product._id)
-                                ? "Adding..."
-                                : isCurrentUserSeller(product)
-                                ? "Your Item"
-                                : "Add to Cart"}
-                            </button>
+                            {isCurrentUserSeller(product) ? (
+                              <div className="w-full h-9 rounded-full font-semibold text-sm bg-gray-400 text-white grid place-items-center select-none">
+                                Your Item
+                              </div>
+                            ) : (
+                              !isSellerRole && (
+                                <button
+                                  disabled={
+                                    addingId === (product.id || product._id)
+                                  }
+                                  className={`w-full h-9 rounded-full font-semibold text-sm disabled:opacity-60 bg-[#E4490F] hover:bg-[#d0410d] text-white`}
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    const token =
+                                      localStorage.getItem("auth_token");
+                                    if (!token) {
+                                      toast.error(
+                                        "Please log in to add items to your cart"
+                                      );
+                                      window.location.href = "/login";
+                                      return;
+                                    }
+                                    const itemId = product.id || product._id;
+                                    if (!itemId) return;
+                                    try {
+                                      setAddingId(itemId);
+                                      await addToCart({
+                                        itemId,
+                                        quantity: 1,
+                                      }).unwrap();
+                                      setModalProduct({
+                                        id: product.id || product._id,
+                                        name: product.itemName || product.name,
+                                        description:
+                                          product.description ||
+                                          "Fresh seafood",
+                                        price:
+                                          product.itemPrice ??
+                                          product.price ??
+                                          0,
+                                        formattedPrice:
+                                          product.formattedPrice || null,
+                                        image:
+                                          product.imageUrl ||
+                                          product.image ||
+                                          bisugo,
+                                      });
+                                      setModalSeller({
+                                        name: product?.seller?.username || "",
+                                        profileImage:
+                                          "/src/assets/icons/profile.png",
+                                      });
+                                      setShowCartModal(true);
+                                    } catch (err) {
+                                      console.error(
+                                        "[AddToCart:Seafood] Error:",
+                                        err
+                                      );
+                                      toast.error(
+                                        err?.data?.message ||
+                                          "Failed to add to cart"
+                                      );
+                                    } finally {
+                                      setAddingId(null);
+                                    }
+                                  }}
+                                >
+                                  {addingId === (product.id || product._id)
+                                    ? "Adding..."
+                                    : "Add to Cart"}
+                                </button>
+                              )
+                            )}
                           </div>
                         </div>
                       </Link>

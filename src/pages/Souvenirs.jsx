@@ -22,6 +22,11 @@ const Souvenirs = () => {
     }
   })();
 
+  const isSellerRole = (() => {
+    const role = currentUser?.role;
+    return typeof role === "string" && role.toLowerCase() === "seller";
+  })();
+
   // Fetch souvenirs from API
   const { data, isLoading, isError } = useGetSouvenirsQuery({
     // Add any additional params here if needed
@@ -293,70 +298,73 @@ const Souvenirs = () => {
                     </p>
                   )}
                   <div className="mt-auto">
-                    <button
-                      disabled={
-                        addingId === (souvenir.id || souvenir._id) ||
-                        isCurrentUserSeller(souvenir)
-                      }
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        const token = localStorage.getItem("auth_token");
-                        if (!token) {
-                          toast.error(
-                            "Please log in to add items to your cart"
-                          );
-                          window.location.href = "/login";
-                          return;
-                        }
-                        const itemId = souvenir.id || souvenir._id;
-                        if (!itemId) return;
-                        try {
-                          setAddingId(itemId);
-                          console.log("[AddToCart:Souvenirs] Submitting:", {
-                            itemId,
-                            quantity: 1,
-                          });
-                          const res = await addToCart({
-                            itemId,
-                            quantity: 1,
-                          }).unwrap();
-                          console.log("[AddToCart:Souvenirs] Success:", res);
-                          setModalProduct({
-                            id: souvenir.id || souvenir._id,
-                            name: souvenir.itemName || souvenir.name,
-                            description:
-                              souvenir.description || "Local souvenir",
-                            price: souvenir.itemPrice ?? souvenir.price ?? 0,
-                            formattedPrice: souvenir.formattedPrice || null,
-                            image:
-                              souvenir.imageUrl || souvenir.image || bisugo,
-                          });
-                          setModalSeller({
-                            name: souvenir?.seller?.username || "",
-                            profileImage: "/src/assets/icons/profile.png",
-                          });
-                          setShowCartModal(true);
-                        } catch (e) {
-                          console.error("[AddToCart:Souvenirs] Error:", e);
-                          toast.error(
-                            e?.data?.message || "Failed to add to cart"
-                          );
-                        } finally {
-                          setAddingId(null);
-                        }
-                      }}
-                      className={`w-full h-9 rounded-full font-semibold text-sm disabled:opacity-60 ${
-                        isCurrentUserSeller(souvenir)
-                          ? "bg-gray-400 cursor-not-allowed text-white"
-                          : "bg-[#E4490F] hover:bg-[#d0410d] text-white"
-                      }`}
-                    >
-                      {addingId === (souvenir.id || souvenir._id)
-                        ? "Adding..."
-                        : isCurrentUserSeller(souvenir)
-                        ? "Your Item"
-                        : "Add to Cart"}
-                    </button>
+                    {isCurrentUserSeller(souvenir) ? (
+                      <div className="w-full h-9 rounded-full font-semibold text-sm bg-gray-400 text-white grid place-items-center select-none">
+                        Your Item
+                      </div>
+                    ) : (
+                      !isSellerRole && (
+                        <button
+                          disabled={addingId === (souvenir.id || souvenir._id)}
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            const token = localStorage.getItem("auth_token");
+                            if (!token) {
+                              toast.error(
+                                "Please log in to add items to your cart"
+                              );
+                              window.location.href = "/login";
+                              return;
+                            }
+                            const itemId = souvenir.id || souvenir._id;
+                            if (!itemId) return;
+                            try {
+                              setAddingId(itemId);
+                              console.log("[AddToCart:Souvenirs] Submitting:", {
+                                itemId,
+                                quantity: 1,
+                              });
+                              const res = await addToCart({
+                                itemId,
+                                quantity: 1,
+                              }).unwrap();
+                              console.log(
+                                "[AddToCart:Souvenirs] Success:",
+                                res
+                              );
+                              setModalProduct({
+                                id: souvenir.id || souvenir._id,
+                                name: souvenir.itemName || souvenir.name,
+                                description:
+                                  souvenir.description || "Local souvenir",
+                                price:
+                                  souvenir.itemPrice ?? souvenir.price ?? 0,
+                                formattedPrice: souvenir.formattedPrice || null,
+                                image:
+                                  souvenir.imageUrl || souvenir.image || bisugo,
+                              });
+                              setModalSeller({
+                                name: souvenir?.seller?.username || "",
+                                profileImage: "/src/assets/icons/profile.png",
+                              });
+                              setShowCartModal(true);
+                            } catch (e) {
+                              console.error("[AddToCart:Souvenirs] Error:", e);
+                              toast.error(
+                                e?.data?.message || "Failed to add to cart"
+                              );
+                            } finally {
+                              setAddingId(null);
+                            }
+                          }}
+                          className={`w-full h-9 rounded-full font-semibold text-sm disabled:opacity-60 bg-[#E4490F] hover:bg-[#d0410d] text-white`}
+                        >
+                          {addingId === (souvenir.id || souvenir._id)
+                            ? "Adding..."
+                            : "Add to Cart"}
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               </Link>

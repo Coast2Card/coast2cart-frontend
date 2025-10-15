@@ -4,7 +4,6 @@ import {
   EnvelopeSimple,
   Phone,
   MapPin,
-  ImageSquare,
   Lock,
   Eye,
   EyeSlash,
@@ -48,7 +47,6 @@ const AddSellerModal = ({ open, onClose }) => {
     email: "",
     contactNo: "",
     address: "",
-    file: null,
     username: "",
     password: "",
     confirmPassword: "",
@@ -89,7 +87,7 @@ const AddSellerModal = ({ open, onClose }) => {
   }, [step]);
 
   const handleChange = (key) => (e) => {
-    const value = key === "file" ? e.target.files?.[0] || null : e.target.value;
+    const value = e.target.value;
     setForm((f) => ({ ...f, [key]: value }));
   };
 
@@ -112,7 +110,6 @@ const AddSellerModal = ({ open, onClose }) => {
       if (form.email) fd.append("email", form.email);
       fd.append("contactNo", form.contactNo);
       if (form.address) fd.append("address", form.address);
-      if (form.file) fd.append("file", form.file);
       fd.append("username", form.username);
       fd.append("password", form.password);
       fd.append("confirmPassword", form.confirmPassword);
@@ -404,28 +401,7 @@ const AddSellerModal = ({ open, onClose }) => {
                     />
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <label className="block text-lg sm:text-xl font-semibold">
-                    Profile Picture
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-md bg-white border-2 border-row-outline grid place-items-center">
-                      <ImageSquare size={28} className="text-base-content/50" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-base-content/70 italic mb-2">
-                        Please upload square image, size less than 100KB
-                      </p>
-                      <div className="rounded-lg">
-                        <input
-                          type="file"
-                          className="file-input file-input-bordered w-full max-w-xs bg-white"
-                          onChange={handleChange("file")}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* Profile picture input removed as it's not processed */}
               </>
             )}
 

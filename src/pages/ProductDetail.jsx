@@ -28,6 +28,11 @@ const ProductDetail = () => {
     }
   })();
 
+  const isSellerRole = (() => {
+    const role = currentUser?.role;
+    return typeof role === "string" && role.toLowerCase() === "seller";
+  })();
+
   // Fetch item by ID from API
   const {
     data: product,
@@ -234,6 +239,14 @@ const ProductDetail = () => {
             <h1 className="font-outfit font-bold text-[28px] md:text-[36px] text-gray-900 mb-1">
               {product.itemName || product.name}
             </h1>
+            {isSellerRole && isCurrentUserSeller() && (
+              <div className="mb-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200">
+                  <span>✔</span>
+                  <span>Your listing</span>
+                </span>
+              </div>
+            )}
             <p className="text-gray-500 text-xs md:text-[11px] mb-3">
               {product.description || "Fresh seafood from Barangay Baybayon"}
             </p>
@@ -288,70 +301,78 @@ const ProductDetail = () => {
 
             <div className="mb-6">
               <div className="flex items-stretch gap-3 mb-3">
-                <div
-                  className={`flex items-center justify-between rounded-full border h-11 px-3 min-w-[112px] select-none ${
-                    (product.quantity || 0) <= 0
-                      ? "border-gray-200 bg-gray-50"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <button
-                    className={`${
-                      quantity <= 1 || (product.quantity || 0) <= 0
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1 || (product.quantity || 0) <= 0}
-                  >
-                    −
-                  </button>
-                  <span
-                    className={`font-medium ${
-                      (product.quantity || 0) <= 0
-                        ? "text-gray-400"
-                        : "text-gray-800"
-                    }`}
-                  >
-                    {quantity}
-                  </span>
-                  <button
-                    className={`${
-                      quantity >= (product.quantity || 0) ||
-                      (product.quantity || 0) <= 0
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={
-                      quantity >= (product.quantity || 0) ||
-                      (product.quantity || 0) <= 0
-                    }
-                  >
-                    +
-                  </button>
-                </div>
-                <button
-                  className={`flex-1 h-11 rounded-full font-semibold disabled:opacity-60 ${
-                    (product.quantity || 0) <= 0 || isCurrentUserSeller()
-                      ? "bg-gray-400 cursor-not-allowed text-white"
-                      : "bg-[#E4490F] hover:bg-[#d0410d] text-white"
-                  }`}
-                  onClick={handleAddToCart}
-                  disabled={
-                    isAdding ||
-                    (product.quantity || 0) <= 0 ||
-                    isCurrentUserSeller()
-                  }
-                >
-                  {isAdding
-                    ? "Adding..."
-                    : isCurrentUserSeller()
-                    ? "Your Item"
-                    : (product.quantity || 0) <= 0
-                    ? "Out of Stock"
-                    : "Add to Cart"}
-                </button>
+                {isSellerRole ? (
+                  <div className="w-full h-11 rounded-full font-semibold bg-gray-400 text-white grid place-items-center select-none">
+                    Your Item
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className={`flex items-center justify-between rounded-full border h-11 px-3 min-w-[112px] select-none ${
+                        (product.quantity || 0) <= 0
+                          ? "border-gray-200 bg-gray-50"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <button
+                        className={`${
+                          quantity <= 1 || (product.quantity || 0) <= 0
+                            ? "text-gray-300 cursor-not-allowed"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                        onClick={() => handleQuantityChange(-1)}
+                        disabled={quantity <= 1 || (product.quantity || 0) <= 0}
+                      >
+                        −
+                      </button>
+                      <span
+                        className={`font-medium ${
+                          (product.quantity || 0) <= 0
+                            ? "text-gray-400"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        {quantity}
+                      </span>
+                      <button
+                        className={`${
+                          quantity >= (product.quantity || 0) ||
+                          (product.quantity || 0) <= 0
+                            ? "text-gray-300 cursor-not-allowed"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                        onClick={() => handleQuantityChange(1)}
+                        disabled={
+                          quantity >= (product.quantity || 0) ||
+                          (product.quantity || 0) <= 0
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      className={`flex-1 h-11 rounded-full font-semibold disabled:opacity-60 ${
+                        (product.quantity || 0) <= 0 || isCurrentUserSeller()
+                          ? "bg-gray-400 cursor-not-allowed text-white"
+                          : "bg-[#E4490F] hover:bg-[#d0410d] text-white"
+                      }`}
+                      onClick={handleAddToCart}
+                      disabled={
+                        isAdding ||
+                        (product.quantity || 0) <= 0 ||
+                        isCurrentUserSeller()
+                      }
+                    >
+                      {isAdding
+                        ? "Adding..."
+                        : isCurrentUserSeller()
+                        ? "Your Item"
+                        : (product.quantity || 0) <= 0
+                        ? "Out of Stock"
+                        : "Add to Cart"}
+                    </button>
+                  </>
+                )}
               </div>
               {(() => {
                 const sellerId =
@@ -372,14 +393,7 @@ const ProductDetail = () => {
 
                 // Don't show message button if current user is the seller
                 if (isCurrentUserSeller()) {
-                  return (
-                    <button
-                      className="w-full h-11 rounded-full border border-gray-300 text-gray-400 cursor-not-allowed font-medium"
-                      disabled
-                    >
-                      This is your item
-                    </button>
-                  );
+                  return null;
                 }
 
                 if (sellerId) {
@@ -396,7 +410,7 @@ const ProductDetail = () => {
                         image: product.image || product.imageUrl,
                         unit: product.unit,
                         quantity: quantity, // Selected quantity for transaction
-                        availableQuantity: product.quantity || 0 // Available stock
+                        availableQuantity: product.quantity || 0, // Available stock
                       }}
                     >
                       Message Seller

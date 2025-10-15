@@ -115,7 +115,7 @@ const Navbar = () => {
       const currentUserId = currentUser?._id || currentUser?.id;
       return String(participantId) !== String(currentUserId);
     });
-    
+
     // Only count unread messages for chats with valid participants
     if (otherParticipant) {
       return total + getUnreadCountForChat(chat);
@@ -358,7 +358,7 @@ const Navbar = () => {
                       currentUser?.username
                     );
                   })() && (
-                    <span className="text-sm font-semibold text-black hidden lg:inline cursor-pointer">
+                    <span className="text-sm font-semibold text-black hidden lg:inline cursor-pointer flex items-center gap-2">
                       {(() => {
                         const fn = (currentUser?.firstName || "").trim();
                         const ln = (currentUser?.lastName || "").trim();
@@ -370,6 +370,19 @@ const Navbar = () => {
                           currentUser?.username
                         );
                       })()}
+                      {currentUser?.role && (
+                        <span
+                          className={`${
+                            String(currentUser.role).toLowerCase() === "seller"
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-emerald-100 text-emerald-700"
+                          } text-[10px] px-2 py-0.5 ml-1 rounded-full uppercase tracking-wide font-bold`}
+                        >
+                          {String(currentUser.role).toLowerCase() === "seller"
+                            ? "Seller"
+                            : "Buyer"}
+                        </span>
+                      )}
                     </span>
                   )}
                 </button>
