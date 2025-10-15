@@ -8,6 +8,8 @@ import {
   useClearCartMutation,
 } from "../services/api";
 import CartSkeleton from "../components/skeleton/CartSkeleton";
+import StartChatButton from "../components/StartChatButton";
+import { useChatContext } from "../contexts/ChatContext";
 
 const CART_STORAGE_KEY = "cart_items";
 
@@ -263,7 +265,8 @@ const Cart = () => {
                 <div className="col-span-3 font-medium text-center">
                   Quantity
                 </div>
-                <div className="col-span-4 font-medium text-right">Total</div>
+                <div className="col-span-2 font-medium text-right">Total</div>
+                <div className="col-span-2 font-medium text-center">Action</div>
               </div>
             </div>
 
@@ -359,8 +362,40 @@ const Cart = () => {
                   </div>
 
                   {/* Total Price */}
-                  <div className="col-span-4 text-right font-semibold text-base-content">
+                  <div className="col-span-2 text-right font-semibold text-base-content">
                     ₱{((Number(it.price) || 0) * (it.quantity || 1)).toFixed(2)}
+                  </div>
+
+                  {/* Message Seller Button */}
+                  <div className="col-span-2 flex justify-center">
+                    {it.sellerId ? (
+                      <StartChatButton
+                        userId={it.sellerId}
+                        username={it.sellerName || "Seller"}
+                        productInfo={(() => {
+                          const productInfo = {
+                            id: it.id,
+                            _id: it.id,
+                            name: it.name,
+                            itemName: it.name,
+                            price: `₱${Number(it.price).toFixed(2)}`,
+                            itemPrice: Number(it.price),
+                            image: it.image,
+                            imageUrl: it.image,
+                            quantity: it.quantity, // Cart quantity
+                            availableQuantity: it.availableQuantity, // Available stock quantity
+                            description: `Product from ${it.sellerName || "Seller"}`,
+                          };
+                          console.log("Cart StartChatButton productInfo:", { it, productInfo });
+                          return productInfo;
+                        })()}
+                        className="px-3 py-1.5 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap"
+                      >
+                        💬 Message Seller
+                      </StartChatButton>
+                    ) : (
+                      <span className="text-xs text-gray-400">No seller</span>
+                    )}
                   </div>
                 </div>
               ))}

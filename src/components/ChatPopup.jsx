@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import {
   useGetChatRoomsQuery,
   useGetChatMessagesQuery,
+  useGetChatTransactionsQuery,
   useSendMessageMutation,
   useMarkMessagesAsReadMutation,
+  useMarkTransactionAsSoldMutation,
 } from "../services/api";
 import { useChatContext } from "../contexts/ChatContext";
 import LoginRequiredModal from "../modals/LoginRequiredModal";
@@ -47,6 +49,7 @@ const ChatPopup = () => {
     pollingInterval: 5000,
   });
 
+
   // Fetch messages for selected chat
   const {
     data: chatMessages,
@@ -57,9 +60,48 @@ const ChatPopup = () => {
     { skip: !selectedChatId }
   );
 
+  // Fetch transactions for selected chat
+  const {
+    data: chatTransactions,
+    isLoading: isLoadingTransactions,
+    refetch: refetchTransactions,
+  } = useGetChatTransactionsQuery(selectedChatId, {
+    skip: !selectedChatId,
+    pollingInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Debug: Log transactions to identify duplicates
+  useEffect(() => {
+    if (chatTransactions && chatTransactions.length > 0) {
+      console.log("Chat Transactions Debug:", {
+        chatRoomId: selectedChatId,
+        transactions: chatTransactions,
+        transactionCount: chatTransactions.length,
+        transactionIds: chatTransactions.map(t => t._id || t.id),
+        duplicateCheck: chatTransactions.reduce((acc, t) => {
+          const id = t._id || t.id;
+          acc[id] = (acc[id] || 0) + 1;
+          return acc;
+        }, {})
+      });
+    }
+  }, [chatTransactions, selectedChatId]);
+
   // Mutations
   const [sendMessage, { isLoading: sendingMessage }] = useSendMessageMutation();
   const [markAsRead] = useMarkMessagesAsReadMutation();
+  const [markTransactionAsSold, { isLoading: markingAsSold }] = useMarkTransactionAsSoldMutation();
+
+  // State for selected transaction to mark as sold
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  
+  // State for toggling transactions visibility
+  const [showTransactions, setShowTransactions] = useState(true);
+  
+  // Reset transactions visibility when switching chat rooms
+  useEffect(() => {
+    setShowTransactions(true);
+  }, [selectedChatId]);
 
   // Helper functions
   const getSenderInfo = (senderId) => {
@@ -80,6 +122,36 @@ const ChatPopup = () => {
     return chatRooms.find((chat) => (chat._id || chat.id) === selectedChatId);
   };
 
+  // Helper function to get unique transactions count
+  const getUniqueTransactionsCount = () => {
+    if (!chatTransactions || chatTransactions.length === 0) return 0;
+    
+    return chatTransactions.reduce((acc, transaction) => {
+      const id = transaction._id || transaction.id;
+      const itemId = transaction.itemId?._id || transaction.itemId?.id || transaction.itemId;
+      const quantity = transaction.quantity;
+      const status = transaction.status;
+      
+      // Check by transaction ID first
+      if (!acc.find(t => (t._id || t.id) === id)) {
+        // Then check for duplicate item+quantity+status combinations
+        const isDuplicateItem = acc.find(t => {
+          const tItemId = t.itemId?._id || t.itemId?.id || t.itemId;
+          return tItemId === itemId && 
+                 t.quantity === quantity && 
+                 t.status === status &&
+                 !t.markedSoldAt && // Don't dedupe sold items
+                 !transaction.markedSoldAt;
+        });
+        
+        if (!isDuplicateItem) {
+          acc.push(transaction);
+        }
+      }
+      return acc;
+    }, []).length;
+  };
+
   const getCurrentChatMessages = () => {
     return chatMessages?.messages || [];
   };
@@ -88,6 +160,18 @@ const ChatPopup = () => {
     return chatRooms.reduce((total, chat) => {
       return total + (chat.unreadCount || 0);
     }, 0);
+  };
+
+  // Helper function to get the count of displayable chats (with valid participants)
+  const getDisplayableChatsCount = () => {
+    return filteredChatRooms().filter(chat => {
+      const otherParticipant = chat.participants?.find((p) => {
+        const participantId = p._id || p.id;
+        const currentUserId = currentUser?._id || currentUser?.id;
+        return String(participantId) !== String(currentUserId);
+      });
+      return otherParticipant;
+    }).length;
   };
 
   const filteredChatRooms = () => {
@@ -217,6 +301,43 @@ const ChatPopup = () => {
     }
   };
 
+  // Handle mark transaction as sold
+  const handleMarkTransactionAsSold = async (transaction) => {
+    if (!transaction?._id && !transaction?.id) {
+      alert("Invalid transaction");
+      return;
+    }
+
+    if (!selectedChatId) {
+      alert("No chat room selected");
+      return;
+    }
+
+    try {
+      const transactionId = transaction._id || transaction.id;
+      
+      const result = await markTransactionAsSold({
+        chatRoomId: selectedChatId,
+        transactionId: transactionId,
+      }).unwrap();
+
+      console.log("Mark as sold result:", result);
+      
+      alert(`Transaction marked as sold! Stock updated to ${result.updatedStock || 'updated'}`);
+      
+      // Refetch transactions and chat rooms to update UI
+      refetchTransactions();
+      refetchRooms();
+      setSelectedTransaction(null);
+    } catch (error) {
+      console.error("Failed to mark transaction as sold:", error);
+      alert(
+        `Failed to mark as sold: ${error?.data?.message || error?.message || "Unknown error"}`
+      );
+    }
+  };
+
+
   if (!isChatOpen) return null;
 
   // Show login prompt if not authenticated
@@ -247,7 +368,7 @@ const ChatPopup = () => {
               <h2 className="text-xl font-bold text-orange-500">
                 Chat{" "}
                 <span className="text-black text-sm">
-                  ({getTotalUnreadCount()})
+                  ({getDisplayableChatsCount()})
                 </span>
               </h2>
               <div className="relative sort-menu-container">
@@ -478,36 +599,187 @@ const ChatPopup = () => {
 
                     if (!otherParticipant) return null;
 
+                    const isSeller = currentUser?.role === "seller";
+                    const isBuyer = currentUser?.role === "buyer";
+
                     return (
-                      <div className="flex items-center space-x-3">
-                        <img
-                          src={
-                            otherParticipant.profilePicture ||
-                            "/default-avatar.png"
-                          }
-                          alt="Profile"
-                          className="w-10 h-10 rounded-full object-cover bg-gray-200"
-                          onError={(e) => {
-                            e.target.src =
-                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGM0Y0RjYiLz4KPHBhdGggZD0iTTIwIDIwQzIyLjc2MTQgMjAgMjUgMTcuNzYxNCAyNSAxNUMyNSAxMi4yMzg2IDIyLjc2MTQgMTAgMjAgMTBDMTcuMjM4NiAxMCAxNSAxMi4yMzg2IDE1IDE1QzE1IDE3Ljc2MTQgMTcuMjM4NiAyMCAyMCAyMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTIwIDIyQzE2LjY4NjMgMjIgMTQgMjQuNjg2MyAxNCAyOFYzMEgyNlYyOEMyNiAyNC42ODYzIDIzLjMxMzcgMjIgMjAgMjJaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo=";
-                          }}
-                        />
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-bold text-black">
-                              {otherParticipant.username}
-                            </h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={
+                              otherParticipant.profilePicture ||
+                              "/default-avatar.png"
+                            }
+                            alt="Profile"
+                            className="w-10 h-10 rounded-full object-cover bg-gray-200"
+                            onError={(e) => {
+                              e.target.src =
+                                "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGM0Y0RjYiLz4KPHBhdGggZD0iTTIwIDIwQzIyLjc2MTQgMjAgMjUgMTcuNzYxNCAyNSAxNUMyNSAxMi4yMzg2IDIyLjc2MTQgMTAgMjAgMTBDMTcuMjM4NiAxMCAxNSAxMi4yMzg2IDE1IDE1QzE1IDE3Ljc2MTQgMTcuMjM4NiAyMCAyMCAyMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTIwIDIyQzE2LjY4NjMgMjIgMTQgMjQuNjg2MyAxNCAyOFYzMEgyNlYyOEMyNiAyNC42ODYzIDIzLjMxMzcgMjIgMjAgMjJaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo=";
+                            }}
+                          />
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-bold text-black">
+                                {otherParticipant.username}
+                              </h3>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              {otherParticipant.isOnline
+                                ? "• Active"
+                                : "• Offline"}
+                            </p>
                           </div>
-                          <p className="text-sm text-gray-500">
-                            {otherParticipant.isOnline
-                              ? "• Active"
-                              : "• Offline"}
-                          </p>
                         </div>
                       </div>
                     );
                   })()}
                 </div>
+
+
+                {/* Transactions Display with Toggle - Scrollable */}
+                {chatTransactions && chatTransactions.length > 0 && (
+                  <div className="mt-3 rounded-lg border border-gray-200 bg-white max-h-80 flex flex-col">
+                    {/* Transactions Header with Toggle */}
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+                      <div className="flex items-center gap-3">
+                        <h4 className="font-bold text-black">
+                          Transactions ({getUniqueTransactionsCount()})
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setShowTransactions(!showTransactions)}
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <span>{showTransactions ? "Hide" : "Show"}</span>
+                          <svg
+                            className={`w-4 h-4 transition-transform ${showTransactions ? "rotate-180" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Transactions Content - Scrollable */}
+                    {showTransactions && (
+                      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        {(() => {
+                          // Enhanced deduplication: by ID and by item+quantity+status
+                          const uniqueTransactions = chatTransactions.reduce((acc, transaction) => {
+                            const id = transaction._id || transaction.id;
+                            const itemId = transaction.itemId?._id || transaction.itemId?.id || transaction.itemId;
+                            const quantity = transaction.quantity;
+                            const status = transaction.status;
+                            
+                            // First check by transaction ID
+                            if (!acc.find(t => (t._id || t.id) === id)) {
+                              // Then check for duplicate item+quantity+status combinations
+                              const isDuplicateItem = acc.find(t => {
+                                const tItemId = t.itemId?._id || t.itemId?.id || t.itemId;
+                                return tItemId === itemId && 
+                                       t.quantity === quantity && 
+                                       t.status === status &&
+                                       !t.markedSoldAt && // Don't dedupe sold items
+                                       !transaction.markedSoldAt;
+                              });
+                              
+                              if (!isDuplicateItem) {
+                                acc.push(transaction);
+                              } else {
+                                console.log("🚫 Filtering duplicate transaction:", {
+                                  itemId,
+                                  quantity,
+                                  status,
+                                  transactionId: id
+                                });
+                              }
+                            }
+                            return acc;
+                          }, []);
+                          
+                          console.log("🔍 Enhanced deduplication results:", {
+                            original: chatTransactions.length,
+                            unique: uniqueTransactions.length,
+                            duplicates: chatTransactions.length - uniqueTransactions.length,
+                            transactions: chatTransactions.map(t => ({
+                              id: t._id || t.id,
+                              itemId: t.itemId?._id || t.itemId?.id || t.itemId,
+                              quantity: t.quantity,
+                              status: t.status,
+                              markedSoldAt: t.markedSoldAt
+                            }))
+                          });
+                          
+                          return uniqueTransactions.map((transaction) => {
+                            const transactionId = transaction._id || transaction.id;
+                            const item = transaction.itemId || {};
+                            const status = transaction.status || "pending";
+                            const isSold = status === "sold";
+                            const isSeller = currentUser?.role === "seller";
+
+                            return (
+                              <div
+                                key={transactionId}
+                                className={`border rounded-lg p-3 ${
+                                  isSold ? "bg-gray-100 border-gray-300" : "bg-white border-orange-200"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={item.image || bangusImage}
+                                    alt={item.itemName || "Product"}
+                                    className="w-16 h-16 rounded object-cover"
+                                  />
+                                  <div className="flex-1">
+                                    <h5 className="font-semibold text-sm">
+                                      {item.itemName || "Unknown Item"}
+                                    </h5>
+                                    <p className="text-xs text-gray-600">
+                                      {transaction.quantity} {item.unit || "units"} × ₱
+                                      {transaction.priceAtTransaction || item.itemPrice || 0}
+                                    </p>
+                                    <p className="text-sm font-bold text-green-600">
+                                      Total: ₱{transaction.totalPrice || 0}
+                                    </p>
+                                    {isSold && (
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        ✅ Sold on {new Date(transaction.markedSoldAt).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {isSeller && !isSold && (
+                                    <button
+                                      onClick={() => handleMarkTransactionAsSold(transaction)}
+                                      disabled={markingAsSold}
+                                      className="px-3 py-1.5 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                                    >
+                                      {markingAsSold ? "Marking..." : "Mark Sold"}
+                                    </button>
+                                  )}
+                                </div>
+                                {!isSold && (
+                                  <div className="mt-2 text-xs text-gray-500">
+                                    Status: <span className="text-orange-600 font-semibold">PENDING</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
+
               </div>
 
               {/* Messages Area - Scrollable */}
@@ -564,32 +836,34 @@ const ChatPopup = () => {
                           }`}
                         >
                           {msg.messageType === "product" ? (
-                            <div
-                              className="rounded-2xl p-4 max-w-sm shadow-lg"
-                              style={{ backgroundColor: "#007A3F" }}
-                            >
-                              <div className="flex space-x-3">
-                                <img
-                                  src={
-                                    msg.content?.product?.image || bangusImage
-                                  }
-                                  alt={msg.content?.product?.name || "Product"}
-                                  className="w-20 h-24 rounded-lg object-cover"
-                                />
-                                <div className="text-white flex flex-col justify-between">
-                                  <div>
-                                    <h4 className="font-bold text-lg">
-                                      {msg.content?.product?.name || "Product"}
-                                    </h4>
-                                    <p className="text-xs opacity-90">
-                                      {msg.content?.product?.description || ""}
+                            <div className="flex flex-col items-center space-y-2">
+                              <div className="relative rounded-2xl p-4 max-w-sm shadow-lg bg-green-600">
+                                <div className="flex space-x-3">
+                                  <img
+                                    src={
+                                      msg.content?.product?.image || bangusImage
+                                    }
+                                    alt={msg.content?.product?.name || "Product"}
+                                    className="w-20 h-24 rounded-lg object-cover"
+                                  />
+                                  <div className="flex flex-col justify-between text-white">
+                                    <div>
+                                      <h4 className="font-bold text-lg">
+                                        {msg.content?.product?.name || "Product"}
+                                      </h4>
+                                      <p className="text-xs opacity-90">
+                                        {msg.content?.product?.description || ""}
+                                      </p>
+                                    </div>
+                                    <p className="font-bold text-lg mt-1">
+                                      {msg.content?.product?.price || ""}
                                     </p>
                                   </div>
-                                  <p className="font-bold text-lg mt-1">
-                                    {msg.content?.product?.price || ""}
-                                  </p>
                                 </div>
                               </div>
+                              <p className="text-xs text-gray-500">
+                                📦 Product inquiry - Check transactions above
+                              </p>
                             </div>
                           ) : (
                             <div
