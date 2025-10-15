@@ -268,105 +268,130 @@ const SellerAccountManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {isFetching && rows.length === 0
-                ? Array.from({ length: 8 }).map((_, idx) => (
-                    <tr
-                      key={`skeleton-${idx}`}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
-                    >
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
-                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+              {isFetching && rows.length === 0 ? (
+                Array.from({ length: 8 }).map((_, idx) => (
+                  <tr
+                    key={`skeleton-${idx}`}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                  >
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                      </div>
+                    </td>
+                    <td>
+                      <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
+                    </td>
+                    <td>
+                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                  </tr>
+                ))
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                        <User
+                          size={24}
+                          weight="light"
+                          className="text-gray-400"
+                        />
+                      </div>
+                      <div className="text-gray-500">
+                        <p className="text-lg font-medium">
+                          No seller accounts found
+                        </p>
+                        <p className="text-sm">
+                          {filters.search || filters.status
+                            ? "Try adjusting your search criteria or filters"
+                            : "No seller accounts have been created yet"}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row, idx) => (
+                  <tr
+                    key={row.id}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
+                  >
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="avatar">
+                          <User
+                            size={16}
+                            weight="fill"
+                            className="text-base-content/80"
+                          />
                         </div>
-                      </td>
-                      <td>
-                        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
-                      </td>
-                      <td>
-                        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                      </td>
-                    </tr>
-                  ))
-                : rows.map((row, idx) => (
-                    <tr
-                      key={row.id}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-row-alt-5"}
-                    >
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className="avatar">
-                            <User
-                              size={16}
-                              weight="fill"
-                              className="text-base-content/80"
-                            />
-                          </div>
-                          <div className="font-medium">{row.name}</div>
-                        </div>
-                      </td>
-                      <td className="text-base-content/80">{row.email}</td>
-                      <td className="text-base-content/80">{row.address}</td>
-                      <td>
-                        <StatusPill value={row.status} />
-                      </td>
-                      <td>
-                        <div className="flex gap-2">
+                        <div className="font-medium">{row.name}</div>
+                      </div>
+                    </td>
+                    <td className="text-base-content/80">{row.email}</td>
+                    <td className="text-base-content/80">{row.address}</td>
+                    <td>
+                      <StatusPill value={row.status} />
+                    </td>
+                    <td>
+                      <div className="flex gap-2">
+                        <button
+                          className="btn btn-xs bg-white text-base-content border border-row-outline"
+                          onClick={() => {
+                            // Prefill minimal data for view modal
+                            const prefill = {
+                              id: row.raw?._id || row.raw?.id || row.id,
+                              fullName: row.raw?.fullName || row.name,
+                              firstName: row.raw?.firstName,
+                              lastName: row.raw?.lastName,
+                              email: row.raw?.email || row.email,
+                              contactNo: row.raw?.contactNo,
+                              address: row.raw?.address || row.address,
+                              username: row.raw?.username,
+                              storeName: row.raw?.storeName,
+                            };
+                            setFocusedSeller(prefill);
+                            setIsViewOpen(true);
+                          }}
+                        >
+                          <Eye size={14} weight="bold" className="mr-1" /> View
+                        </button>
+
+                        {/* Action buttons based on status */}
+                        {row.status === "pending_otp" && (
                           <button
-                            className="btn btn-xs bg-white text-base-content border border-row-outline"
+                            className="btn btn-xs bg-purple-500 text-white border border-purple-500"
+                            onClick={() => handleResendOtp(row.raw)}
+                          >
+                            Resend OTP
+                          </button>
+                        )}
+
+                        {(row.status === "pending_admin" ||
+                          row.status === "pending") && (
+                          <button
+                            className="btn btn-xs bg-success text-white border border-success"
                             onClick={() => {
-                              // Prefill minimal data for view modal
-                              const prefill = {
-                                id: row.raw?._id || row.raw?.id || row.id,
-                                fullName: row.raw?.fullName || row.name,
-                                firstName: row.raw?.firstName,
-                                lastName: row.raw?.lastName,
-                                email: row.raw?.email || row.email,
-                                contactNo: row.raw?.contactNo,
-                                address: row.raw?.address || row.address,
-                                username: row.raw?.username,
-                                storeName: row.raw?.storeName,
-                              };
-                              setFocusedSeller(prefill);
-                              setIsViewOpen(true);
+                              setFocusedSeller(row.raw);
+                              setIsVerifyOpen(true);
                             }}
                           >
-                            <Eye size={14} weight="bold" className="mr-1" />{" "}
-                            View
+                            Verify
                           </button>
-
-                          {/* Action buttons based on status */}
-                          {row.status === "pending_otp" && (
-                            <button
-                              className="btn btn-xs bg-purple-500 text-white border border-purple-500"
-                              onClick={() => handleResendOtp(row.raw)}
-                            >
-                              Resend OTP
-                            </button>
-                          )}
-
-                          {(row.status === "pending_admin" ||
-                            row.status === "pending") && (
-                            <button
-                              className="btn btn-xs bg-success text-white border border-success"
-                              onClick={() => {
-                                setFocusedSeller(row.raw);
-                                setIsVerifyOpen(true);
-                              }}
-                            >
-                              Verify
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
