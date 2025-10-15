@@ -1,6 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  "/api";
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl,
@@ -19,6 +21,21 @@ const baseQueryWithFriendlyErrors = async (args, apiCtx, extraOptions) => {
   try {
     result = await rawBaseQuery(args, apiCtx, extraOptions);
   } catch (e) {
+    // Handle CORS errors specifically
+    if (
+      e?.message?.includes("CORS") ||
+      e?.message?.includes("Access-Control-Allow-Origin")
+    ) {
+      return {
+        error: {
+          status: "CORS_ERROR",
+          data: {
+            message:
+              "CORS Error: Backend server needs to allow requests from localhost:5173. Contact backend developer to fix CORS configuration.",
+          },
+        },
+      };
+    }
     return {
       error: {
         status: "REQUEST_ERROR",
@@ -435,7 +452,9 @@ export const api = createApi({
     }),
     getChatRoom: builder.query({
       query: (chatRoomId) => `/chat/rooms/${chatRoomId}`,
-      providesTags: (result, error, chatRoomId) => [{ type: "Chat", id: chatRoomId }],
+      providesTags: (result, error, chatRoomId) => [
+        { type: "Chat", id: chatRoomId },
+      ],
       transformResponse: (response) => response?.data || response,
     }),
     createOrGetChatRoom: builder.mutation({
@@ -469,8 +488,13 @@ export const api = createApi({
         "Chat",
       ],
       transformResponse: (response) => {
-        const messages = response?.data?.messages || response?.messages || response?.data || [];
-        const pagination = response?.data?.pagination || response?.pagination || null;
+        const messages =
+          response?.data?.messages ||
+          response?.messages ||
+          response?.data ||
+          [];
+        const pagination =
+          response?.data?.pagination || response?.pagination || null;
         return { messages, pagination };
       },
     }),

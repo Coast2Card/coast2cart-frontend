@@ -142,24 +142,6 @@ const Cart = () => {
   const serverSellerCount = cartData?.sellerCount ?? 0;
   const serverCartTotal = cartData?.cartTotal ?? 0;
 
-  const handleCheckout = () => {
-    const isLoggedIn = Boolean(localStorage.getItem("auth_token"));
-    if (!isLoggedIn) {
-      toast.error("Please log in to checkout");
-      navigate("/login");
-      return;
-    }
-    if (selectedItemsList.length === 0) {
-      toast.error("Please select items to checkout");
-      return;
-    }
-    navigate("/checkout", {
-      state: {
-        selectedItems: selectedItems,
-      },
-    });
-  };
-
   return (
     <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full min-h-screen">
       <h1 className="text-xl sm:text-3xl font-bold text-black mb-2">
@@ -403,21 +385,6 @@ const Cart = () => {
                   </>
                 )}
               </div>
-              <button
-                onClick={handleCheckout}
-                disabled={selectedItemsList.length === 0}
-                className={`mt-1.5 w-full rounded-b-xl px-6 py-4 text-sm font-semibold transition-colors duration-200 ${
-                  selectedItemsList.length === 0
-                    ? "bg-base-200 text-base-content/50 cursor-not-allowed"
-                    : "bg-primary text-primary-content hover:bg-primary/90"
-                }`}
-              >
-                {selectedItemsList.length === 0
-                  ? "Select items to checkout"
-                  : `Checkout ${selectedItemsList.length} item${
-                      selectedItemsList.length > 1 ? "s" : ""
-                    }`}
-              </button>
             </div>
           </aside>
         </div>
