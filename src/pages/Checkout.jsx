@@ -22,6 +22,29 @@ const Checkout = () => {
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Get current user info and check if seller
+  const currentUser = (() => {
+    try {
+      const raw = localStorage.getItem("auth_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  // Redirect sellers away from checkout page
+  useEffect(() => {
+    if (currentUser?.role === "seller") {
+      toast.error("Sellers cannot access the checkout page");
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
+
+  // Early return for sellers
+  if (currentUser?.role === "seller") {
+    return null;
+  }
+
   useEffect(() => {
     // Get selected items from cart page or all items if coming directly
     const selectedItemsFromCart = location.state?.selectedItems || new Set();

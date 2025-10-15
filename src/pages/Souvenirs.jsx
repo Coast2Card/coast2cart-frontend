@@ -50,6 +50,17 @@ const Souvenirs = () => {
       item?.owner?._id ||
       item?.owner?.id;
 
+    // Debug logging
+    console.log("Seller Check Debug:", {
+      currentUserId,
+      sellerId,
+      currentUserRole: currentUser?.role,
+      itemId: item?.id || item?._id,
+      itemName: item?.itemName || item?.name,
+      isSeller: currentUserId === sellerId,
+    });
+
+    // Only block if the current user is the specific seller of this item
     return currentUserId === sellerId;
   };
 
