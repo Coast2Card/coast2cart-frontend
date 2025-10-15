@@ -84,9 +84,10 @@ const SellerProfilePage = ({ sellerId }) => {
     });
 
   // Fetch seller profile info
-  const { data: sellerInfo } = useGetSellerInfoQuery(resolvedSellerId, {
-    skip: !resolvedSellerId,
-  });
+  const { data: sellerInfo, isLoading: isLoadingSellerInfo } =
+    useGetSellerInfoQuery(resolvedSellerId, {
+      skip: !resolvedSellerId,
+    });
 
   // Mock data - Backend team can replace with API calls using sellerId
   const sellerData = {
@@ -201,54 +202,84 @@ const SellerProfilePage = ({ sellerId }) => {
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
         {/* Left Side - Avatar */}
         <div className="flex-shrink-0">
-          <div className="w-40 h-40 md:w-48 md:h-48 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
-            <img
-              src={sellerData.profileImage}
-              alt={sellerData.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
+          {isLoadingSellerInfo ? (
+            <div className="w-40 h-40 md:w-48 md:h-48 bg-white/60 rounded-full animate-pulse" />
+          ) : (
+            <div className="w-40 h-40 md:w-48 md:h-48 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+              <img
+                src={sellerData.profileImage}
+                alt={sellerData.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
         </div>
 
         {/* Right Side - Seller Info */}
         <div className="flex-1 text-center md:text-left mt-4 md:mt-0">
           <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-            <h1 className="text-4xl md:text-5xl font-bold text-white">
-              {sellerData.name}
-            </h1>
-            <CheckCircle size={32} weight="fill" className="text-white" />
+            {isLoadingSellerInfo ? (
+              <div className="h-10 md:h-12 w-56 bg-white/60 rounded animate-pulse" />
+            ) : (
+              <h1 className="text-4xl md:text-5xl font-bold text-white">
+                {sellerData.name}
+              </h1>
+            )}
+            {!isLoadingSellerInfo && (
+              <CheckCircle size={32} weight="fill" className="text-white" />
+            )}
           </div>
 
           <div className="mb-6 text-center md:text-left">
-            <span className="text-sm md:text-base font-normal text-white/90">
-              {currentUsername}
-            </span>
+            {isLoadingSellerInfo ? (
+              <div className="h-4 w-40 bg-white/50 rounded animate-pulse" />
+            ) : (
+              <span className="text-sm md:text-base font-normal text-white/90">
+                {currentUsername}
+              </span>
+            )}
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-center md:justify-start gap-3">
               <MapPin size={22} weight="fill" className="text-white" />
-              <span className="text-lg md:text-xl font-normal">
-                {sellerData.location}
-              </span>
+              {isLoadingSellerInfo ? (
+                <span className="h-5 w-56 bg-white/40 rounded animate-pulse" />
+              ) : (
+                <span className="text-lg md:text-xl font-normal">
+                  {sellerData.location}
+                </span>
+              )}
             </div>
             <div className="flex items-center justify-center md:justify-start gap-3">
               <Phone size={22} weight="fill" className="text-white" />
-              <span className="text-lg md:text-xl font-normal">
-                {sellerData.phone}
-              </span>
+              {isLoadingSellerInfo ? (
+                <span className="h-5 w-40 bg-white/40 rounded animate-pulse" />
+              ) : (
+                <span className="text-lg md:text-xl font-normal">
+                  {sellerData.phone}
+                </span>
+              )}
             </div>
             <div className="flex items-center justify-center md:justify-start gap-3">
               <Envelope size={22} weight="fill" className="text-white" />
-              <span className="text-lg md:text-xl font-normal">
-                {sellerData.email}
-              </span>
+              {isLoadingSellerInfo ? (
+                <span className="h-5 w-48 bg-white/40 rounded animate-pulse" />
+              ) : (
+                <span className="text-lg md:text-xl font-normal">
+                  {sellerData.email}
+                </span>
+              )}
             </div>
             <div className="flex items-center justify-center md:justify-start gap-3">
               <Calendar size={22} weight="fill" className="text-white" />
-              <span className="text-lg md:text-xl font-normal">
-                Seller Since {sellerData.memberSince}
-              </span>
+              {isLoadingSellerInfo ? (
+                <span className="h-5 w-56 bg-white/40 rounded animate-pulse" />
+              ) : (
+                <span className="text-lg md:text-xl font-normal">
+                  Seller Since {sellerData.memberSince}
+                </span>
+              )}
             </div>
           </div>
         </div>

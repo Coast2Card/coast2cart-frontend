@@ -329,7 +329,7 @@ const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={() => setIsProfileMenuOpen((v) => !v)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 cursor-pointer"
                 >
                   <img
                     src={profileIcon}
@@ -347,7 +347,7 @@ const Navbar = () => {
                       currentUser?.username
                     );
                   })() && (
-                    <span className="text-sm font-semibold text-black hidden lg:inline">
+                    <span className="text-sm font-semibold text-black hidden lg:inline cursor-pointer">
                       {(() => {
                         const fn = (currentUser?.firstName || "").trim();
                         const ln = (currentUser?.lastName || "").trim();

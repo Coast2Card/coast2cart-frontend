@@ -100,6 +100,11 @@ const Cart = () => {
     }
   };
 
+  const goToProduct = (itemId) => {
+    if (!itemId) return;
+    navigate(`/seafood/${itemId}`);
+  };
+
   const toggleItemSelection = (id) => {
     const newSelected = new Set(selectedItems);
     if (newSelected.has(id)) {
@@ -288,7 +293,10 @@ const Cart = () => {
 
                   {/* Product Image and Details */}
                   <div className="col-span-4 flex items-center gap-3">
-                    <div className="w-16 h-16 bg-base-200 rounded-lg flex-shrink-0">
+                    <div
+                      className="w-16 h-16 bg-base-200 rounded-lg flex-shrink-0 cursor-pointer"
+                      onClick={() => goToProduct(it.id)}
+                    >
                       {it.image ? (
                         <img
                           src={it.image}
@@ -303,10 +311,16 @@ const Cart = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-base-content truncate">
+                      <p
+                        className="font-semibold text-base-content truncate cursor-pointer hover:underline"
+                        onClick={() => goToProduct(it.id)}
+                      >
                         {it.name}
                       </p>
-                      <p className="text-base-content/60 text-sm">
+                      <p
+                        className="text-base-content/60 text-sm cursor-pointer hover:underline"
+                        onClick={() => goToProduct(it.id)}
+                      >
                         ₱{Number(it.price).toFixed(2)}
                       </p>
                     </div>
@@ -338,11 +352,17 @@ const Cart = () => {
                             )
                           );
                           try {
-                            await updateCartItem({ itemId: it.id, quantity: newQty }).unwrap();
+                            await updateCartItem({
+                              itemId: it.id,
+                              quantity: newQty,
+                            }).unwrap();
                             await refetch();
                           } catch (error) {
                             persist(previous);
-                            toast.error(error?.data?.message || "Failed to update quantity");
+                            toast.error(
+                              error?.data?.message ||
+                                "Failed to update quantity"
+                            );
                           }
                         }}
                         className="w-12 h-8 text-center border-2 border-base-300 rounded text-sm text-base-content [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

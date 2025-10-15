@@ -69,9 +69,12 @@ const BuyerProfilePage = () => {
     return undefined;
   };
   const accountId = resolveAccountId();
-  const { data: account } = useGetAccountByIdQuery(accountId, {
-    skip: !accountId,
-  });
+  const { data: account, isLoading: isLoadingAccount } = useGetAccountByIdQuery(
+    accountId,
+    {
+      skip: !accountId,
+    }
+  );
 
   // API calls for buyer data
   const {

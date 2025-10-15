@@ -32,115 +32,122 @@ function App() {
   return (
     <>
       <ScrollToTop />
-      <Toaster position="top-center" />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            marginTop: "45px", // Add margin to avoid navbar overlap
+          },
+        }}
+      />
       <ChatProvider>
         <Routes>
-        {/* Routes with shared layout */}
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="seafood" element={<Seafood />} />
-          <Route path="seafood/:itemId" element={<ProductDetail />} />
-          <Route path="souvenirs" element={<Souvenirs />} />
-          <Route path="about" element={<About />} />
+          {/* Routes with shared layout */}
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="seafood" element={<Seafood />} />
+            <Route path="seafood/:itemId" element={<ProductDetail />} />
+            <Route path="souvenirs" element={<Souvenirs />} />
+            <Route path="about" element={<About />} />
+            <Route
+              path="cart"
+              element={
+                <ProtectedRoute>
+                  <Cart />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="checkout"
+              element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="profile/buyer"
+              element={
+                <ProtectedRoute allowedRoles={["buyer"]}>
+                  <BuyerProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="profile/seller"
+              element={
+                <ProtectedRoute allowedRoles={["seller"]}>
+                  <SellerProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="profile/superadmin"
+              element={
+                <ProtectedRoute allowedRoles={["superadmin"]}>
+                  <SuperAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="colors" element={<Colors />} />
+          </Route>
+          {/* Admin routes with AdminLayout */}
           <Route
-            path="cart"
+            path="/admin"
             element={
-              <ProtectedRoute>
-                <Cart />
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout />
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="checkout"
-            element={
-              <ProtectedRoute>
-                <Checkout />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="profile/buyer"
-            element={
-              <ProtectedRoute allowedRoles={["buyer"]}>
-                <BuyerProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="profile/seller"
-            element={
-              <ProtectedRoute allowedRoles={["seller"]}>
-                <SellerProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="profile/superadmin"
-            element={
-              <ProtectedRoute allowedRoles={["superadmin"]}>
-                <SuperAdmin />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="colors" element={<Colors />} />
-        </Route>
-        {/* Admin routes with AdminLayout */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route
-            index
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <Dashbord />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="sellers"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <SellerAccountManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="buyers"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <BuyerAccountManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="admins"
-            element={
-              <ProtectedRoute allowedRoles={["superadmin"]}>
-                <AdminAccountManagement />
-              </ProtectedRoute>
-            }
-          />
-        </Route>
-        {/* Auth routes without shared layout */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/verify-otp" element={<OtpVerify />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          >
+            <Route
+              index
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Dashbord />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="sellers"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <SellerAccountManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="buyers"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <BuyerAccountManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admins"
+              element={
+                <ProtectedRoute allowedRoles={["superadmin"]}>
+                  <AdminAccountManagement />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+          {/* Auth routes without shared layout */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/verify-otp" element={<OtpVerify />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </ChatProvider>
     </>
   );
