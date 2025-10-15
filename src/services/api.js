@@ -187,18 +187,18 @@ export const api = createApi({
         // Expect { success: boolean, data: array, cartTotal: number, itemCount: number, sellerCount: number }
         const rawItems = Array.isArray(response?.data) ? response.data : [];
         console.log("Cart API Response Debug:", { response, rawItems });
-        
+
         const items = rawItems.map((entry) => {
           const item = entry?.item || {};
           const seller = item?.seller || entry?.seller || {};
-          
-          console.log("Cart Item Debug:", { 
-            entry, 
-            item, 
+
+          console.log("Cart Item Debug:", {
+            entry,
+            item,
             itemQuantity: item?.quantity,
-            entryQuantity: entry?.quantity 
+            entryQuantity: entry?.quantity,
           });
-          
+
           return {
             id: entry?.itemId || entry?._id || item?._id || entry?.id,
             name: item?.itemName || item?.name || entry?.name || "",
@@ -344,12 +344,12 @@ export const api = createApi({
           ? response
           : [];
         const items = raw.map((r) => {
-          const item = r?.item || r?.product || r;
+          const item = r?.itemId || r?.item || r?.product || r;
           const id = r?._id || r?.id || item?._id || item?.id;
           const name = item?.itemName || item?.name || r?.name || "";
           const image = item?.image || item?.imageUrl || r?.image || "";
           const category =
-            item?.category || item?.itemType || r?.category || "";
+            item?.itemType || item?.category || r?.category || "";
           const qty = r?.quantity ?? r?.qty ?? item?.quantity ?? undefined;
           const unit = item?.unit || r?.unit || "";
           const quantity =
@@ -357,7 +357,12 @@ export const api = createApi({
               ? `${qty} ${unit || ""}`.trim()
               : r?.weight || r?.quantityLabel || "";
           const soldDate =
-            r?.soldAt || r?.createdAt || r?.updatedAt || item?.soldAt || "";
+            r?.markedSoldAt ||
+            r?.soldAt ||
+            r?.createdAt ||
+            r?.updatedAt ||
+            item?.soldAt ||
+            "";
           return { id, name, image, category, quantity, soldDate, raw: r };
         });
         const pagination = response?.pagination || null;
@@ -490,10 +495,10 @@ export const api = createApi({
       query: ({ participantId, itemId, quantity }) => ({
         url: "/chat/rooms",
         method: "POST",
-        body: { 
-          participantId, 
+        body: {
+          participantId,
           itemId: itemId || undefined,
-          quantity: quantity || undefined
+          quantity: quantity || undefined,
         },
       }),
       invalidatesTags: ["Chat"],

@@ -152,16 +152,22 @@ const SellerProfilePage = ({ sellerId }) => {
   );
   const apiSoldItems = (sellerSoldData?.items || []).map((it) => {
     const item = it?.itemId && typeof it.itemId === "object" ? it.itemId : {};
-    const name = item?.itemName || "";
-    const image = item?.image || bisugotImg;
+    const name = item?.itemName || item?.name || it?.name || "";
+    const image = item?.image || item?.imageUrl || it?.image || "";
     const category = item?.itemType || it?.category || "";
     const quantity =
       it?.quantity != null && it?.unit
         ? `${it.quantity} ${it.unit}`
         : item?.formattedQuantity || it?.quantity || "";
     const soldDateIso = it?.markedSoldAt || it?.updatedAt || it?.soldDate;
-    const priceLabel = item?.formattedPrice || (it?.totalPrice != null ? `₱${Number(it.totalPrice).toLocaleString()}` : "");
-    const summary = it?.summary || (quantity && priceLabel ? `${quantity} - ${priceLabel}` : "");
+    const priceLabel =
+      item?.formattedPrice ||
+      (it?.totalPrice != null
+        ? `₱${Number(it.totalPrice).toLocaleString()}`
+        : "");
+    const summary =
+      it?.summary ||
+      (quantity && priceLabel ? `${quantity} - ${priceLabel}` : "");
     return {
       id: it?.id || it?._id,
       name,
