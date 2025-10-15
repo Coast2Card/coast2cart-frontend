@@ -37,7 +37,6 @@ const ProductDetail = () => {
     error,
   });
 
-
   // Loading state with skeletons
   if (isLoading) {
     return (
@@ -98,7 +97,7 @@ const ProductDetail = () => {
             The product you're looking for doesn't exist or has been removed.
           </p>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary cursor-pointer"
             onClick={() => navigate("/seafood")}
           >
             Back to Seafood
@@ -253,21 +252,21 @@ const ProductDetail = () => {
               <div className="flex items-stretch gap-3 mb-3">
                 <div className="flex items-center justify-between rounded-full border border-gray-300 h-11 px-3 min-w-[112px] select-none">
                   <button
-                    className="text-gray-600 hover:text-gray-900"
+                    className="text-gray-600 hover:text-gray-900 cursor-pointer"
                     onClick={() => handleQuantityChange(-1)}
                   >
                     −
                   </button>
                   <span className="font-medium text-gray-800">{quantity}</span>
                   <button
-                    className="text-gray-600 hover:text-gray-900"
+                    className="text-gray-600 hover:text-gray-900 cursor-pointer"
                     onClick={() => handleQuantityChange(1)}
                   >
                     +
                   </button>
                 </div>
                 <button
-                  className="flex-1 h-11 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold disabled:opacity-60"
+                  className="flex-1 h-11 rounded-full bg-[#E4490F] hover:bg-[#d0410d] text-white font-semibold disabled:opacity-60 cursor-pointer"
                   onClick={handleAddToCart}
                   disabled={isAdding}
                 >
@@ -275,12 +274,25 @@ const ProductDetail = () => {
                 </button>
               </div>
               {(() => {
-                const sellerId = product?.seller?._id || product?.seller?.id || product?.postedBy?._id || product?.postedBy?.id || product?.owner?._id || product?.owner?.id;
-                const sellerName = product?.seller?.username || product?.seller?.name || product?.postedBy?.username || product?.postedBy?.name || product?.owner?.username || product?.owner?.name || 'Seller';
-                
+                const sellerId =
+                  product?.seller?._id ||
+                  product?.seller?.id ||
+                  product?.postedBy?._id ||
+                  product?.postedBy?.id ||
+                  product?.owner?._id ||
+                  product?.owner?.id;
+                const sellerName =
+                  product?.seller?.username ||
+                  product?.seller?.name ||
+                  product?.postedBy?.username ||
+                  product?.postedBy?.name ||
+                  product?.owner?.username ||
+                  product?.owner?.name ||
+                  "Seller";
+
                 if (sellerId) {
                   return (
-                    <StartChatButton 
+                    <StartChatButton
                       userId={sellerId}
                       username={sellerName}
                       className="w-full h-11 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium"
@@ -290,7 +302,7 @@ const ProductDetail = () => {
                         description: product.description,
                         price: product.itemPrice || product.price,
                         image: product.image || product.imageUrl,
-                        unit: product.unit
+                        unit: product.unit,
                       }}
                     >
                       Message Seller
@@ -311,7 +323,7 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Seller info and reviews */}
       <SellerSection itemId={itemId} product={product} />
       {/* Related products */}
