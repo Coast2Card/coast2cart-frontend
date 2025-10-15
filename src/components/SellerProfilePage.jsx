@@ -538,15 +538,6 @@ const SellerProfilePage = ({ sellerId }) => {
   const ReviewCard = ({ review }) => (
     <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 hover:border-secondary/30 hover:-translate-y-0.5 active:scale-98">
       <div className="flex items-start gap-4">
-        <div className="avatar group flex-shrink-0">
-          <div className="w-12 h-12 rounded-full ring-2 ring-gray-200 group-hover:ring-secondary transition-all duration-200 group-hover:scale-105">
-            <img
-              src={review.avatar}
-              alt={review.customerName}
-              className="w-full h-full object-cover rounded-full transition-transform duration-200 group-hover:scale-110"
-            />
-          </div>
-        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-gray-800 font-primary group-hover:text-primary transition-colors duration-200 truncate">

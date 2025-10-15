@@ -364,7 +364,7 @@ const ChatPopup = () => {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/50 backdrop-blur-sm"
       onClick={closeChat}
     >
       <div
@@ -634,11 +634,6 @@ const ChatPopup = () => {
                                 {otherParticipant.username}
                               </h3>
                             </div>
-                            <p className="text-sm text-gray-500">
-                              {otherParticipant.isOnline
-                                ? "• Active"
-                                : "• Offline"}
-                            </p>
                           </div>
                         </div>
                       </div>
