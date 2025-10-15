@@ -404,12 +404,17 @@ const Cart = () => {
                             imageUrl: it.image,
                             quantity: it.quantity, // Cart quantity
                             availableQuantity: it.availableQuantity, // Available stock quantity
-                            description: `Product from ${it.sellerName || "Seller"}`,
+                            description: `Product from ${
+                              it.sellerName || "Seller"
+                            }`,
                           };
-                          console.log("Cart StartChatButton productInfo:", { it, productInfo });
+                          console.log("Cart StartChatButton productInfo:", {
+                            it,
+                            productInfo,
+                          });
                           return productInfo;
                         })()}
-                        className="px-3 py-1.5 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap"
+                        className="ml-2 px-1.5 py-1.5 bg-orange-500 text-white text-xs rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap"
                       >
                         💬 Message Seller
                       </StartChatButton>
