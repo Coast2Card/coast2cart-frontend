@@ -107,9 +107,20 @@ const Navbar = () => {
     return 0;
   };
 
-  // Calculate total unread messages count (frontend-only)
+  // Calculate total unread messages count (frontend-only) - only for chats with valid participants
   const totalUnreadCount = chatRooms.reduce((total, chat) => {
-    return total + getUnreadCountForChat(chat);
+    // Only count chats that have valid participants (same logic as chat popup)
+    const otherParticipant = chat.participants?.find((p) => {
+      const participantId = p._id || p.id;
+      const currentUserId = currentUser?._id || currentUser?.id;
+      return String(participantId) !== String(currentUserId);
+    });
+    
+    // Only count unread messages for chats with valid participants
+    if (otherParticipant) {
+      return total + getUnreadCountForChat(chat);
+    }
+    return total;
   }, 0);
 
   const handleLogout = () => {
